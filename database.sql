@@ -1,8 +1,8 @@
-﻿-- Tạo database TravlerDB
-CREATE DATABASE TravlerDB;
+﻿-- Tạo database VietCulture
+CREATE DATABASE VietCulture;
 GO
 
-USE TravlerDB;
+USE VietCulture;
 GO
 
 -- Bảng Users (chính)
@@ -18,7 +18,7 @@ CREATE TABLE Users (
     bio NVARCHAR(500),
     createdAt DATE NOT NULL DEFAULT GETDATE(),
     isActive BIT NOT NULL DEFAULT 1,
-    userType NVARCHAR(20) NOT NULL CHECK (userType IN ('TRAVELER', 'LOCAL_HOST', 'SUPPLIER', 'ADMIN'))
+    userType NVARCHAR(20) NOT NULL CHECK (userType IN ('TRAVELER', 'HOST_SUPPLIER', 'ADMIN'))
 );
 GO
 
@@ -31,27 +31,24 @@ CREATE TABLE Travelers (
 );
 GO
 
--- Bảng LocalHosts mở rộng
-CREATE TABLE LocalHosts (
+-- Bảng HostsSuppliers mở rộng (gộp LocalHosts và Suppliers)
+CREATE TABLE HostsSuppliers (
     userId INT PRIMARY KEY,
-    skills NVARCHAR(500),
-    region NVARCHAR(50),
+
+    -- Thông tin Local Host
+    skills NVARCHAR(500) NULL,
+    region NVARCHAR(50) NULL,
     averageRating FLOAT NOT NULL DEFAULT 0,
     totalExperiences INT NOT NULL DEFAULT 0,
-    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
-);
-GO
 
--- Bảng Suppliers mở rộng
-CREATE TABLE Suppliers (
-    userId INT PRIMARY KEY,
-    businessName NVARCHAR(100) NOT NULL,
-    businessType NVARCHAR(50),
-    businessAddress NVARCHAR(255),
-    businessDescription NVARCHAR(500),
-    taxId NVARCHAR(50),
+    -- Thông tin Supplier
+    businessName NVARCHAR(100) NULL,
+    businessType NVARCHAR(50) NULL,
+    businessAddress NVARCHAR(255) NULL,
+    businessDescription NVARCHAR(500) NULL,
+    taxId NVARCHAR(50) NULL,
     totalRevenue FLOAT NOT NULL DEFAULT 0,
-    averageRating FLOAT NOT NULL DEFAULT 0,
+
     FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
 );
 GO
@@ -194,7 +191,6 @@ CREATE TABLE Complaints (
 );
 GO
 
-
 -- Chèn dữ liệu mặc định Regions
 INSERT INTO Regions (name, vietnameseName, description, imageUrl, climate, culture)
 VALUES 
@@ -222,7 +218,6 @@ VALUES
     ('Craft', 'Hands-on craft workshops and artisan visits', 'craft_icon.png');
 GO
 
-
 -- Chèn Admin user với biến để lấy userId
 DECLARE @adminUserId INT;
 
@@ -248,28 +243,43 @@ VALUES
     ((SELECT userId FROM Users WHERE email='jane@example.com'), '{"likes":["Adventure","History"]}', 5);
 GO
 
--- Chèn LocalHost sample
+-- Chèn HostsSuppliers sample (gộp LocalHost + Supplier)
 INSERT INTO Users (email, password, fullName, phone, userType)
-VALUES ('host1@example.com', '123456', 'Nguyen Van A', '0987654321', 'LOCAL_HOST');
+VALUES 
+    ('host_supplier1@example.com', '123456', 'Nguyen Van A', '0987654321', 'HOST_SUPPLIER'),
+    ('host_supplier2@example.com', '123456', 'Supplier One', '0912345678', 'HOST_SUPPLIER');
 GO
 
-INSERT INTO LocalHosts (userId, skills, region, averageRating, totalExperiences)
-VALUES ((SELECT userId FROM Users WHERE email='host1@example.com'), 'Cooking, Storytelling', 'North', 4.8, 12);
+-- LocalHost data cho user đầu tiên
+INSERT INTO HostsSuppliers (userId, skills, region, averageRating, totalExperiences, totalRevenue)
+VALUES (
+    (SELECT userId FROM Users WHERE email='host_supplier1@example.com'),
+    'Cooking, Storytelling',
+    'North',
+    4.8,
+    12,
+    0 -- Supplier phần không dùng
+);
 GO
 
--- Chèn Supplier sample
-INSERT INTO Users (email, password, fullName, phone, userType)
-VALUES ('supplier1@example.com', '123456', 'Supplier One', '0912345678', 'SUPPLIER');
-GO
-
-INSERT INTO Suppliers (userId, businessName, businessType, businessAddress, businessDescription, taxId, totalRevenue, averageRating)
-VALUES ((SELECT userId FROM Users WHERE email='supplier1@example.com'), 'Supplier Co.', 'Food & Beverage', '123 Supplier St, HCMC', 'Provides fresh ingredients', 'TAX123456', 1000000, 4.5);
+-- Supplier data cho user thứ hai
+INSERT INTO HostsSuppliers (userId, businessName, businessType, businessAddress, businessDescription, taxId, averageRating, totalRevenue)
+VALUES (
+    (SELECT userId FROM Users WHERE email='host_supplier2@example.com'),
+    'Supplier Co.',
+    'Food & Beverage',
+    '123 Supplier St, HCMC',
+    'Provides fresh ingredients',
+    'TAX123456',
+    4.5,
+    1000000
+);
 GO
 
 -- Chèn Experiences sample
 INSERT INTO Experiences (hostId, title, description, location, city, region, type, price, maxGroupSize, duration, difficulty, language, includedItems, requirements, images)
 VALUES
-    ((SELECT userId FROM Users WHERE email='host1@example.com'),
+    ((SELECT userId FROM Users WHERE email='host_supplier1@example.com'),
     'Hanoi Street Food Tour',
     'Explore Hanoi''s best street food with a local guide.',
     'Hanoi Old Quarter',
@@ -325,7 +335,7 @@ GO
 INSERT INTO Transactions (supplierId, amount, transactionType, status)
 VALUES
 (
-    (SELECT userId FROM Users WHERE email='supplier1@example.com'),
+    (SELECT userId FROM Users WHERE email='host_supplier2@example.com'),
     500,
     'WITHDRAWAL',
     'COMPLETED'
@@ -341,5 +351,3 @@ VALUES
     'The cooking class started late and was shorter than expected.'
 );
 GO
-
-
