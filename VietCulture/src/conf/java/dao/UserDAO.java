@@ -731,7 +731,19 @@ public class UserDAO {
     public void updateFullName(int userId, String trim) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+
+
+public boolean updatePassword(String email, String newPassword) throws SQLException {
+    // Tìm user dựa trên email
+    User user = getUserByEmail(email);
+    if (user == null) {
+        LOGGER.log(Level.WARNING, "Không tìm thấy người dùng với email: " + email);
+        return false;
+    }
     
+    // Cập nhật mật khẩu sử dụng phương thức đã có
+    return updatePassword(user.getUserId(), newPassword);
+}    
     /**
      * Inner class for user statistics
      */
