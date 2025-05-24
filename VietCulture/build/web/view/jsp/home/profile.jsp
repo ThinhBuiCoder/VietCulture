@@ -1,0 +1,768 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Cá Nhân - VietCulture</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #10466C;
+            --secondary-color: #83C5BE;
+            --accent-color: #F8F9FA;
+            --dark-color: #2F4858;
+            --light-color: #FFFFFF;
+            --shadow-sm: 0 2px 10px rgba(0,0,0,0.05);
+            --shadow-md: 0 5px 15px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+            --border-radius: 16px;
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--accent-color);
+            padding-top: 80px;
+        }
+
+        /* Custom Navbar */
+        .custom-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary-color);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+            z-index: 1000;
+            padding: 15px 0;
+            transition: var(--transition);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-brand img {
+            height: 50px;
+            margin-right: 12px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-right a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-right a:hover {
+            color: white;
+        }
+
+        /* Profile Container */
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(50px, -50px);
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.3);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .profile-info h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Profile Content */
+        .profile-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .profile-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .profile-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .profile-card h4 i {
+            font-size: 1.2rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(16, 70, 108, 0.1);
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #0d3a5a;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border: none;
+            margin-bottom: 25px;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            background: transparent;
+            color: var(--dark-color);
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-right: 10px;
+            transition: var(--transition);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-tabs .nav-link:hover:not(.active) {
+            background: rgba(16, 70, 108, 0.1);
+        }
+
+        /* Info Items */
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(16, 70, 108, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: var(--primary-color);
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        /* Badge Styles */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Success/Error Messages */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .profile-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-stats {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            
+            .profile-header {
+                padding: 25px;
+                text-align: center;
+            }
+            
+            .profile-info h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Avatar Upload */
+        .avatar-upload {
+            position: relative;
+            display: inline-block;
+        }
+
+        .avatar-upload-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .avatar-upload-btn:hover {
+            background: #0d3a5a;
+            transform: scale(1.1);
+        }
+
+        #avatarInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="custom-navbar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+                    <img src="${pageContext.request.contextPath}/images/logo.jpg" alt="VietCulture Logo">
+                    <span>VIETCULTURE</span>
+                </a>
+
+                <div class="nav-right">
+                    <a href="${pageContext.request.contextPath}/">
+                        <i class="ri-home-line me-2"></i>Trang Chủ
+                    </a>
+                    <c:if test="${sessionScope.user.userType == 'HOST'}">
+                        <a href="${pageContext.request.contextPath}/host/dashboard">
+                            <i class="ri-dashboard-line me-2"></i>Dashboard
+                        </a>
+                    </c:if>
+                    <a href="${pageContext.request.contextPath}/logout">
+                        <i class="ri-logout-circle-r-line me-2"></i>Đăng Xuất
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Success/Error Messages -->
+    <c:if test="${not empty message}">
+        <div class="container mt-3">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="ri-check-circle-line me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </c:if>
+
+    <c:if test="${not empty error}">
+        <div class="container mt-3">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="ri-error-warning-line me-2"></i>
+                ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </c:if>
+
+    <div class="profile-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="d-flex align-items-center">
+                <div class="avatar-upload me-4">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user.avatar}">
+                            <img src="${pageContext.request.contextPath}/assets/images/avatars/${sessionScope.user.avatar}" 
+                                 alt="Avatar" class="profile-avatar" id="profileAvatar">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" 
+                                 alt="Default Avatar" class="profile-avatar" id="profileAvatar">
+                        </c:otherwise>
+                    </c:choose>
+                    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+                        <i class="ri-camera-line"></i>
+                    </button>
+                    <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatar(this)">
+                </div>
+                
+                <div class="profile-info flex-grow-1">
+                    <h2>${sessionScope.user.fullName}</h2>
+                    <p class="mb-2">
+                        <i class="ri-mail-line me-2"></i>${sessionScope.user.email}
+                    </p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge badge-primary">${sessionScope.user.userType}</span>
+                        <c:choose>
+                            <c:when test="${sessionScope.user.active}">
+                                <span class="badge badge-success">Đang hoạt động</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge badge-warning">Tạm khóa</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-number">${totalBookings}</span>
+                            <span class="stat-label">Đặt chỗ</span>
+                        </div>
+                        <c:if test="${sessionScope.user.userType == 'HOST'}">
+                            <div class="stat-item">
+                                <span class="stat-number">${totalExperiences}</span>
+                                <span class="stat-label">Trải nghiệm</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">${totalRevenue}đ</span>
+                                <span class="stat-label">Doanh thu</span>
+                            </div>
+                        </c:if>
+                        <div class="stat-item">
+                            <span class="stat-number">
+                                <fmt:formatDate value="${sessionScope.user.createdAt}" pattern="yyyy"/>
+                            </span>
+                            <span class="stat-label">Tham gia</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Content -->
+        <div class="profile-content">
+            <!-- Sidebar -->
+            <div class="profile-sidebar">
+                <!-- Personal Info Card -->
+                <div class="profile-card">
+                    <h4><i class="ri-user-line"></i>Thông Tin Cá Nhân</h4>
+                    
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="ri-phone-line"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Số điện thoại</div>
+                            <div class="info-value">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user.phone}">
+                                        ${sessionScope.user.phone}
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="ri-calendar-line"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Ngày sinh</div>
+                            <div class="info-value">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user.dateOfBirth}">
+                                        <fmt:formatDate value="${sessionScope.user.dateOfBirth}" pattern="dd/MM/yyyy"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="ri-user-2-line"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Giới tính</div>
+                            <div class="info-value">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user.gender}">
+                                        ${sessionScope.user.gender}
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-muted">Chưa cập nhật</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="ri-time-line"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Tham gia</div>
+                            <div class="info-value">
+                                <fmt:formatDate value="${sessionScope.user.createdAt}" pattern="dd/MM/yyyy"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bio Card -->
+                <div class="profile-card">
+                    <h4><i class="ri-information-line"></i>Giới Thiệu</h4>
+                    <p class="text-muted mb-0">
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.user.bio}">
+                                ${sessionScope.user.bio}
+                            </c:when>
+                            <c:otherwise>
+                                Người dùng chưa thêm mô tả về bản thân.
+                            </c:otherwise>
+                        </c:choose>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="profile-main">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit-pane" type="button" role="tab">
+                            <i class="ri-edit-line me-2"></i>Chỉnh Sửa Hồ Sơ
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password-pane" type="button" role="tab">
+                            <i class="ri-lock-line me-2"></i>Đổi Mật Khẩu
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="profileTabsContent">
+                    <!-- Edit Profile Tab -->
+                    <div class="tab-pane fade show active" id="edit-pane" role="tabpanel">
+                        <div class="profile-card">
+                            <form action="${pageContext.request.contextPath}/profile/update" method="post" enctype="multipart/form-data">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="fullName">Họ và tên *</label>
+                                            <input type="text" class="form-control" id="fullName" name="fullName" 
+                                                   value="${sessionScope.user.fullName}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="email">Email *</label>
+                                            <input type="email" class="form-control" id="email" name="email" 
+                                                   value="${sessionScope.user.email}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="phone">Số điện thoại</label>
+                                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                                   value="${sessionScope.user.phone}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="dateOfBirth">Ngày sinh</label>
+                                            <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth"
+                                                   value="<fmt:formatDate value='${sessionScope.user.dateOfBirth}' pattern='yyyy-MM-dd'/>">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="gender">Giới tính</label>
+                                            <select class="form-control" id="gender" name="gender">
+                                                <option value="">Chọn giới tính</option>
+                                                <option value="Nam" ${sessionScope.user.gender == 'Nam' ? 'selected' : ''}>Nam</option>
+                                                <option value="Nữ" ${sessionScope.user.gender == 'Nữ' ? 'selected' : ''}>Nữ</option>
+                                                <option value="Khác" ${sessionScope.user.gender == 'Khác' ? 'selected' : ''}>Khác</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="form-label" for="avatarFile">Ảnh đại diện</label>
+                                            <input type="file" class="form-control" id="avatarFile" name="avatarFile" 
+                                                   accept="image/*" onchange="previewAvatar(this)">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="bio">Giới thiệu bản thân</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="4" 
+                                              placeholder="Viết vài dòng giới thiệu về bản thân...">${sessionScope.user.bio}</textarea>
+                                </div>
+
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-save-line me-2"></i>Lưu Thay Đổi
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="ri-refresh-line me-2"></i>Khôi Phục
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Tab -->
+                    <div class="tab-pane fade" id="password-pane" role="tabpanel">
+                        <div class="profile-card">
+                            <form action="${pageContext.request.contextPath}/profile/change-password" method="post">
+                                <div class="form-group">
+                                    <label class="form-label" for="currentPassword">Mật khẩu hiện tại *</label>
+                                    <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="newPassword">Mật khẩu mới *</label>
+                                    <input type="password" class="form-control" id="newPassword" name="newPassword" 
+                                           minlength="6" required>
+                                    <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="confirmPassword">Xác nhận mật khẩu mới *</label>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
+                                           minlength="6" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-lock-unlock-line me-2"></i>Đổi Mật Khẩu
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Preview avatar
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profileAvatar').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = this.value;
+            
+            if (newPassword !== confirmPassword) {
+                this.setCustomValidity('Mật khẩu xác nhận không khớp');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
