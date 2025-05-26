@@ -12,29 +12,31 @@ import java.util.logging.Level;
 
 public class UserDAO {
     private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
-    
+
     /**
      * Login user with email verification check
      */
     public User login(String email, String password) throws SQLException {
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified, 
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
             WHERE email = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, email);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     User user = mapUserFromResultSet(rs);
                     String storedPassword = user.getPassword();
-                    
+
                     // Verify password using PasswordUtils
                     if (utils.PasswordUtils.verifyPassword(password, storedPassword)) {
                         return user;
@@ -44,24 +46,26 @@ public class UserDAO {
         }
         return null;
     }
-    
+
     /**
      * Get user by ID
      */
     public User getUserById(int userId) throws SQLException {
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified,
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
             WHERE userId = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setInt(1, userId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapUserFromResultSet(rs);
@@ -70,21 +74,23 @@ public class UserDAO {
         }
         return null;
     }
-    
+
     /**
-     * Create new user with email verification fields and Google OAuth support
+     * Create new user
      */
     public int createUser(User user) throws SQLException {
         String sql = """
             INSERT INTO Users (email, password, fullName, phone, dateOfBirth, gender, 
-                              avatar, bio, isActive, userType, emailVerified, verificationToken, 
-                              tokenExpiry, googleId, provider)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                              avatar, bio, isActive, role, preferences, totalBookings,
+                              businessName, businessType, businessAddress, businessDescription,
+                              taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                              permissions, emailVerified, verificationToken, tokenExpiry)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
+
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getPassword());
             ps.setString(3, user.getFullName());
@@ -94,15 +100,26 @@ public class UserDAO {
             ps.setString(7, user.getAvatar());
             ps.setString(8, user.getBio());
             ps.setBoolean(9, user.isActive());
-            ps.setString(10, user.getUserType());
-            ps.setBoolean(11, user.isEmailVerified());
-            ps.setString(12, user.getVerificationToken());
-            ps.setTimestamp(13, user.getTokenExpiry() != null ? new java.sql.Timestamp(user.getTokenExpiry().getTime()) : null);
-            ps.setString(14, user.getGoogleId());
-            ps.setString(15, user.getProvider() != null ? user.getProvider() : "local");
-            
+            ps.setString(10, user.getRole());
+            ps.setString(11, user.getPreferences());
+            ps.setInt(12, user.getTotalBookings());
+            ps.setString(13, user.getBusinessName());
+            ps.setString(14, user.getBusinessType());
+            ps.setString(15, user.getBusinessAddress());
+            ps.setString(16, user.getBusinessDescription());
+            ps.setString(17, user.getTaxId());
+            ps.setString(18, user.getSkills());
+            ps.setString(19, user.getRegion());
+            ps.setDouble(20, user.getAverageRating());
+            ps.setInt(21, user.getTotalExperiences());
+            ps.setDouble(22, user.getTotalRevenue());
+            ps.setString(23, user.getPermissions());
+            ps.setBoolean(24, user.isEmailVerified());
+            ps.setString(25, user.getVerificationToken());
+            ps.setTimestamp(26, user.getTokenExpiry() != null ? new java.sql.Timestamp(user.getTokenExpiry().getTime()) : null);
+
             int affectedRows = ps.executeUpdate();
-            
+
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -119,24 +136,26 @@ public class UserDAO {
         }
         return 0;
     }
-    
+
     /**
      * Get user by email
      */
     public User getUserByEmail(String email) throws SQLException {
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified, 
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
             WHERE email = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, email);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapUserFromResultSet(rs);
@@ -145,54 +164,26 @@ public class UserDAO {
         }
         return null;
     }
-    
-    /**
-     * Get user by Google ID
-     */
-    public User getUserByGoogleId(String googleId) throws SQLException {
-        if (googleId == null || googleId.trim().isEmpty()) {
-            return null;
-        }
-        
-        String sql = """
-            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified, 
-                   verificationToken, tokenExpiry, googleId, provider
-            FROM Users 
-            WHERE googleId = ?
-        """;
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, googleId);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapUserFromResultSet(rs);
-                }
-            }
-        }
-        return null;
-    }
-    
+
     /**
      * Get user by verification token
      */
     public User getUserByVerificationToken(String token) throws SQLException {
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified, 
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
             WHERE verificationToken = ? AND emailVerified = 0
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, token);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapUserFromResultSet(rs);
@@ -201,123 +192,7 @@ public class UserDAO {
         }
         return null;
     }
-    
-    /**
-     * Update Google ID for existing user
-     */
-    public boolean updateGoogleId(int userId, String googleId) throws SQLException {
-        String sql = """
-            UPDATE Users 
-            SET googleId = ?, provider = CASE 
-                WHEN provider = 'local' THEN 'both'
-                WHEN provider IS NULL THEN 'google'
-                ELSE provider
-            END
-            WHERE userId = ?
-        """;
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, googleId);
-            ps.setInt(2, userId);
-            
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Google ID updated for user ID: " + userId);
-            }
-            return rowsAffected > 0;
-        }
-    }
-    
-    /**
-     * Link Google account to existing local account
-     */
-    public boolean linkGoogleAccount(String email, String googleId) throws SQLException {
-        String sql = """
-            UPDATE Users 
-            SET googleId = ?, provider = 'both'
-            WHERE email = ? AND (provider = 'local' OR provider IS NULL)
-        """;
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, googleId);
-            ps.setString(2, email);
-            
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Google account linked for email: " + email);
-            }
-            return rowsAffected > 0;
-        }
-    }
-    
-    /**
-     * Create traveler profile for new user
-     */
-    public boolean createTravelerProfile(int userId) throws SQLException {
-        String sql = "INSERT INTO Travelers (userId, preferences) VALUES (?, ?)";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ps.setString(2, "{\"likes\": []}"); // Default empty preferences
-            
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Traveler profile created for user ID: " + userId);
-            }
-            return rowsAffected > 0;
-        }
-    }
-    
-    /**
-     * Create host profile for new user
-     */
-    public boolean createHostProfile(int userId, String businessName, String businessType) throws SQLException {
-        String sql = """
-            INSERT INTO Hosts (userId, businessName, businessType, averageRating, totalExperiences, totalRevenue)
-            VALUES (?, ?, ?, 0, 0, 0)
-        """;
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ps.setString(2, businessName);
-            ps.setString(3, businessType);
-            
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Host profile created for user ID: " + userId);
-            }
-            return rowsAffected > 0;
-        }
-    }
-    
-    /**
-     * Check if email exists and return provider info
-     */
-    public String getEmailProvider(String email) throws SQLException {
-        String sql = "SELECT provider FROM Users WHERE email = ?";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, email);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("provider");
-                }
-            }
-        }
-        return null;
-    }
-    
+
     /**
      * Verify user email
      */
@@ -327,12 +202,12 @@ public class UserDAO {
             SET emailVerified = 1, verificationToken = NULL, tokenExpiry = NULL
             WHERE userId = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setInt(1, userId);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("Email verified for user ID: " + userId);
@@ -340,7 +215,7 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
     /**
      * Update verification token
      */
@@ -350,14 +225,14 @@ public class UserDAO {
             SET verificationToken = ?, tokenExpiry = ?
             WHERE userId = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, token);
             ps.setTimestamp(2, new java.sql.Timestamp(expiry.getTime()));
             ps.setInt(3, userId);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("Verification token updated for user ID: " + userId);
@@ -365,7 +240,7 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
     /**
      * Update user information
      */
@@ -373,13 +248,16 @@ public class UserDAO {
         String sql = """
             UPDATE Users 
             SET email = ?, fullName = ?, phone = ?, dateOfBirth = ?, gender = ?, 
-                avatar = ?, bio = ?, isActive = ?
+                avatar = ?, bio = ?, isActive = ?, preferences = ?, totalBookings = ?,
+                businessName = ?, businessType = ?, businessAddress = ?, businessDescription = ?,
+                taxId = ?, skills = ?, region = ?, averageRating = ?, totalExperiences = ?, 
+                totalRevenue = ?, permissions = ?
             WHERE userId = ?
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getFullName());
             ps.setString(3, user.getPhone());
@@ -388,8 +266,21 @@ public class UserDAO {
             ps.setString(6, user.getAvatar());
             ps.setString(7, user.getBio());
             ps.setBoolean(8, user.isActive());
-            ps.setInt(9, user.getUserId());
-            
+            ps.setString(9, user.getPreferences());
+            ps.setInt(10, user.getTotalBookings());
+            ps.setString(11, user.getBusinessName());
+            ps.setString(12, user.getBusinessType());
+            ps.setString(13, user.getBusinessAddress());
+            ps.setString(14, user.getBusinessDescription());
+            ps.setString(15, user.getTaxId());
+            ps.setString(16, user.getSkills());
+            ps.setString(17, user.getRegion());
+            ps.setDouble(18, user.getAverageRating());
+            ps.setInt(19, user.getTotalExperiences());
+            ps.setDouble(20, user.getTotalRevenue());
+            ps.setString(21, user.getPermissions());
+            ps.setInt(22, user.getUserId());
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("User updated successfully: " + user.getUserId());
@@ -397,21 +288,21 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
     /**
      * Update user password with hashing
      */
     public boolean updatePassword(int userId, String newPassword) throws SQLException {
         String sql = "UPDATE Users SET password = ? WHERE userId = ?";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             // Hash the new password
             String hashedPassword = utils.PasswordUtils.hashPasswordWithSalt(newPassword);
             ps.setString(1, hashedPassword);
             ps.setInt(2, userId);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("Password updated for user ID: " + userId);
@@ -419,19 +310,31 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
     /**
-     * Update user avatar only
+     * Update user password by email
+     */
+    public boolean updatePassword(String email, String newPassword) throws SQLException {
+        User user = getUserByEmail(email);
+        if (user == null) {
+            LOGGER.log(Level.WARNING, "Không tìm thấy người dùng với email: " + email);
+            return false;
+        }
+        return updatePassword(user.getUserId(), newPassword);
+    }
+
+    /**
+     * Update user avatar
      */
     public boolean updateAvatar(int userId, String avatarUrl) throws SQLException {
         String sql = "UPDATE Users SET avatar = ? WHERE userId = ?";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, avatarUrl);
             ps.setInt(2, userId);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("Avatar updated for user ID: " + userId);
@@ -439,18 +342,40 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
+    /**
+     * Update user full name
+     */
+    public void updateFullName(int userId, String fullName) throws SQLException {
+        String sql = "UPDATE Users SET fullName = ? WHERE userId = ?";
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, fullName);
+            ps.setInt(2, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Full name updated for user ID: " + userId);
+            } else {
+                LOGGER.log(Level.WARNING, "No user found with ID: " + userId);
+                throw new SQLException("Failed to update full name: User not found");
+            }
+        }
+    }
+
     /**
      * Check if email exists
      */
     public boolean emailExists(String email) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ?";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, email);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -459,19 +384,19 @@ public class UserDAO {
         }
         return false;
     }
-    
+
     /**
-     * Check if email exists for different user (for update validation)
+     * Check if email exists for another user
      */
     public boolean emailExistsForOtherUser(String email, int currentUserId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ? AND userId != ?";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setString(1, email);
             ps.setInt(2, currentUserId);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -480,26 +405,28 @@ public class UserDAO {
         }
         return false;
     }
-    
+
     /**
-     * Get all users by type
+     * Get all users by role
      */
-    public List<User> getUsersByType(String userType) throws SQLException {
+    public List<User> getUsersByRole(String role) throws SQLException {
         List<User> users = new ArrayList<>();
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified,
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
-            WHERE userType = ?
+            WHERE role = ?
             ORDER BY createdAt DESC
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, userType);
-            
+
+            ps.setString(1, role);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     users.add(mapUserFromResultSet(rs));
@@ -508,19 +435,19 @@ public class UserDAO {
         }
         return users;
     }
-    
+
     /**
      * Update user status (active/inactive)
      */
     public boolean updateUserStatus(int userId, boolean isActive) throws SQLException {
         String sql = "UPDATE Users SET isActive = ? WHERE userId = ?";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setBoolean(1, isActive);
             ps.setInt(2, userId);
-            
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
                 LOGGER.info("User status updated for user ID: " + userId + ", Active: " + isActive);
@@ -528,29 +455,90 @@ public class UserDAO {
             return rowsAffected > 0;
         }
     }
-    
+
+    /**
+     * Soft delete user
+     */
+    public boolean softDeleteUser(int userId, String reason) throws SQLException {
+        String sql = "UPDATE Users SET isActive = 0 WHERE userId = ?";
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("User soft deleted - ID: " + userId + ", Reason: " + reason);
+                // Note: Reason is logged but not stored in DB as no field exists
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Restore user
+     */
+    public boolean restoreUser(int userId) throws SQLException {
+        String sql = "UPDATE Users SET isActive = 1 WHERE userId = ?";
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("User restored - ID: " + userId);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Hard delete user
+     */
+    public boolean hardDeleteUser(int userId) throws SQLException {
+        String sql = "DELETE FROM Users WHERE userId = ?";
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("User hard deleted - ID: " + userId);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
     /**
      * Get user statistics
      */
     public UserStats getUserStats(int userId) throws SQLException {
         UserStats stats = new UserStats();
-        
         String sql = """
             SELECT 
                 (SELECT COUNT(*) FROM Bookings WHERE travelerId = ?) as totalBookings,
                 (SELECT COUNT(*) FROM Experiences WHERE hostId = ?) as totalExperiences,
                 (SELECT ISNULL(SUM(totalPrice), 0) FROM Bookings b 
                  JOIN Experiences e ON b.experienceId = e.experienceId 
-                 WHERE e.hostId = ? AND b.status = 'COMPLETED') as totalRevenue
+                 WHERE e.hostId = ? AND b.status = 'COMPLETED') +
+                (SELECT ISNULL(SUM(totalPrice), 0) FROM Bookings b 
+                 JOIN Accommodations a ON b.accommodationId = a.accommodationId 
+                 WHERE a.hostId = ? AND b.status = 'COMPLETED') as totalRevenue
         """;
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setInt(1, userId);
             ps.setInt(2, userId);
             ps.setInt(3, userId);
-            
+            ps.setInt(4, userId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     stats.setTotalBookings(rs.getInt("totalBookings"));
@@ -561,46 +549,39 @@ public class UserDAO {
         }
         return stats;
     }
-    
-    /**
-     * Delete user (soft delete by setting inactive)
-     * @param userId
-     */
-    public boolean deleteUser(int userId) throws SQLException {
-        return updateUserStatus(userId, false);
-    }
-    
+
     /**
      * Search users by keyword
      */
-    public List<User> searchUsers(String keyword, String userType) throws SQLException {
+    public List<User> searchUsers(String keyword, String role) throws SQLException {
         List<User> users = new ArrayList<>();
-        
         StringBuilder sqlBuilder = new StringBuilder("""
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, userType, emailVerified,
-                   verificationToken, tokenExpiry, googleId, provider
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
             FROM Users 
             WHERE (fullName LIKE ? OR email LIKE ?)
         """);
-        
-        if (userType != null && !userType.isEmpty()) {
-            sqlBuilder.append(" AND userType = ?");
+
+        if (role != null && !role.isEmpty()) {
+            sqlBuilder.append(" AND role = ?");
         }
-        
+
         sqlBuilder.append(" ORDER BY createdAt DESC");
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-            
+
             String searchPattern = "%" + keyword + "%";
             ps.setString(1, searchPattern);
             ps.setString(2, searchPattern);
-            
-            if (userType != null && !userType.isEmpty()) {
-                ps.setString(3, userType);
+
+            if (role != null && !role.isEmpty()) {
+                ps.setString(3, role);
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     users.add(mapUserFromResultSet(rs));
@@ -609,35 +590,35 @@ public class UserDAO {
         }
         return users;
     }
-    
+
     /**
      * Get total users count
      */
     public int getTotalUsersCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE isActive = 1";
-        
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            
+
             if (rs.next()) {
                 return rs.getInt(1);
             }
         }
         return 0;
     }
-    
+
     /**
-     * Get users count by type
+     * Get users count by role
      */
-    public int getUsersCountByType(String userType) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Users WHERE userType = ? AND isActive = 1";
-        
+    public int getUsersCountByRole(String role) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Users WHERE role = ? AND isActive = 1";
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, userType);
-            
+
+            ps.setString(1, role);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -646,58 +627,512 @@ public class UserDAO {
         }
         return 0;
     }
-    
+
     /**
-     * Get users count by provider (local, google, both)
+     * Get users with filters for admin management
      */
-    public int getUsersCountByProvider(String provider) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Users WHERE provider = ? AND isActive = 1";
-        
+    public List<User> getUsersWithFilters(String role, String status, String search, int page, int pageSize) throws SQLException {
+        List<User> users = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
+            FROM Users 
+            WHERE 1=1
+        """);
+
+        List<Object> params = new ArrayList<>();
+
+        if (role != null && !role.isEmpty()) {
+            sqlBuilder.append(" AND role = ?");
+            params.add(role);
+        }
+
+        if (status != null && !status.isEmpty()) {
+            switch (status) {
+                case "active":
+                    sqlBuilder.append(" AND isActive = 1");
+                    break;
+                case "inactive":
+                    sqlBuilder.append(" AND isActive = 0");
+                    break;
+                case "pending":
+                    sqlBuilder.append(" AND emailVerified = 0");
+                    break;
+            }
+        }
+
+        if (search != null && !search.trim().isEmpty()) {
+            sqlBuilder.append(" AND (fullName LIKE ? OR email LIKE ? OR phone LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+
+        sqlBuilder.append(" ORDER BY createdAt DESC");
+        sqlBuilder.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add((page - 1) * pageSize);
+        params.add(pageSize);
+
         try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setString(1, provider);
-            
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    users.add(mapUserFromResultSet(rs));
+                }
+            }
+        }
+
+        return users;
+    }
+
+    /**
+     * Get total users count with filters
+     */
+    public int getTotalUsersWithFilters(String role, String status, String search) throws SQLException {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(*) FROM Users WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (role != null && !role.isEmpty()) {
+            sqlBuilder.append(" AND role = ?");
+            params.add(role);
+        }
+
+        if (status != null && !status.isEmpty()) {
+            switch (status) {
+                case "active":
+                    sqlBuilder.append(" AND isActive = 1");
+                    break;
+                case "inactive":
+                    sqlBuilder.append(" AND isActive = 0");
+                    break;
+                case "pending":
+                    sqlBuilder.append(" AND emailVerified = 0");
+                    break;
+            }
+        }
+
+        if (search != null && !search.trim().isEmpty()) {
+            sqlBuilder.append(" AND (fullName LIKE ? OR email LIKE ? OR phone LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
                 }
             }
         }
+
         return 0;
     }
-    
+
     /**
-     * Log OAuth login attempt
+     * Get user roles counts for statistics
      */
-    public boolean logOAuthLogin(int userId, String provider, String providerId, 
-                                String email, String ipAddress, String userAgent, boolean isSuccessful) throws SQLException {
+    public Map<String, Integer> getUserRolesCounts() throws SQLException {
+        Map<String, Integer> counts = new HashMap<>();
         String sql = """
-            INSERT INTO OAuthLogins (userId, provider, providerId, email, ipAddress, userAgent, isSuccessful)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            SELECT role, COUNT(*) as count 
+            FROM Users 
+            WHERE isActive = 1 
+            GROUP BY role
         """;
-        
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                counts.put(rs.getString("role"), rs.getInt("count"));
+            }
+        }
+
+        return counts;
+    }
+
+    /**
+     * Lock user account
+     */
+    public boolean lockUser(int userId, String reason) throws SQLException {
+        return updateUserStatus(userId, false);
+    }
+
+    /**
+     * Unlock user account
+     */
+    public boolean unlockUser(int userId) throws SQLException {
+        return updateUserStatus(userId, true);
+    }
+
+    /**
+     * Update user role
+     */
+    public boolean updateUserRole(int userId, String newRole) throws SQLException {
+        String sql = """
+            UPDATE Users 
+            SET role = ?
+            WHERE userId = ?
+        """;
+
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ps.setString(2, provider);
-            ps.setString(3, providerId);
-            ps.setString(4, email);
-            ps.setString(5, ipAddress);
-            ps.setString(6, userAgent);
-            ps.setBoolean(7, isSuccessful);
-            
+
+            ps.setString(1, newRole);
+            ps.setInt(2, userId);
+
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
-                LOGGER.info("OAuth login logged for user: " + email + ", provider: " + provider);
+                LOGGER.info("User role updated - ID: " + userId + ", New Role: " + newRole);
             }
             return rowsAffected > 0;
         }
     }
-    
+
     /**
-     * Map ResultSet to User object with all fields including OAuth
+     * Get user growth percentage
+     */
+    public double getUserGrowthPercentage(String period) throws SQLException {
+        String sql;
+        switch (period) {
+            case "week":
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(DAY, -7, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
+                         AND createdAt < DATEADD(DAY, -7, GETDATE())) as previous_period
+                """;
+                break;
+            case "year":
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(YEAR, -1, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
+                         AND createdAt < DATEADD(YEAR, -1, GETDATE())) as previous_period
+                """;
+                break;
+            default: // month
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(MONTH, -1, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
+                         AND createdAt < DATEADD(MONTH, -1, GETDATE())) as previous_period
+                """;
+        }
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                int currentPeriod = rs.getInt("current_period");
+                int previousPeriod = rs.getInt("previous_period");
+
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+
+                return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Get traveler growth data for chart
+     */
+    public List<Integer> getTravelerGrowthData(int months) throws SQLException {
+        List<Integer> data = new ArrayList<>();
+        String sql = """
+            SELECT COUNT(*) as count
+            FROM Users 
+            WHERE role = 'TRAVELER' 
+            AND createdAt >= DATEADD(MONTH, ?, GETDATE())
+            AND createdAt < DATEADD(MONTH, ?, GETDATE())
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getInt("count"));
+                    } else {
+                        data.add(0);
+                    }
+                }
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Get host growth data for chart
+     */
+    public List<Integer> getHostGrowthData(int months) throws SQLException {
+        List<Integer> data = new ArrayList<>();
+        String sql = """
+            SELECT COUNT(*) as count
+            FROM Users 
+            WHERE role = 'HOST' 
+            AND createdAt >= DATEADD(MONTH, ?, GETDATE())
+            AND createdAt < DATEADD(MONTH, ?, GETDATE())
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getInt("count"));
+                    } else {
+                        data.add(0);
+                    }
+                }
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Get users by region for statistics
+     */
+    public Map<String, Integer> getUsersByRegion() throws SQLException {
+        Map<String, Integer> regionCounts = new HashMap<>();
+        String sql = """
+            SELECT region, COUNT(*) as userCount
+            FROM Users
+            WHERE isActive = 1 AND role = 'HOST' AND region IS NOT NULL
+            GROUP BY region
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                String regionName = rs.getString("region");
+                int count = rs.getInt("userCount");
+                regionCounts.put(regionName, count);
+            }
+        }
+
+        return regionCounts;
+    }
+
+    /**
+     * Update host statistics
+     */
+    public boolean updateHostStats(int userId, double averageRating, int totalExperiences, double totalRevenue) throws SQLException {
+        String sql = """
+            UPDATE Users 
+            SET averageRating = ?, totalExperiences = ?, totalRevenue = ?
+            WHERE userId = ? AND role = 'HOST'
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDouble(1, averageRating);
+            ps.setInt(2, totalExperiences);
+            ps.setDouble(3, totalRevenue);
+            ps.setInt(4, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Host stats updated for user ID: " + userId);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Get all hosts with pagination
+     */
+    public List<User> getAllHosts(int offset, int limit) throws SQLException {
+        List<User> hosts = new ArrayList<>();
+        String sql = """
+            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
+            FROM Users 
+            WHERE role = 'HOST' AND isActive = 1
+            ORDER BY totalRevenue DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    hosts.add(mapUserFromResultSet(rs));
+                }
+            }
+        }
+        return hosts;
+    }
+
+    /**
+     * Search hosts by keyword and region
+     */
+    public List<User> searchHosts(String keyword, String region, int offset, int limit) throws SQLException {
+        List<User> hosts = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
+            FROM Users 
+            WHERE role = 'HOST' AND isActive = 1
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sqlBuilder.append(" AND (businessName LIKE ? OR fullName LIKE ? OR businessDescription LIKE ?)");
+            String searchPattern = "%" + keyword.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        if (region != null && !region.trim().isEmpty()) {
+            sqlBuilder.append(" AND region = ?");
+            parameters.add(region);
+        }
+
+        sqlBuilder.append(" ORDER BY averageRating DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add(offset);
+        parameters.add(limit);
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    hosts.add(mapUserFromResultSet(rs));
+                }
+            }
+        }
+        return hosts;
+    }
+
+    /**
+     * Get hosts count by region
+     */
+    public int getHostsCountByRegion(String region) throws SQLException {
+        String sql = """
+            SELECT COUNT(*) FROM Users
+            WHERE isActive = 1 AND role = 'HOST' AND region = ?
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, region);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get total hosts count
+     */
+    public int getTotalHostsCount() throws SQLException {
+        String sql = """
+            SELECT COUNT(*) FROM Users
+            WHERE isActive = 1 AND role = 'HOST'
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get top hosts by rating
+     */
+    public List<User> getTopHosts(int limit) throws SQLException {
+        List<User> hosts = new ArrayList<>();
+        String sql = """
+            SELECT TOP(?) userId, email, password, fullName, phone, dateOfBirth, gender, 
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
+            FROM Users 
+            WHERE role = 'HOST' AND isActive = 1 AND averageRating > 0
+            ORDER BY averageRating DESC, totalExperiences DESC
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    hosts.add(mapUserFromResultSet(rs));
+                }
+            }
+        }
+        return hosts;
+    }
+
+    /**
+     * Map ResultSet to User object
      */
     private User mapUserFromResultSet(ResultSet rs) throws SQLException {
         User user = new User();
@@ -712,49 +1147,31 @@ public class UserDAO {
         user.setBio(rs.getString("bio"));
         user.setCreatedAt(rs.getDate("createdAt"));
         user.setActive(rs.getBoolean("isActive"));
-        user.setUserType(rs.getString("userType"));
-        
-        // Email verification fields
+        user.setRole(rs.getString("role"));
+        user.setPreferences(rs.getString("preferences"));
+        user.setTotalBookings(rs.getInt("totalBookings"));
+        user.setBusinessName(rs.getString("businessName"));
+        user.setBusinessType(rs.getString("businessType"));
+        user.setBusinessAddress(rs.getString("businessAddress"));
+        user.setBusinessDescription(rs.getString("businessDescription"));
+        user.setTaxId(rs.getString("taxId"));
+        user.setSkills(rs.getString("skills"));
+        user.setRegion(rs.getString("region"));
+        user.setAverageRating(rs.getDouble("averageRating"));
+        user.setTotalExperiences(rs.getInt("totalExperiences"));
+        user.setTotalRevenue(rs.getDouble("totalRevenue"));
+        user.setPermissions(rs.getString("permissions"));
         user.setEmailVerified(rs.getBoolean("emailVerified"));
         user.setVerificationToken(rs.getString("verificationToken"));
-        
+
         Timestamp tokenExpiry = rs.getTimestamp("tokenExpiry");
         if (tokenExpiry != null) {
             user.setTokenExpiry(new java.util.Date(tokenExpiry.getTime()));
         }
-        
-        // Google OAuth fields - handle null values properly
-        user.setGoogleId(rs.getString("googleId"));
-        String provider = rs.getString("provider");
-        user.setProvider(provider != null ? provider : "local");
-        
+
         return user;
     }
 
-    public void updateFullName(int userId, String trim) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-
-public boolean updatePassword(String email, String newPassword) throws SQLException {
-    // Tìm user dựa trên email
-    User user = getUserByEmail(email);
-    if (user == null) {
-        LOGGER.log(Level.WARNING, "Không tìm thấy người dùng với email: " + email);
-        return false;
-    }
-    
-    // Cập nhật mật khẩu sử dụng phương thức đã có
-    return updatePassword(user.getUserId(), newPassword);
-}    
-
-    public boolean softDeleteUser(int contentId, String trim) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    public boolean restoreUser(int contentId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
     /**
      * Inner class for user statistics
      */
@@ -762,446 +1179,31 @@ public boolean updatePassword(String email, String newPassword) throws SQLExcept
         private int totalBookings;
         private int totalExperiences;
         private double totalRevenue;
-        
-        // Default constructor
+
         public UserStats() {}
-        
-        // Constructor with parameters
+
         public UserStats(int totalBookings, int totalExperiences, double totalRevenue) {
             this.totalBookings = totalBookings;
             this.totalExperiences = totalExperiences;
             this.totalRevenue = totalRevenue;
         }
-        
-        // Getters and setters
-        public int getTotalBookings() {
-            return totalBookings;
-        }
-        
-        public void setTotalBookings(int totalBookings) {
-            this.totalBookings = totalBookings;
-        }
-        
-        public int getTotalExperiences() {
-            return totalExperiences;
-        }
-        
-        public void setTotalExperiences(int totalExperiences) {
-            this.totalExperiences = totalExperiences;
-        }
-        
-        public double getTotalRevenue() {
-            return totalRevenue;
-        }
-        
-        public void setTotalRevenue(double totalRevenue) {
-            this.totalRevenue = totalRevenue;
-        }
-        
+
+        public int getTotalBookings() { return totalBookings; }
+        public void setTotalBookings(int totalBookings) { this.totalBookings = totalBookings; }
+
+        public int getTotalExperiences() { return totalExperiences; }
+        public void setTotalExperiences(int totalExperiences) { this.totalExperiences = totalExperiences; }
+
+        public double getTotalRevenue() { return totalRevenue; }
+        public void setTotalRevenue(double totalRevenue) { this.totalRevenue = totalRevenue; }
+
         @Override
         public String toString() {
             return "UserStats{" +
-                    "totalBookings=" + totalBookings +
-                    ", totalExperiences=" + totalExperiences +
-                    ", totalRevenue=" + totalRevenue +
-                    '}';
+                   "totalBookings=" + totalBookings +
+                   ", totalExperiences=" + totalExperiences +
+                   ", totalRevenue=" + totalRevenue +
+                   '}';
         }
     }
-    // Thêm các method này vào UserDAO.java
-
-/**
- * Get users with filters for admin management
- */
-public List<User> getUsersWithFilters(String userType, String status, String search, int page, int pageSize) throws SQLException {
-    List<User> users = new ArrayList<>();
-    
-    StringBuilder sqlBuilder = new StringBuilder("""
-        SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-               avatar, bio, createdAt, isActive, userType, emailVerified,
-               verificationToken, tokenExpiry, googleId, provider
-        FROM Users 
-        WHERE 1=1
-    """);
-    
-    List<Object> params = new ArrayList<>();
-    
-    // Filter by user type
-    if (userType != null && !userType.isEmpty()) {
-        sqlBuilder.append(" AND userType = ?");
-        params.add(userType);
-    }
-    
-    // Filter by status
-    if (status != null && !status.isEmpty()) {
-        switch (status) {
-            case "active":
-                sqlBuilder.append(" AND isActive = 1");
-                break;
-            case "inactive":
-                sqlBuilder.append(" AND isActive = 0");
-                break;
-            case "pending":
-                sqlBuilder.append(" AND emailVerified = 0");
-                break;
-        }
-    }
-    
-    // Search filter
-    if (search != null && !search.trim().isEmpty()) {
-        sqlBuilder.append(" AND (fullName LIKE ? OR email LIKE ? OR phone LIKE ?)");
-        String searchPattern = "%" + search.trim() + "%";
-        params.add(searchPattern);
-        params.add(searchPattern);
-        params.add(searchPattern);
-    }
-    
-    sqlBuilder.append(" ORDER BY createdAt DESC");
-    sqlBuilder.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    params.add((page - 1) * pageSize);
-    params.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-        
-        // Set parameters
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                users.add(mapUserFromResultSet(rs));
-            }
-        }
-    }
-    
-    return users;
-}
-
-/**
- * Get total users count with filters for admin management
- */
-public int getTotalUsersWithFilters(String userType, String status, String search) throws SQLException {
-    StringBuilder sqlBuilder = new StringBuilder("SELECT COUNT(*) FROM Users WHERE 1=1");
-    List<Object> params = new ArrayList<>();
-    
-    // Filter by user type
-    if (userType != null && !userType.isEmpty()) {
-        sqlBuilder.append(" AND userType = ?");
-        params.add(userType);
-    }
-    
-    // Filter by status
-    if (status != null && !status.isEmpty()) {
-        switch (status) {
-            case "active":
-                sqlBuilder.append(" AND isActive = 1");
-                break;
-            case "inactive":
-                sqlBuilder.append(" AND isActive = 0");
-                break;
-            case "pending":
-                sqlBuilder.append(" AND emailVerified = 0");
-                break;
-        }
-    }
-    
-    // Search filter
-    if (search != null && !search.trim().isEmpty()) {
-        sqlBuilder.append(" AND (fullName LIKE ? OR email LIKE ? OR phone LIKE ?)");
-        String searchPattern = "%" + search.trim() + "%";
-        params.add(searchPattern);
-        params.add(searchPattern);
-        params.add(searchPattern);
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-        
-        // Set parameters
-        for (int i = 0; i < params.size(); i++) {
-            ps.setObject(i + 1, params.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    
-    return 0;
-}
-
-/**
- * Get user types counts for statistics
- */
-public Map<String, Integer> getUserTypesCounts() throws SQLException {
-    Map<String, Integer> counts = new HashMap<>();
-    String sql = """
-        SELECT userType, COUNT(*) as count 
-        FROM Users 
-        WHERE isActive = 1 
-        GROUP BY userType
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            counts.put(rs.getString("userType"), rs.getInt("count"));
-        }
-    }
-    
-    return counts;
-}
-
-/**
- * Lock user account with reason
- */
-public boolean lockUser(int userId, String reason) throws SQLException {
-    String sql = """
-        UPDATE Users 
-        SET isActive = 0
-        WHERE userId = ?
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, userId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            // Log the lock reason (you might want to create a separate table for this)
-            logUserAction(userId, "LOCKED", reason);
-            LOGGER.info("User locked - ID: " + userId + ", Reason: " + reason);
-        }
-        return rowsAffected > 0;
-    }
-}
-
-/**
- * Unlock user account
- */
-public boolean unlockUser(int userId) throws SQLException {
-    String sql = """
-        UPDATE Users 
-        SET isActive = 1
-        WHERE userId = ?
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, userId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            logUserAction(userId, "UNLOCKED", "Account unlocked by admin");
-            LOGGER.info("User unlocked - ID: " + userId);
-        }
-        return rowsAffected > 0;
-    }
-}
-
-/**
- * Delete user (hard delete for admin)
- */
-
-
-/**
- * Update user type (change role)
- */
-public boolean updateUserType(int userId, String newUserType) throws SQLException {
-    String sql = """
-        UPDATE Users 
-        SET userType = ?
-        WHERE userId = ?
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setString(1, newUserType);
-        ps.setInt(2, userId);
-        
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            logUserAction(userId, "ROLE_CHANGED", "Role changed to " + newUserType);
-            LOGGER.info("User type updated - ID: " + userId + ", New Type: " + newUserType);
-        }
-        return rowsAffected > 0;
-    }
-}
-
-/**
- * Get user growth percentage for statistics
- */
-public double getUserGrowthPercentage(String period) throws SQLException {
-    String sql;
-    switch (period) {
-        case "week":
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(DAY, -7, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
-                     AND createdAt < DATEADD(DAY, -7, GETDATE())) as previous_period
-            """;
-            break;
-        case "year":
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(YEAR, -1, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
-                     AND createdAt < DATEADD(YEAR, -1, GETDATE())) as previous_period
-            """;
-            break;
-        default: // month
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(MONTH, -1, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Users WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
-                     AND createdAt < DATEADD(MONTH, -1, GETDATE())) as previous_period
-            """;
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            int currentPeriod = rs.getInt("current_period");
-            int previousPeriod = rs.getInt("previous_period");
-            
-            if (previousPeriod == 0) {
-                return currentPeriod > 0 ? 100.0 : 0.0;
-            }
-            
-            return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
-        }
-    }
-    
-    return 0.0;
-}
-
-/**
- * Get traveler growth data for chart
- */
-public List<Integer> getTravelerGrowthData(int months) throws SQLException {
-    List<Integer> data = new ArrayList<>();
-    String sql = """
-        SELECT COUNT(*) as count
-        FROM Users 
-        WHERE userType = 'TRAVELER' 
-        AND createdAt >= DATEADD(MONTH, ?, GETDATE())
-        AND createdAt < DATEADD(MONTH, ?, GETDATE())
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        for (int i = months - 1; i >= 0; i--) {
-            ps.setInt(1, -i - 1);
-            ps.setInt(2, -i);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    data.add(rs.getInt("count"));
-                } else {
-                    data.add(0);
-                }
-            }
-        }
-    }
-    
-    return data;
-}
-
-/**
- * Get host growth data for chart
- */
-public List<Integer> getHostGrowthData(int months) throws SQLException {
-    List<Integer> data = new ArrayList<>();
-    String sql = """
-        SELECT COUNT(*) as count
-        FROM Users 
-        WHERE userType = 'HOST' 
-        AND createdAt >= DATEADD(MONTH, ?, GETDATE())
-        AND createdAt < DATEADD(MONTH, ?, GETDATE())
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        for (int i = months - 1; i >= 0; i--) {
-            ps.setInt(1, -i - 1);
-            ps.setInt(2, -i);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    data.add(rs.getInt("count"));
-                } else {
-                    data.add(0);
-                }
-            }
-        }
-    }
-    
-    return data;
-}
-
-/**
- * Get users by region for statistics
- */
-public Map<String, Integer> getUsersByRegion() throws SQLException {
-    Map<String, Integer> regionCounts = new HashMap<>();
-    String sql = """
-        SELECT r.name as regionName, COUNT(u.userId) as userCount
-        FROM Users u
-        LEFT JOIN Hosts h ON u.userId = h.userId
-        LEFT JOIN Regions r ON h.region = r.name
-        WHERE u.isActive = 1 AND u.userType = 'HOST'
-        GROUP BY r.name
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            String regionName = rs.getString("regionName");
-            int count = rs.getInt("userCount");
-            if (regionName != null) {
-                regionCounts.put(regionName, count);
-            }
-        }
-    }
-    
-    return regionCounts;
-}
-
-/**
- * Log user actions for audit trail
- */
-private void logUserAction(int userId, String action, String details) throws SQLException {
-    String sql = """
-        INSERT INTO UserActions (userId, action, details, createdAt)
-        VALUES (?, ?, ?, GETDATE())
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, userId);
-        ps.setString(2, action);
-        ps.setString(3, details);
-        
-        ps.executeUpdate();
-    } catch (SQLException e) {
-        // Log action might fail if table doesn't exist, but don't break main operation
-        LOGGER.log(Level.WARNING, "Failed to log user action", e);
-    }
-}
 }

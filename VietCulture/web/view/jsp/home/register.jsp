@@ -557,7 +557,7 @@
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" name="userType" id="userType">
+                        <input type="hidden" name="role" id="role">
                         <div class="text-danger d-none mt-2" id="roleError">
                             <i class="fas fa-exclamation-triangle me-1"></i>
                             Vui lòng chọn vai trò
@@ -615,13 +615,13 @@
                 option.addEventListener('click', function() {
                     document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
                     this.classList.add('selected');
-                    document.getElementById('userType').value = this.getAttribute('data-role');
+                    document.getElementById('role').value = this.getAttribute('data-role');
                     document.getElementById('roleError').classList.add('d-none');
                 });
             });
 
             // Preserve selected role
-            const selectedRole = '${param.userType}';
+            const selectedRole = '${param.role}';
             if (selectedRole) {
                 const roleOption = document.querySelector(`[data-role="${selectedRole}"]`);
                 if (roleOption) roleOption.click();
@@ -748,8 +748,8 @@
                     isValid = false;
                 }
 
-                const userType = document.getElementById('userType').value;
-                if (!userType) {
+                const role = document.getElementById('role').value;
+                if (!role) {
                     document.getElementById('roleError').classList.remove('d-none');
                     errors.push('Chưa chọn vai trò');
                     isValid = false;
@@ -812,7 +812,7 @@
             });
 
             // Auto-save form data to sessionStorage
-            const autoSaveFields = ['fullName', 'email', 'userType', 'newsletter'];
+            const autoSaveFields = ['fullName', 'email', 'role', 'newsletter'];
             function saveFormData() {
                 const formData = {};
                 autoSaveFields.forEach(fieldName => {
@@ -834,7 +834,7 @@
                                 field.checked = savedData[fieldName];
                             } else {
                                 field.value = savedData[fieldName];
-                                if (fieldName === 'userType' && savedData[fieldName]) {
+                                if (fieldName === 'role' && savedData[fieldName]) {
                                     const roleOption = document.querySelector(`[data-role="${savedData[fieldName]}"]`);
                                     if (roleOption) roleOption.click();
                                 }

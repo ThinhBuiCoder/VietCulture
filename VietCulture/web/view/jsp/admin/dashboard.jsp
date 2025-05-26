@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <!-- Security check -->
-<c:if test="${empty sessionScope.user or sessionScope.user.userType ne 'ADMIN'}">
+<c:if test="${empty sessionScope.user or sessionScope.user.role ne 'ADMIN'}">
     <c:redirect url="/login" />
 </c:if>
 
@@ -228,7 +228,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="chart-pie pt-4 pb-2">
-                                    <canvas id="userTypeChart"></canvas>
+                                    <canvas id="roleChart"></canvas>
                                 </div>
                                 <div class="mt-4 text-center small">
                                     <span class="mr-2"><i class="fas fa-circle text-primary"></i> Travelers</span>
@@ -329,8 +329,8 @@
         });
 
         // User Type Chart
-        const userTypeCtx = document.getElementById('userTypeChart').getContext('2d');
-        const userTypeChart = new Chart(userTypeCtx, {
+        const roleCtx = document.getElementById('roleChart').getContext('2d');
+        const roleChart = new Chart(roleCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Travelers', 'Hosts', 'Admins'],

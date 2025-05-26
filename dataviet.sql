@@ -5,7 +5,7 @@ GO
 USE TravelerDB;
 GO
 
--- Bảng Users
+-- Bảng Users (gộp Travelers, Hosts, Admins)
 CREATE TABLE Users (
     userId INT PRIMARY KEY IDENTITY(1,1),
     email NVARCHAR(100) UNIQUE NOT NULL,
@@ -18,43 +18,43 @@ CREATE TABLE Users (
     bio NVARCHAR(500),
     createdAt DATE NOT NULL DEFAULT GETDATE(),
     isActive BIT NOT NULL DEFAULT 1,
-    userType NVARCHAR(20) NOT NULL CHECK (userType IN ('TRAVELER', 'HOST', 'ADMIN'))
+    role NVARCHAR(50) NOT NULL CHECK (role IN ('TRAVELER', 'HOST', 'ADMIN')), -- Thay userType bằng role
+    preferences NVARCHAR(MAX), -- Từ bảng Travelers
+    businessName NVARCHAR(100), -- Từ bảng Hosts
+    businessType NVARCHAR(50), -- Từ bảng Hosts
+    businessAddress NVARCHAR(255), -- Từ bảng Hosts
+    businessDescription NVARCHAR(500), -- Từ bảng Hosts
+    taxId NVARCHAR(50), -- Từ bảng Hosts
+    skills NVARCHAR(500), -- Từ bảng Hosts
+    region NVARCHAR(50), -- Từ bảng Hosts
+    averageRating FLOAT NOT NULL DEFAULT 0, -- Từ bảng Hosts
+    totalExperiences INT NOT NULL DEFAULT 0, -- Từ bảng Hosts
+    totalRevenue FLOAT NOT NULL DEFAULT 0, -- Từ bảng Hosts
+    totalBookings INT NOT NULL DEFAULT 0, -- Từ bảng Travelers
+    permissions NVARCHAR(MAX), -- Từ bảng Admins
+    emailVerified BIT NOT NULL DEFAULT 0, -- Từ yêu cầu trước
+    verificationToken NVARCHAR(255), -- Từ yêu cầu trước
+    tokenExpiry DATETIME -- Từ yêu cầu trước
 );
 GO
 
--- Bảng Travelers
-CREATE TABLE Travelers (
-    userId INT PRIMARY KEY,
-    preferences NVARCHAR(MAX),
-    totalBookings INT NOT NULL DEFAULT 0,
+-- Tạo bảng EmailVerification
+CREATE TABLE EmailVerification (
+    verificationId INT PRIMARY KEY IDENTITY(1,1),
+    userId INT NOT NULL,
+    email NVARCHAR(100) NOT NULL,
+    verificationToken NVARCHAR(255) NOT NULL,
+    tokenExpiry DATETIME NOT NULL,
+    isUsed BIT NOT NULL DEFAULT 0,
+    createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+    verifiedAt DATETIME NULL,
     FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
 );
 GO
 
--- Bảng Hosts (LocalHost & Supplier gộp)
-CREATE TABLE Hosts (
-    userId INT PRIMARY KEY,
-    businessName NVARCHAR(100),
-    businessType NVARCHAR(50), -- Ví dụ Travel, Homestay, Hotel...
-    businessAddress NVARCHAR(255),
-    businessDescription NVARCHAR(500),
-    taxId NVARCHAR(50),
-    skills NVARCHAR(500),
-    region NVARCHAR(50),
-    averageRating FLOAT NOT NULL DEFAULT 0,
-    totalExperiences INT NOT NULL DEFAULT 0,
-    totalRevenue FLOAT NOT NULL DEFAULT 0,
-    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
-);
-GO
-
--- Bảng Admins
-CREATE TABLE Admins (
-    userId INT PRIMARY KEY,
-    role NVARCHAR(50) NOT NULL,
-    permissions NVARCHAR(MAX),
-    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
-);
+-- Index để tìm kiếm nhanh token
+CREATE INDEX IX_EmailVerification_Token ON EmailVerification(verificationToken);
+CREATE INDEX IX_Users_VerificationToken ON Users(verificationToken);
 GO
 
 -- Bảng Regions
@@ -91,7 +91,7 @@ CREATE TABLE Categories (
 );
 GO
 
--- Bảng Experiences (Tour trải nghiệm)
+-- Bảng Experiences
 CREATE TABLE Experiences (
     experienceId INT PRIMARY KEY IDENTITY(1,1),
     hostId INT NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE Experiences (
     includedItems NVARCHAR(MAX),
     requirements NVARCHAR(MAX),
     createdAt DATE NOT NULL DEFAULT GETDATE(),
-    isActive BIT NOT NULL DEFAULT 0, -- Chờ admin duyệt
+    isActive BIT NOT NULL DEFAULT 0,
     images NVARCHAR(MAX),
     averageRating FLOAT NOT NULL DEFAULT 0,
     totalBookings INT NOT NULL DEFAULT 0,
@@ -127,7 +127,7 @@ CREATE TABLE Experience_Categories (
 );
 GO
 
--- Bảng Accommodations (Dịch vụ homestay, khách sạn)
+-- Bảng Accommodations
 CREATE TABLE Accommodations (
     accommodationId INT PRIMARY KEY IDENTITY(1,1),
     hostId INT NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE Accommodations (
     pricePerNight FLOAT NOT NULL,
     images NVARCHAR(MAX),
     createdAt DATE NOT NULL DEFAULT GETDATE(),
-    isActive BIT NOT NULL DEFAULT 0, -- Chờ admin duyệt
+    isActive BIT NOT NULL DEFAULT 0,
     averageRating FLOAT NOT NULL DEFAULT 0,
     totalBookings INT NOT NULL DEFAULT 0,
     FOREIGN KEY (hostId) REFERENCES Users(userId),
@@ -166,7 +166,7 @@ CREATE TABLE Bookings (
     FOREIGN KEY (experienceId) REFERENCES Experiences(experienceId),
     FOREIGN KEY (accommodationId) REFERENCES Accommodations(accommodationId),
     FOREIGN KEY (travelerId) REFERENCES Users(userId),
-    CHECK (experienceId IS NOT NULL OR accommodationId IS NOT NULL) -- phải đặt ít nhất 1
+    CHECK (experienceId IS NOT NULL OR accommodationId IS NOT NULL)
 );
 GO
 
@@ -214,6 +214,8 @@ CREATE TABLE Complaints (
 );
 GO
 
+-- Chèn dữ liệu mẫu
+
 -- Chèn Regions
 INSERT INTO Regions (name, vietnameseName, description, imageUrl, climate, culture) VALUES
 ('North', N'Miền Bắc', N'Khu vực phía Bắc Việt Nam bao gồm Hà Nội, Hải Phòng, Sapa, Hạ Long, Ninh Bình', 'north.jpg', N'Khí hậu cận nhiệt đới với bốn mùa', N'Văn hóa đậm chất lịch sử, ảnh hưởng Trung Hoa'),
@@ -249,63 +251,25 @@ INSERT INTO Categories (name, description, iconUrl) VALUES
 ('History', 'Lịch sử & di tích', 'history.png');
 GO
 
--- Chèn admin
-DECLARE @adminId INT;
-INSERT INTO Users (email, password, fullName, phone, gender, userType) VALUES ('admin@travel.com', '123456', N'Admin', '0123456789', N'Nam', 'ADMIN');
-SET @adminId = SCOPE_IDENTITY();
-INSERT INTO Admins (userId, role, permissions) VALUES (@adminId, 'SUPER_ADMIN', '{"all": true}');
+-- Chèn Admin
+INSERT INTO Users (email, password, fullName, phone, gender, role, permissions, emailVerified) VALUES
+('admin@travel.com', 'kien2004', N'Admin', '0123456789', N'Nam', 'ADMIN', '{"all": true}', 1);
 GO
 
--- Thêm Traveler
-INSERT INTO Users (email, password, fullName, dateOfBirth, gender, userType) VALUES
-('tr1@example.com', '123456', N'Nguyễn A', '1990-01-01', N'Nam', 'TRAVELER'),
-('tr2@example.com', '123456', N'Lê B', '1985-05-05', N'Nữ', 'TRAVELER');
+-- Chèn Travelers
+INSERT INTO Users (email, password, fullName, dateOfBirth, gender, role, preferences, emailVerified) VALUES
+('tr1@example.com', '123456', N'Nguyễn A', '1990-01-01', N'Nam', 'TRAVELER', '{"likes": ["Food", "Adventure"]}', 1),
+('tr2@example.com', '123456', N'Lê B', '1985-05-05', N'Nữ', 'TRAVELER', '{"likes": ["Culture", "History"]}', 1);
 GO
 
-INSERT INTO Travelers (userId, preferences) VALUES
-((SELECT userId FROM Users WHERE email='tr1@example.com'), '{"likes": ["Food", "Adventure"]}'),
-((SELECT userId FROM Users WHERE email='tr2@example.com'), '{"likes": ["Culture", "History"]}');
+-- Chèn Hosts
+INSERT INTO Users (email, password, fullName, gender, role, businessName, businessType, businessAddress, businessDescription, taxId, skills, region, averageRating, totalExperiences, totalRevenue, emailVerified) VALUES
+('host1@example.com', '123456', N'Nguyễn Host', N'Nữ', 'HOST', N'Nguyễn Homestay', N'Homestay', N'123 Đường Láng, Hà Nội', N'Homestay ấm cúng gần hồ Tây', 'TAX123456', N'Giao tiếp, tổ chức tour', N'North', 4.8, 12, 5000000, 1),
+('host2@example.com', '123456', N'Trần Host', N'Nam', 'HOST', N'Trần Travel', N'Travel Agency', N'456 Hai Bà Trưng, Đà Nẵng', N'Công ty du lịch chuyên tour miền Trung', 'TAX654321', N'Tổ chức tour, hướng dẫn viên', N'Central', 4.7, 20, 12000000, 1);
 GO
 
--- Thêm Host
-INSERT INTO Users (email, password, fullName, gender, userType) VALUES
-('host1@example.com', '123456', N'Nguyễn Host', N'Nữ', 'HOST'),
-('host2@example.com', '123456', N'Trần Host', N'Nam', 'HOST');
-GO
-
-INSERT INTO Hosts (userId, businessName, businessType, businessAddress, businessDescription, taxId, skills, region, averageRating, totalExperiences, totalRevenue)
-VALUES
-(
-    (SELECT userId FROM Users WHERE email='host1@example.com'),
-    N'Nguyễn Homestay',
-    N'Homestay',
-    N'123 Đường Láng, Hà Nội',
-    N'Homestay ấm cúng gần hồ Tây',
-    'TAX123456',
-    N'Giao tiếp, tổ chức tour',
-    N'North',
-    4.8,
-    12,
-    5000000
-),
-(
-    (SELECT userId FROM Users WHERE email='host2@example.com'),
-    N'Trần Travel',
-    N'Travel Agency',
-    N'456 Hai Bà Trưng, Đà Nẵng',
-    N'Công ty du lịch chuyên tour miền Trung',
-    'TAX654321',
-    N'Tổ chức tour, hướng dẫn viên',
-    N'Central',
-    4.7,
-    20,
-    12000000
-);
-GO
-
--- Host1 thêm Experiences (Tour)
-INSERT INTO Experiences (hostId, title, description, location, cityId, type, price, maxGroupSize, duration, difficulty, language, includedItems, requirements, images, isActive)
-VALUES
+-- Chèn Experiences
+INSERT INTO Experiences (hostId, title, description, location, cityId, type, price, maxGroupSize, duration, difficulty, language, includedItems, requirements, images, isActive) VALUES
 (
     (SELECT userId FROM Users WHERE email='host1@example.com'),
     N'Tour đạp xe quanh Hà Nội',
@@ -321,13 +285,8 @@ VALUES
     N'Xe đạp, Nước uống',
     N'Mang giày thể thao',
     N'bike1.jpg,bike2.jpg',
-    1 -- Đã duyệt admin
-);
-GO
-
--- Host2 thêm Experiences
-INSERT INTO Experiences (hostId, title, description, location, cityId, type, price, maxGroupSize, duration, difficulty, language, includedItems, requirements, images, isActive)
-VALUES
+    1
+),
 (
     (SELECT userId FROM Users WHERE email='host2@example.com'),
     N'Tour ẩm thực Đà Nẵng',
@@ -347,9 +306,8 @@ VALUES
 );
 GO
 
--- Host1 thêm Accommodations (Homestay)
-INSERT INTO Accommodations (hostId, name, description, cityId, address, type, numberOfRooms, amenities, pricePerNight, images, isActive)
-VALUES
+-- Chèn Accommodations
+INSERT INTO Accommodations (hostId, name, description, cityId, address, type, numberOfRooms, amenities, pricePerNight, images, isActive) VALUES
 (
     (SELECT userId FROM Users WHERE email='host1@example.com'),
     N'Homestay Hoa Mai',
@@ -362,12 +320,7 @@ VALUES
     400000,
     N'homestay1.jpg,homestay2.jpg',
     1
-);
-GO
-
--- Host2 thêm Accommodations (Khách sạn)
-INSERT INTO Accommodations (hostId, name, description, cityId, address, type, numberOfRooms, amenities, pricePerNight, images, isActive)
-VALUES
+),
 (
     (SELECT userId FROM Users WHERE email='host2@example.com'),
     N'Khách sạn Mặt Trời',
@@ -383,11 +336,8 @@ VALUES
 );
 GO
 
--- Các bảng Booking, Reviews có thể thêm khi cần
-
--- Ví dụ booking Experience
-INSERT INTO Bookings (experienceId, travelerId, bookingDate, bookingTime, numberOfPeople, totalPrice, status, contactInfo)
-VALUES
+-- Chèn Bookings
+INSERT INTO Bookings (experienceId, travelerId, bookingDate, bookingTime, numberOfPeople, totalPrice, status, contactInfo) VALUES
 (
     (SELECT experienceId FROM Experiences WHERE title = N'Tour đạp xe quanh Hà Nội'),
     (SELECT userId FROM Users WHERE email='tr1@example.com'),
@@ -397,14 +347,9 @@ VALUES
     100,
     'CONFIRMED',
     N'0123456789'
-);
-GO
-
--- Ví dụ booking Accommodation
-INSERT INTO Bookings (accommodationId, travelerId, bookingDate, bookingTime, numberOfPeople, totalPrice, status, contactInfo)
-VALUES
+),
 (
-    (SELECT accommodationId FROM Accommodations WHERE name = N'Homestay Hoa Mai'),
+    NULL,
     (SELECT userId FROM Users WHERE email='tr2@example.com'),
     '2025-06-10',
     '14:00:00',
@@ -415,9 +360,8 @@ VALUES
 );
 GO
 
--- Ví dụ Reviews
-INSERT INTO Reviews (experienceId, travelerId, rating, comment)
-VALUES
+-- Chèn Reviews
+INSERT INTO Reviews (experienceId, travelerId, rating, comment) VALUES
 (
     (SELECT experienceId FROM Experiences WHERE title = N'Tour đạp xe quanh Hà Nội'),
     (SELECT userId FROM Users WHERE email='tr1@example.com'),
@@ -426,8 +370,7 @@ VALUES
 );
 GO
 
-INSERT INTO Reviews (accommodationId, travelerId, rating, comment)
-VALUES
+INSERT INTO Reviews (accommodationId, travelerId, rating, comment) VALUES
 (
     (SELECT accommodationId FROM Accommodations WHERE name = N'Homestay Hoa Mai'),
     (SELECT userId FROM Users WHERE email='tr2@example.com'),
@@ -435,31 +378,3 @@ VALUES
     N'Không gian rất thoải mái, sẽ quay lại!'
 );
 GO
--- Thêm cột email verification vào bảng Users
-ALTER TABLE Users ADD 
-    emailVerified BIT NOT NULL DEFAULT 0,
-    verificationToken NVARCHAR(255) NULL,
-    tokenExpiry DATETIME NULL;
-
--- Tạo bảng EmailVerification để lưu lịch sử xác thực
-CREATE TABLE EmailVerification (
-    verificationId INT PRIMARY KEY IDENTITY(1,1),
-    userId INT NOT NULL,
-    email NVARCHAR(100) NOT NULL,
-    verificationToken NVARCHAR(255) NOT NULL,
-    tokenExpiry DATETIME NOT NULL,
-    isUsed BIT NOT NULL DEFAULT 0,
-    createdAt DATETIME NOT NULL DEFAULT GETDATE(),
-    verifiedAt DATETIME NULL,
-    FOREIGN KEY (userId) REFERENCES Users(userId) ON DELETE CASCADE
-);
-
--- Index để tìm kiếm nhanh token
-CREATE INDEX IX_EmailVerification_Token ON EmailVerification(verificationToken);
-CREATE INDEX IX_Users_VerificationToken ON Users(verificationToken);
-
--- Cập nhật Users hiện tại (set email verified = true cho admin và dữ liệu có sẵn)
-UPDATE Users SET emailVerified = 1 WHERE userType = 'ADMIN';
-UPDATE Users SET emailVerified = 1 WHERE userId IN (
-    SELECT userId FROM Users WHERE createdAt < GETDATE()
-);

@@ -985,7 +985,7 @@
         <c:if test="${not empty sessionScope.user}">
             User Email: ${sessionScope.user.email}
             User Full Name: ${sessionScope.user.fullName}
-            User Type: ${sessionScope.user.userType}
+            User Type: ${sessionScope.user.role}
         </c:if>
     </div>
 
@@ -1040,14 +1040,14 @@
         </a>
                             <ul class="dropdown-menu">
                                 <%-- Role-based dashboard access --%>
-                                <c:if test="${sessionScope.user.userType == 'ADMIN'}">
+                                <c:if test="${sessionScope.user.role == 'ADMIN'}">
                                     <li>
                                         <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard">
                                             <i class="ri-dashboard-line"></i> Quản Trị
                                         </a>
                                     </li>
                                 </c:if>
-                                <c:if test="${sessionScope.user.userType == 'HOST'}">
+                                <c:if test="${sessionScope.user.role == 'HOST'}">
                                     <li>
                                         <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard">
                                             <i class="ri-dashboard-line"></i> Quản Lý Host

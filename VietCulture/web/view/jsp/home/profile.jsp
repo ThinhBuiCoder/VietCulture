@@ -406,7 +406,7 @@
                     <a href="${pageContext.request.contextPath}/">
                         <i class="ri-home-line me-2"></i>Trang Chủ
                     </a>
-                    <c:if test="${sessionScope.user.userType == 'HOST'}">
+                    <c:if test="${sessionScope.user.role == 'HOST'}">
                         <a href="${pageContext.request.contextPath}/host/dashboard">
                             <i class="ri-dashboard-line me-2"></i>Dashboard
                         </a>
@@ -467,7 +467,7 @@
                         <i class="ri-mail-line me-2"></i>${sessionScope.user.email}
                     </p>
                     <div class="d-flex align-items-center gap-3">
-                        <span class="badge badge-primary">${sessionScope.user.userType}</span>
+                        <span class="badge badge-primary">${sessionScope.user.role}</span>
                         <c:choose>
                             <c:when test="${sessionScope.user.active}">
                                 <span class="badge badge-success">Đang hoạt động</span>
@@ -482,7 +482,7 @@
                             <span class="stat-number">${totalBookings}</span>
                             <span class="stat-label">Đặt chỗ</span>
                         </div>
-                        <c:if test="${sessionScope.user.userType == 'HOST'}">
+                        <c:if test="${sessionScope.user.role == 'HOST'}">
                             <div class="stat-item">
                                 <span class="stat-number">${totalExperiences}</span>
                                 <span class="stat-label">Trải nghiệm</span>
