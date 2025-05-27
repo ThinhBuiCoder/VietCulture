@@ -26,7 +26,7 @@ import java.util.logging.Logger;
     "/admin/accommodations/approval",
     "/admin/accommodations/approval/*",
     "/admin/accommodations/*/approve",
-    "/admin/accommodations/*/delete",
+
     "/admin/accommodations/approve-all",
     "/admin/accommodations/*/images",
     "/admin/accommodations/export-pending"
@@ -41,10 +41,16 @@ public class AdminAccommodationApprovalServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        accommodationDAO = new AccommodationDAO();
-        userDAO = new UserDAO();
-        cityDAO = new CityDAO();
-        gson = new Gson();
+        try {
+            accommodationDAO = new AccommodationDAO();
+            userDAO = new UserDAO();
+            cityDAO = new CityDAO();
+            gson = new Gson();
+            LOGGER.info("AdminAccommodationApprovalServlet initialized successfully");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize AdminAccommodationApprovalServlet", e);
+            throw new ServletException("Initialization failed", e);
+        }
     }
 
     @Override
@@ -60,18 +66,14 @@ public class AdminAccommodationApprovalServlet extends HttpServlet {
 
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
-                // Show accommodations approval list
                 handleAccommodationsList(request, response);
             } else if (pathInfo.matches("/\\d+")) {
-                // Show accommodation detail
                 int accommodationId = Integer.parseInt(pathInfo.substring(1));
                 handleAccommodationDetail(request, response, accommodationId);
             } else if (pathInfo.matches("/\\d+/images")) {
-                // Get accommodation images (AJAX)
                 int accommodationId = Integer.parseInt(pathInfo.split("/")[1]);
                 handleGetAccommodationImages(request, response, accommodationId);
             } else if ("/export-pending".equals(pathInfo)) {
-                // Export pending accommodations
                 handleExportPending(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -99,15 +101,12 @@ public class AdminAccommodationApprovalServlet extends HttpServlet {
 
         try {
             if (pathInfo != null && pathInfo.matches("/\\d+/approve")) {
-                // Approve accommodation
                 int accommodationId = Integer.parseInt(pathInfo.split("/")[1]);
                 handleApproveAccommodation(request, response, accommodationId);
             } else if (pathInfo != null && pathInfo.matches("/\\d+/delete")) {
-                // Delete accommodation
                 int accommodationId = Integer.parseInt(pathInfo.split("/")[1]);
                 handleDeleteAccommodation(request, response, accommodationId);
             } else if ("/approve-all".equals(pathInfo)) {
-                // Approve all pending accommodations
                 handleApproveAll(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);

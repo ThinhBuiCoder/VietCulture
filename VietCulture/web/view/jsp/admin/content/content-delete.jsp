@@ -4,7 +4,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <!-- Security check -->
-<c:if test="${empty sessionScope.user or sessionScope.user.userType ne 'ADMIN'}">
+<c:if test="${empty sessionScope.user or sessionScope.user.role ne 'ADMIN'}">
     <c:redirect url="/login" />
 </c:if>
 
@@ -13,132 +13,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý xóa nội dung - Admin</title>
+    <title>Quản lý xóa nội dung - Admin VietCulture</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
         .admin-sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--primary-gradient);
             color: white;
+            position: sticky;
+            top: 0;
         }
+        
         .admin-content {
             background-color: #f8f9fa;
             min-height: 100vh;
         }
+        
         .content-item {
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-radius: 16px;
             overflow: hidden;
+            background: white;
         }
+        
         .content-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
+        
         .content-type-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 4px 8px;
-            border-radius: 12px;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.75rem;
-            font-weight: bold;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
         .content-type-experience {
-            background-color: #28a745;
+            background: var(--success-gradient);
             color: white;
         }
+        
         .content-type-accommodation {
-            background-color: #007bff;
+            background: var(--info-gradient);
             color: white;
         }
+        
         .content-type-user {
-            background-color: #6f42c1;
+            background: var(--primary-gradient);
             color: white;
         }
+        
         .content-type-review {
-            background-color: #fd7e14;
+            background: var(--warning-gradient);
             color: white;
         }
+        
         .delete-reason {
-            background-color: #fff5f5;
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
             border: 1px solid #fed7d7;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 8px;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 10px;
         }
+        
         .content-image {
             width: 80px;
             height: 80px;
             object-fit: cover;
-            border-radius: 8px;
+            border-radius: 12px;
         }
+        
         .danger-zone {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            background: var(--danger-gradient);
             color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
         }
-        .warning-zone {
-            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
+        
         .stats-card {
-            transition: all 0.3s ease;
-            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 16px;
             border: none;
-            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
         }
+        
         .stats-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
         }
+        
+        .stats-card .card-body {
+            padding: 1.5rem;
+        }
+        
         .action-buttons {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
         }
+        
         .filter-tabs {
-            border-bottom: 2px solid #dee2e6;
-            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 24px;
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 0 16px;
         }
+        
         .filter-tabs .nav-link {
             border: none;
             border-bottom: 3px solid transparent;
             color: #6c757d;
             font-weight: 500;
+            padding: 16px 20px;
+            border-radius: 12px 12px 0 0;
+            transition: all 0.3s ease;
         }
+        
+        .filter-tabs .nav-link:hover {
+            color: #007bff;
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+        
         .filter-tabs .nav-link.active {
             border-bottom-color: #007bff;
             color: #007bff;
-            background: none;
+            background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%);
         }
+        
         .bulk-actions {
-            background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
         }
+        
         .content-thumbnail {
             position: relative;
             overflow: hidden;
-            border-radius: 8px;
+            border-radius: 12px;
         }
+        
         .reported-badge {
-            background-color: #dc3545;
+            background: var(--danger-gradient);
             color: white;
             position: absolute;
-            top: 5px;
-            left: 5px;
-            padding: 2px 6px;
-            border-radius: 8px;
+            top: 4px;
+            left: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
             font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            padding: 60px 0;
+            text-align: center;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+            padding: 24px;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 24px;
+        }
+        
+        .toast {
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .page-link {
+            border-radius: 8px;
+            margin: 0 2px;
+            border: none;
+            color: #6c757d;
+        }
+        
+        .page-item.active .page-link {
+            background: var(--primary-gradient);
+            border: none;
+        }
+        
+        .dropdown-menu {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 12px 16px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        @media (max-width: 768px) {
+            .stats-card {
+                margin-bottom: 16px;
+            }
+            
+            .content-item {
+                margin-bottom: 16px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -147,9 +283,15 @@
         <div class="row">
             <!-- Include sidebar -->
             <%@ include file="../includes/admin-sidebar.jsp" %>
-
             <!-- Main content -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 admin-content">
+                <!-- Toggle button for mobile -->
+                <div class="d-md-none mb-3">
+                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target=".admin-sidebar">
+                        <i class="fas fa-bars"></i> Menu
+                    </button>
+                </div>
+
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-trash-alt me-2 text-danger"></i>Quản lý xóa nội dung
@@ -171,13 +313,12 @@
                                 <li><h6 class="dropdown-header">Loại nội dung</h6></li>
                                 <li><a class="dropdown-item" href="?type=experience">Experiences</a></li>
                                 <li><a class="dropdown-item" href="?type=accommodation">Accommodations</a></li>
-                                <li><a class="dropdown-item" href="?type=user">Users</a></li>
                                 <li><a class="dropdown-item" href="?type=review">Reviews</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Trạng thái</h6></li>
-                                <li><a class="dropdown-item" href="?status=reported">Bị báo cáo</a></li>
-                                <li><a class="dropdown-item" href="?status=flagged">Bị đánh dấu</a></li>
-                                <li><a class="dropdown-item" href="?status=pending">Chờ xử lý</a></li>
+                                <li><a class="dropdown-item" href="?tab=flagged">Bị đánh dấu</a></li>
+                                <li><a class="dropdown-item" href="?tab=pending">Chờ duyệt</a></li>
+                                <li><a class="dropdown-item" href="?tab=deleted">Đã xóa</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="?">Tất cả</a></li>
                             </ul>
@@ -201,18 +342,6 @@
                     <div class="col-lg-3 col-md-6 mb-3">
                         <div class="card text-center stats-card h-100">
                             <div class="card-body">
-                                <div class="text-danger mb-2">
-                                    <i class="fas fa-exclamation-circle fa-3x"></i>
-                                </div>
-                                <h4 class="card-title text-danger mb-1">${reportedCount != null ? reportedCount : 0}</h4>
-                                <p class="card-text mb-0 text-muted">Bị báo cáo</p>
-                                <small class="text-muted">Cần xem xét</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
                                 <div class="text-warning mb-2">
                                     <i class="fas fa-flag fa-3x"></i>
                                 </div>
@@ -229,7 +358,7 @@
                                     <i class="fas fa-clock fa-3x"></i>
                                 </div>
                                 <h4 class="card-title text-info mb-1">${pendingCount != null ? pendingCount : 0}</h4>
-                                <p class="card-text mb-0 text-muted">Chờ xử lý</p>
+                                <p class="card-text mb-0 text-muted">Chờ duyệt</p>
                                 <small class="text-muted">Cần quyết định</small>
                             </div>
                         </div>
@@ -246,18 +375,26 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card text-center stats-card h-100">
+                            <div class="card-body">
+                                <div class="text-success mb-2">
+                                    <i class="fas fa-check-circle fa-3x"></i>
+                                </div>
+                                <h4 class="card-title text-success mb-1">
+                                    ${(flaggedCount != null ? flaggedCount : 0) + (pendingCount != null ? pendingCount : 0) + (deletedCount != null ? deletedCount : 0)}
+                                </h4>
+                                <p class="card-text mb-0 text-muted">Tổng cộng</p>
+                                <small class="text-muted">Tất cả nội dung</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filter Tabs -->
                 <ul class="nav nav-tabs filter-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <a class="nav-link ${param.tab eq 'reported' or empty param.tab ? 'active' : ''}" 
-                           href="?tab=reported" role="tab">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Bị báo cáo
-                        </a>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link ${param.tab eq 'flagged' ? 'active' : ''}" 
+                        <a class="nav-link ${param.tab eq 'flagged' or empty param.tab ? 'active' : ''}" 
                            href="?tab=flagged" role="tab">
                             <i class="fas fa-flag me-2"></i>Bị đánh dấu
                         </a>
@@ -265,7 +402,7 @@
                     <li class="nav-item" role="presentation">
                         <a class="nav-link ${param.tab eq 'pending' ? 'active' : ''}" 
                            href="?tab=pending" role="tab">
-                            <i class="fas fa-clock me-2"></i>Chờ xử lý
+                            <i class="fas fa-clock me-2"></i>Chờ duyệt
                         </a>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -291,9 +428,6 @@
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDelete()" disabled id="bulkDeleteBtn">
                                     <i class="fas fa-trash me-1"></i>Xóa đã chọn
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkSoftDelete()" disabled id="bulkSoftDeleteBtn">
-                                    <i class="fas fa-archive me-1"></i>Ẩn đã chọn
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkRestore()" disabled id="bulkRestoreBtn">
                                     <i class="fas fa-undo me-1"></i>Khôi phục đã chọn
@@ -323,8 +457,8 @@
                                                     </c:otherwise>
                                                 </c:choose>
                                                 
-                                                <c:if test="${content.isReported}">
-                                                    <span class="reported-badge">Báo cáo</span>
+                                                <c:if test="${content.reportCount > 0}">
+                                                    <span class="reported-badge">${content.reportCount} báo cáo</span>
                                                 </c:if>
                                                 
                                                 <span class="content-type-badge content-type-${fn:toLowerCase(content.type)}">
@@ -347,14 +481,11 @@
                                                         <li><a class="dropdown-item" href="#" onclick="viewContent('${content.type}', ${content.id})">
                                                             <i class="fas fa-eye me-2"></i>Xem chi tiết
                                                         </a></li>
-                                                        <li><a class="dropdown-item" href="#" onclick="editContent('${content.type}', ${content.id})">
-                                                            <i class="fas fa-edit me-2"></i>Chỉnh sửa
-                                                        </a></li>
                                                         <li><hr class="dropdown-divider"></li>
                                                         <li><a class="dropdown-item text-warning" href="#" onclick="softDelete('${content.type}', ${content.id})">
                                                             <i class="fas fa-archive me-2"></i>Ẩn nội dung
                                                         </a></li>
-                                                        <li><a class="dropdown-item text-danger" href="#" onclick="hardDelete('${content.type}', ${content.id})">
+                                                        <li><a class="dropdown-item text-danger" href="#" onclick="permanentDelete('${content.type}', ${content.id})">
                                                             <i class="fas fa-trash me-2"></i>Xóa vĩnh viễn
                                                         </a></li>
                                                     </ul>
@@ -388,15 +519,6 @@
                                                 </small>
                                             </div>
                                             
-                                            <c:if test="${content.reportCount > 0}">
-                                                <div class="mb-2">
-                                                    <span class="badge bg-danger">
-                                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        ${content.reportCount} báo cáo
-                                                    </span>
-                                                </div>
-                                            </c:if>
-                                            
                                             <c:if test="${not empty content.deleteReason}">
                                                 <div class="delete-reason">
                                                     <small class="text-danger">
@@ -423,10 +545,6 @@
                                                 </button>
                                             </c:when>
                                             <c:otherwise>
-                                                <button type="button" class="btn btn-sm btn-outline-info" 
-                                                        onclick="viewReports('${content.type}', ${content.id})">
-                                                    <i class="fas fa-list me-1"></i>Xem báo cáo
-                                                </button>
                                                 <button type="button" class="btn btn-sm btn-outline-warning" 
                                                         onclick="softDelete('${content.type}', ${content.id})">
                                                     <i class="fas fa-archive me-1"></i>Ẩn
@@ -451,14 +569,11 @@
                                 <h4 class="text-muted">Không có nội dung nào</h4>
                                 <p class="text-muted">
                                     <c:choose>
-                                        <c:when test="${param.tab eq 'reported'}">
-                                            Không có nội dung nào bị báo cáo.
-                                        </c:when>
                                         <c:when test="${param.tab eq 'flagged'}">
                                             Không có nội dung nào bị đánh dấu.
                                         </c:when>
                                         <c:when test="${param.tab eq 'pending'}">
-                                            Không có nội dung nào chờ xử lý.
+                                            Không có nội dung nào chờ duyệt.
                                         </c:when>
                                         <c:when test="${param.tab eq 'deleted'}">
                                             Thùng rác trống.
@@ -507,6 +622,7 @@
         </div>
     </div>
 
+    <!-- Modals -->
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog">
@@ -540,29 +656,6 @@
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reports Modal -->
-    <div class="modal fade" id="reportsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Báo cáo vi phạm</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="reportsList">
-                        <!-- Reports will be loaded here -->
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="button" class="btn btn-success" onclick="dismissAllReports()">
-                        <i class="fas fa-check me-1"></i>Bỏ qua tất cả báo cáo
-                    </button>
-                </div>
             </div>
         </div>
     </div>
@@ -608,13 +701,13 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        const contextPath = '${pageContext.request.contextPath}';
         let selectedItems = [];
         let currentDeleteType = '';
         let currentDeleteId = 0;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // Setup checkbox handlers
             setupCheckboxHandlers();
         });
 
@@ -622,12 +715,14 @@
             const selectAllCheckbox = document.getElementById('selectAll');
             const contentCheckboxes = document.querySelectorAll('.content-checkbox');
 
-            selectAllCheckbox.addEventListener('change', function() {
-                contentCheckboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    contentCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    updateSelectedItems();
                 });
-                updateSelectedItems();
-            });
+            }
 
             contentCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', updateSelectedItems);
@@ -642,10 +737,13 @@
             }));
 
             const count = selectedItems.length;
-            document.getElementById('selectedCount').textContent = count;
+            const selectedCountElement = document.getElementById('selectedCount');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = count;
+            }
             
             // Enable/disable bulk action buttons
-            const bulkButtons = ['bulkDeleteBtn', 'bulkSoftDeleteBtn', 'bulkRestoreBtn'];
+            const bulkButtons = ['bulkDeleteBtn', 'bulkRestoreBtn'];
             bulkButtons.forEach(btnId => {
                 const btn = document.getElementById(btnId);
                 if (btn) {
@@ -655,11 +753,8 @@
         }
 
         function viewContent(type, id) {
-            window.open(`${contextPath}/admin/${type}s/${id}`, '_blank');
-        }
-
-        function editContent(type, id) {
-            window.location.href = `${contextPath}/admin/${type}s/${id}/edit`;
+            const url = `${contextPath}/admin/${type}s/${id}`;
+            window.open(url, '_blank');
         }
 
         function softDelete(type, id) {
@@ -671,13 +766,32 @@
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 
-        function hardDelete(type, id) {
-            currentDeleteType = type;
-            currentDeleteId = id;
-            document.getElementById('deleteMessage').textContent = 
-                `Bạn có chắc chắn muốn xóa vĩnh viễn ${type} này? Hành động này không thể hoàn tác!`;
-            document.getElementById('confirmDeleteBtn').innerHTML = '<i class="fas fa-trash me-1"></i>Xóa vĩnh viễn';
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        function permanentDelete(type, id) {
+            if (confirm(`Bạn có THỰC SỰ chắc chắn muốn xóa vĩnh viễn ${type} này?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`)) {
+                if (confirm('Lần xác nhận cuối cùng. Nội dung sẽ bị xóa hoàn toàn khỏi hệ thống!')) {
+                    fetch(`${contextPath}/admin/content/permanent-delete`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ type: type, id: id })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Đã xóa vĩnh viễn nội dung!', 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể xóa'), 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('Có lỗi xảy ra khi kết nối server', 'error');
+                    });
+                }
+            }
         }
 
         function restoreContent(type, id) {
@@ -732,61 +846,6 @@
             }
         }
 
-        function viewReports(type, id) {
-            fetch(`${contextPath}/admin/content/reports?type=${type}&id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        displayReports(data.reports);
-                        new bootstrap.Modal(document.getElementById('reportsModal')).show();
-                    } else {
-                        showToast('Không thể tải báo cáo', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showToast('Có lỗi xảy ra khi tải báo cáo', 'error');
-                });
-        }
-
-        function displayReports(reports) {
-            const reportsList = document.getElementById('reportsList');
-            
-            if (reports.length === 0) {
-                reportsList.innerHTML = '<div class="text-center text-muted">Không có báo cáo nào</div>';
-                return;
-            }
-            
-            let html = '';
-            reports.forEach(report => {
-                html += `
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h6 class="mb-1">${report.reason}</h6>
-                                <p class="mb-1 text-muted">${report.description || 'Không có mô tả'}</p>
-                                <small class="text-muted">
-                                    Báo cáo bởi: ${report.reporterName} - ${report.createdAt}
-                                </small>
-                            </div>
-                            <span class="badge bg-warning text-dark">
-                                PENDING
-                            </span>
-                        </c:when>
-                        <c:otherwise>
-                            <span class="badge bg-success">
-                                RESOLVED
-                            </span>
-                        </c:otherwise>
-                    </c:choose>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            reportsList.innerHTML = html;
-        }
-
         function bulkDelete() {
             if (selectedItems.length === 0) {
                 showToast('Vui lòng chọn ít nhất một mục', 'warning');
@@ -795,17 +854,6 @@
             
             document.getElementById('bulkDeleteCount').textContent = selectedItems.length;
             new bootstrap.Modal(document.getElementById('bulkDeleteModal')).show();
-        }
-
-        function bulkSoftDelete() {
-            if (selectedItems.length === 0) {
-                showToast('Vui lòng chọn ít nhất một mục', 'warning');
-                return;
-            }
-            
-            if (confirm(`Bạn có chắc chắn muốn ẩn ${selectedItems.length} mục đã chọn?`)) {
-                executeBulkAction('soft-delete');
-            }
         }
 
         function bulkRestore() {
@@ -840,16 +888,13 @@
                         case 'delete':
                             actionText = 'xóa';
                             break;
-                        case 'soft-delete':
-                            actionText = 'ẩn';
-                            break;
                         case 'restore':
                             actionText = 'khôi phục';
                             break;
                         default:
                             actionText = 'xử lý';
                     }
-                    showToast('Đã ' + actionText + ' ' + (data.count || selectedItems.length) + ' mục!', 'success');
+                    showToast(`Đã ${actionText} ${data.count || selectedItems.length} mục!`, 'success');
                     setTimeout(() => location.reload(), 2000);
                 } else {
                     showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể thực hiện'), 'error');
@@ -866,44 +911,7 @@
         }
 
         function showRecycleBin() {
-            window.location.href = '${pageContext.request.contextPath}/admin/content/delete?tab=deleted';
-        }
-
-        function dismissAllReports() {
-            if (confirm('Bạn có chắc chắn muốn bỏ qua tất cả báo cáo cho nội dung này?')) {
-                // Implementation for dismissing reports
-                showToast('Đã bỏ qua tất cả báo cáo', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('reportsModal')).hide();
-                setTimeout(() => location.reload(), 1500);
-            }
-        }
-
-        function permanentDelete(type, id) {
-            if (confirm(`Bạn có THỰC SỰ chắc chắn muốn xóa vĩnh viễn ${type} này?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`)) {
-                if (confirm('Lần xác nhận cuối cùng. Nội dung sẽ bị xóa hoàn toàn khỏi hệ thống!')) {
-                    fetch(`${contextPath}/admin/content/permanent-delete`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({ type: type, id: id })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showToast('Đã xóa vĩnh viễn nội dung!', 'success');
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể xóa'), 'error');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        showToast('Có lỗi xảy ra khi kết nối server', 'error');
-                    });
-                }
-            }
+            window.location.href = `${contextPath}/admin/content/delete?tab=deleted`;
         }
 
         function showToast(message, type) {
@@ -938,11 +946,11 @@
 
         function escapeHtml(text) {
             const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
+                '&': '&',
+                '<': '<',
+                '>': '>',
+                '"': '"',
+                "'": '''
             };
             return text.replace(/[&<>"']/g, function(m) { return map[m]; });
         }
@@ -1009,8 +1017,6 @@
         document.getElementById('bulkDeleteModal').addEventListener('hidden.bs.modal', function() {
             document.getElementById('bulkDeleteForm').reset();
         });
-
-        const contextPath = '${pageContext.request.contextPath}';
     </script>
 </body>
 </html>

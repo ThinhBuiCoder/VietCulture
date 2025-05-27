@@ -10,20 +10,20 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+/**
+ * Lớp DAO xử lý các thao tác với bảng Experiences trong cơ sở dữ liệu
+ */
 public class ExperienceDAO {
     private static final Logger LOGGER = Logger.getLogger(ExperienceDAO.class.getName());
-    
+
     /**
-     * Get total experiences count by host
+     * Lấy tổng số trải nghiệm theo host
      */
     public int getTotalExperiencesByHost(int hostId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Experiences WHERE hostId = ?";
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, hostId);
-            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -32,13 +32,12 @@ public class ExperienceDAO {
         }
         return 0;
     }
-    
+
     /**
-     * Get experiences by host with pagination
+     * Lấy danh sách trải nghiệm theo host với phân trang
      */
     public List<Experience> getExperiencesByHost(int hostId, int offset, int limit) throws SQLException {
         List<Experience> experiences = new ArrayList<>();
-        
         String sql = """
             SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
                    e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
@@ -52,14 +51,11 @@ public class ExperienceDAO {
             ORDER BY e.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, hostId);
             ps.setInt(2, offset);
             ps.setInt(3, limit);
-            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Experience experience = mapExperienceFromResultSet(rs);
@@ -69,9 +65,9 @@ public class ExperienceDAO {
         }
         return experiences;
     }
-    
+
     /**
-     * Get experience by ID
+     * Lấy trải nghiệm theo ID
      */
     public Experience getExperienceById(int experienceId) throws SQLException {
         String sql = """
@@ -85,12 +81,9 @@ public class ExperienceDAO {
             LEFT JOIN Users u ON e.hostId = u.userId
             WHERE e.experienceId = ?
         """;
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, experienceId);
-            
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapExperienceFromResultSet(rs);
@@ -99,9 +92,9 @@ public class ExperienceDAO {
         }
         return null;
     }
-    
+
     /**
-     * Create new experience
+     * Tạo trải nghiệm mới
      */
     public int createExperience(Experience experience) throws SQLException {
         String sql = """
@@ -110,10 +103,8 @@ public class ExperienceDAO {
                                    includedItems, requirements, images, isActive)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
             ps.setInt(1, experience.getHostId());
             ps.setString(2, experience.getTitle());
             ps.setString(3, experience.getDescription());
@@ -129,9 +120,7 @@ public class ExperienceDAO {
             ps.setString(13, experience.getRequirements());
             ps.setString(14, experience.getImages());
             ps.setBoolean(15, experience.isActive());
-            
             int affectedRows = ps.executeUpdate();
-            
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -144,9 +133,9 @@ public class ExperienceDAO {
         }
         return 0;
     }
-    
+
     /**
-     * Update experience
+     * Cập nhật thông tin trải nghiệm
      */
     public boolean updateExperience(Experience experience) throws SQLException {
         String sql = """
@@ -156,10 +145,8 @@ public class ExperienceDAO {
                 includedItems = ?, requirements = ?, images = ?, isActive = ?
             WHERE experienceId = ?
         """;
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setString(1, experience.getTitle());
             ps.setString(2, experience.getDescription());
             ps.setString(3, experience.getLocation());
@@ -175,35 +162,30 @@ public class ExperienceDAO {
             ps.setString(13, experience.getImages());
             ps.setBoolean(14, experience.isActive());
             ps.setInt(15, experience.getExperienceId());
-            
             return ps.executeUpdate() > 0;
         }
     }
-    
+
     /**
-     * Update experience status
+     * Cập nhật trạng thái hoạt động của trải nghiệm
      */
     public boolean updateExperienceStatus(int experienceId, boolean isActive) throws SQLException {
         String sql = "UPDATE Experiences SET isActive = ? WHERE experienceId = ?";
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setBoolean(1, isActive);
             ps.setInt(2, experienceId);
-            
             int rowsAffected = ps.executeUpdate();
-            LOGGER.info("Experience status updated: " + experienceId + " -> " + isActive);
+            LOGGER.info("Cập nhật trạng thái trải nghiệm: " + experienceId + " -> " + isActive);
             return rowsAffected > 0;
         }
     }
-    
+
     /**
-     * Get all active experiences with pagination
+     * Lấy tất cả trải nghiệm đang hoạt động với phân trang
      */
     public List<Experience> getAllActiveExperiences(int offset, int limit) throws SQLException {
         List<Experience> experiences = new ArrayList<>();
-        
         String sql = """
             SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
                    e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
@@ -217,13 +199,10 @@ public class ExperienceDAO {
             ORDER BY e.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, offset);
             ps.setInt(2, limit);
-            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Experience experience = mapExperienceFromResultSet(rs);
@@ -233,14 +212,13 @@ public class ExperienceDAO {
         }
         return experiences;
     }
-    
+
     /**
-     * Search experiences with filters
+     * Tìm kiếm trải nghiệm với bộ lọc
      */
     public List<Experience> searchExperiences(String keyword, Integer cityId, String type, 
                                             int offset, int limit) throws SQLException {
         List<Experience> experiences = new ArrayList<>();
-        
         StringBuilder sqlBuilder = new StringBuilder("""
             SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
                    e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
@@ -252,37 +230,29 @@ public class ExperienceDAO {
             LEFT JOIN Users u ON e.hostId = u.userId
             WHERE e.isActive = 1
         """);
-        
         List<Object> parameters = new ArrayList<>();
-        
         if (keyword != null && !keyword.trim().isEmpty()) {
             sqlBuilder.append(" AND (e.title LIKE ? OR e.description LIKE ?)");
             String searchPattern = "%" + keyword.trim() + "%";
             parameters.add(searchPattern);
             parameters.add(searchPattern);
         }
-        
         if (cityId != null) {
             sqlBuilder.append(" AND e.cityId = ?");
             parameters.add(cityId);
         }
-        
         if (type != null && !type.trim().isEmpty()) {
             sqlBuilder.append(" AND e.type = ?");
             parameters.add(type);
         }
-        
         sqlBuilder.append(" ORDER BY e.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         parameters.add(offset);
         parameters.add(limit);
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-            
             for (int i = 0; i < parameters.size(); i++) {
                 ps.setObject(i + 1, parameters.get(i));
             }
-            
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Experience experience = mapExperienceFromResultSet(rs);
@@ -292,41 +262,533 @@ public class ExperienceDAO {
         }
         return experiences;
     }
-    
+
     /**
-     * Update experience rating
+     * Cập nhật điểm đánh giá trung bình
      */
     public boolean updateExperienceRating(int experienceId, double averageRating) throws SQLException {
         String sql = "UPDATE Experiences SET averageRating = ? WHERE experienceId = ?";
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setDouble(1, averageRating);
             ps.setInt(2, experienceId);
-            
             return ps.executeUpdate() > 0;
         }
     }
-    
+
     /**
-     * Increment total bookings count
-     * @param experienceId
+     * Tăng số lượt đặt
      */
     public boolean incrementTotalBookings(int experienceId) throws SQLException {
         String sql = "UPDATE Experiences SET totalBookings = totalBookings + 1 WHERE experienceId = ?";
-        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
             ps.setInt(1, experienceId);
-            
             return ps.executeUpdate() > 0;
         }
     }
-    
+
     /**
-     * Map ResultSet to Experience object
+     * Lấy tổng số trải nghiệm
+     */
+    public int getTotalExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy số trải nghiệm đang chờ duyệt
+     */
+    public int getPendingExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 0";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy số trải nghiệm đã được duyệt
+     */
+    public int getApprovedExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy số trải nghiệm bị từ chối (giả định có bảng riêng)
+     */
+    public int getRejectedExperiencesCount() throws SQLException {
+        // Giả định chưa có bảng từ chối, trả về 0
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm đang chờ duyệt
+     */
+    public List<Experience> getPendingExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 0
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm đã được duyệt
+     */
+    public List<Experience> getApprovedExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 1
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm bị từ chối
+     */
+    public List<Experience> getRejectedExperiences(int page, int pageSize) throws SQLException {
+        // Giả định chưa có bảng từ chối, trả về danh sách rỗng
+        return new ArrayList<>();
+    }
+
+    /**
+     * Lấy tất cả trải nghiệm
+     */
+    public List<Experience> getAllExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Duyệt trải nghiệm
+     */
+    public boolean approveExperience(int experienceId) throws SQLException {
+        String sql = "UPDATE Experiences SET isActive = 1 WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Từ chối trải nghiệm
+     */
+    public boolean rejectExperience(int experienceId, String reason, boolean allowResubmit) throws SQLException {
+        String sql = "UPDATE Experiences SET isActive = 0, rejectionReason = ? WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, experienceId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Thu hồi duyệt trải nghiệm
+     */
+    public boolean revokeApproval(int experienceId, String reason) throws SQLException {
+        String sql = "UPDATE Experiences SET isActive = 0 WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            if (ps.executeUpdate() > 0) {
+                logExperienceAction(experienceId, "REVOKED", reason);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Xóa mềm trải nghiệm
+     */
+    public boolean softDeleteExperience(int contentId, String reason) throws SQLException {
+        String sql = "UPDATE Experiences SET isDeleted = 1, deleteReason = ?, deletedAt = GETDATE() WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, contentId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Khôi phục trải nghiệm
+     */
+    public boolean restoreExperience(int contentId) throws SQLException {
+        String sql = "UPDATE Experiences SET isDeleted = 0, deleteReason = NULL, deletedAt = NULL WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, contentId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Lấy số trải nghiệm đang hoạt động
+     */
+    public int getActiveExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1 AND isDeleted = 0";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm đã bị xóa
+     */
+    public List<Experience> getDeletedExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isDeleted = 1
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số trải nghiệm đã bị xóa
+     */
+    public int getDeletedExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isDeleted = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm bị báo cáo
+     */
+    public List<Experience> getReportedExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.reportCount > 0
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số trải nghiệm bị báo cáo
+     */
+    public int getReportedExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE reportCount > 0";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm bị đánh dấu
+     */
+    public List<Experience> getFlaggedExperiences(int page, int pageSize) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isFlagged = 1
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    experiences.add(mapExperienceFromResultSet(rs));
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số trải nghiệm bị đánh dấu
+     */
+    public int getFlaggedExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isFlagged = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Xóa vĩnh viễn trải nghiệm
+     */
+    public boolean deleteExperience(int experienceId) throws SQLException {
+        String sql = "DELETE FROM Experiences WHERE experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Thống kê số lượng trải nghiệm theo vùng
+     */
+    public Map<String, Integer> getExperiencesByRegion() throws SQLException {
+        Map<String, Integer> regionCounts = new HashMap<>();
+        String sql = """
+            SELECT r.name as regionName, COUNT(e.experienceId) as count
+            FROM Experiences e
+            JOIN Cities c ON e.cityId = c.cityId
+            JOIN Regions r ON c.regionId = r.regionId
+            WHERE e.isActive = 1
+            GROUP BY r.name
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                regionCounts.put(rs.getString("regionName"), rs.getInt("count"));
+            }
+        }
+        return regionCounts;
+    }
+
+    /**
+     * Lấy dữ liệu tăng trưởng hàng tháng
+     */
+    public List<Integer> getMonthlyGrowthData(int months) throws SQLException {
+        List<Integer> data = new ArrayList<>();
+        String sql = """
+            SELECT COUNT(*) as count
+            FROM Experiences 
+            WHERE createdAt >= DATEADD(MONTH, ?, GETDATE())
+            AND createdAt < DATEADD(MONTH, ?, GETDATE())
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getInt("count"));
+                    } else {
+                        data.add(0);
+                    }
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
+     * Tính tỷ lệ tăng trưởng
+     */
+    public double getGrowthPercentage(String period) throws SQLException {
+        String sql;
+        switch (period) {
+            case "week":
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(DAY, -7, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
+                         AND createdAt < DATEADD(DAY, -7, GETDATE())) as previous_period
+                """;
+                break;
+            case "year":
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(YEAR, -1, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
+                         AND createdAt < DATEADD(YEAR, -1, GETDATE())) as previous_period
+                """;
+                break;
+            default: // month
+                sql = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(MONTH, -1, GETDATE())) as current_period,
+                        (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
+                         AND createdAt < DATEADD(MONTH, -1, GETDATE())) as previous_period
+                """;
+        }
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int currentPeriod = rs.getInt("current_period");
+                int previousPeriod = rs.getInt("previous_period");
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+                return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Ghi log hành động trên trải nghiệm
+     */
+    private void logExperienceAction(int experienceId, String action, String details) throws SQLException {
+        String sql = """
+            INSERT INTO ExperienceActions (experienceId, action, details, createdAt)
+            VALUES (?, ?, ?, GETDATE())
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            ps.setString(2, action);
+            ps.setString(3, details);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Không thể ghi log hành động trải nghiệm", e);
+        }
+    }
+
+    /**
+     * Ánh xạ ResultSet sang đối tượng Experience
      */
     private Experience mapExperienceFromResultSet(ResultSet rs) throws SQLException {
         Experience experience = new Experience();
@@ -349,390 +811,24 @@ public class ExperienceDAO {
         experience.setImages(rs.getString("images"));
         experience.setAverageRating(rs.getDouble("averageRating"));
         experience.setTotalBookings(rs.getInt("totalBookings"));
-        
-        // Set additional info if available
         if (rs.getString("cityName") != null) {
             experience.setCityName(rs.getString("cityName"));
         }
         if (rs.getString("hostName") != null) {
             experience.setHostName(rs.getString("hostName"));
         }
-        
         return experience;
     }
-    public int getTotalExperiencesCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Experiences";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-    }
-    return 0;
-}
 
-/**
- * Get pending experiences count for admin
- */
-public int getPendingExperiencesCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 0";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-    }
-    return 0;
-}
-
-/**
- * Get approved experiences count
- */
-public int getApprovedExperiencesCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-    }
-    return 0;
-}
-
-/**
- * Get rejected experiences count (assuming you have a rejection table)
- */
-public int getRejectedExperiencesCount() throws SQLException {
-    // This would need a separate table for rejected experiences
-    // For now, return 0 or implement based on your rejection system
-    return 0;
-}
-
-/**
- * Get pending experiences for admin approval
- */
-public List<Experience> getPendingExperiences(int page, int pageSize) throws SQLException {
-    List<Experience> experiences = new ArrayList<>();
-    
-    String sql = """
-        SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
-               e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
-               e.difficulty, e.language, e.includedItems, e.requirements,
-               e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
-               c.vietnameseName as cityName, u.fullName as hostName
-        FROM Experiences e
-        LEFT JOIN Cities c ON e.cityId = c.cityId
-        LEFT JOIN Users u ON e.hostId = u.userId
-        WHERE e.isActive = 0
-        ORDER BY e.createdAt DESC
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, (page - 1) * pageSize);
-        ps.setInt(2, pageSize);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                experiences.add(mapExperienceFromResultSet(rs));
-            }
-        }
-    }
-    return experiences;
-}
-
-/**
- * Get approved experiences
- */
-public List<Experience> getApprovedExperiences(int page, int pageSize) throws SQLException {
-    List<Experience> experiences = new ArrayList<>();
-    
-    String sql = """
-        SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
-               e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
-               e.difficulty, e.language, e.includedItems, e.requirements,
-               e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
-               c.vietnameseName as cityName, u.fullName as hostName
-        FROM Experiences e
-        LEFT JOIN Cities c ON e.cityId = c.cityId
-        LEFT JOIN Users u ON e.hostId = u.userId
-        WHERE e.isActive = 1
-        ORDER BY e.createdAt DESC
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, (page - 1) * pageSize);
-        ps.setInt(2, pageSize);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                experiences.add(mapExperienceFromResultSet(rs));
-            }
-        }
-    }
-    return experiences;
-}
-
-/**
- * Get rejected experiences (placeholder - implement based on your rejection system)
- */
-public List<Experience> getRejectedExperiences(int page, int pageSize) throws SQLException {
-    // Implement based on your rejection tracking system
-    return new ArrayList<>();
-}
-
-/**
- * Get all experiences for admin
- */
-public List<Experience> getAllExperiences(int page, int pageSize) throws SQLException {
-    List<Experience> experiences = new ArrayList<>();
-    
-    String sql = """
-        SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
-               e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
-               e.difficulty, e.language, e.includedItems, e.requirements,
-               e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
-               c.vietnameseName as cityName, u.fullName as hostName
-        FROM Experiences e
-        LEFT JOIN Cities c ON e.cityId = c.cityId
-        LEFT JOIN Users u ON e.hostId = u.userId
-        ORDER BY e.createdAt DESC
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, (page - 1) * pageSize);
-        ps.setInt(2, pageSize);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                experiences.add(mapExperienceFromResultSet(rs));
-            }
-        }
-    }
-    return experiences;
-}
-
-/**
- * Approve experience
- */
-public boolean approveExperience(int experienceId) throws SQLException {
-    String sql = "UPDATE Experiences SET isActive = 1 WHERE experienceId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, experienceId);
-        return ps.executeUpdate() > 0;
-    }
-}
-
-/**
- * Reject experience (soft delete or move to rejected table)
- */
-public boolean rejectExperience(int experienceId, String reason, boolean allowResubmit) throws SQLException {
-    // Option 1: Soft delete - mark as rejected
-    String sql = "UPDATE Experiences SET isActive = 0, rejectionReason = ? WHERE experienceId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setString(1, reason);
-        ps.setInt(2, experienceId);
-        return ps.executeUpdate() > 0;
-    }
-    
-    // Option 2: Hard delete (uncomment if preferred)
-    // String sql = "DELETE FROM Experiences WHERE experienceId = ?";
-    // try (Connection conn = DBUtils.getConnection();
-    //      PreparedStatement ps = conn.prepareStatement(sql)) {
-    //     ps.setInt(1, experienceId);
-    //     return ps.executeUpdate() > 0;
-    // }
-}
-
-/**
- * Revoke approval
- */
-public boolean revokeApproval(int experienceId, String reason) throws SQLException {
-    String sql = "UPDATE Experiences SET isActive = 0 WHERE experienceId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, experienceId);
-        
-        // Log the revocation reason
-        if (ps.executeUpdate() > 0) {
-            logExperienceAction(experienceId, "REVOKED", reason);
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * Get experiences by region for statistics
- */
-public Map<String, Integer> getExperiencesByRegion() throws SQLException {
-    Map<String, Integer> regionCounts = new HashMap<>();
-    
-    String sql = """
-        SELECT r.name as regionName, COUNT(e.experienceId) as count
-        FROM Experiences e
-        JOIN Cities c ON e.cityId = c.cityId
-        JOIN Regions r ON c.regionId = r.regionId
-        WHERE e.isActive = 1
-        GROUP BY r.name
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        while (rs.next()) {
-            regionCounts.put(rs.getString("regionName"), rs.getInt("count"));
-        }
-    }
-    
-    return regionCounts;
-}
-
-/**
- * Get monthly growth data for experiences
- */
-public List<Integer> getMonthlyGrowthData(int months) throws SQLException {
-    List<Integer> data = new ArrayList<>();
-    
-    String sql = """
-        SELECT COUNT(*) as count
-        FROM Experiences 
-        WHERE createdAt >= DATEADD(MONTH, ?, GETDATE())
-        AND createdAt < DATEADD(MONTH, ?, GETDATE())
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        for (int i = months - 1; i >= 0; i--) {
-            ps.setInt(1, -i - 1);
-            ps.setInt(2, -i);
-            
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    data.add(rs.getInt("count"));
-                } else {
-                    data.add(0);
-                }
-            }
-        }
-    }
-    
-    return data;
-}
-
-/**
- * Get growth percentage
- */
-public double getGrowthPercentage(String period) throws SQLException {
-    String sql;
-    switch (period) {
-        case "week":
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(DAY, -7, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
-                     AND createdAt < DATEADD(DAY, -7, GETDATE())) as previous_period
-            """;
-            break;
-        case "year":
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(YEAR, -1, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
-                     AND createdAt < DATEADD(YEAR, -1, GETDATE())) as previous_period
-            """;
-            break;
-        default: // month
-            sql = """
-                SELECT 
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(MONTH, -1, GETDATE())) as current_period,
-                    (SELECT COUNT(*) FROM Experiences WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
-                     AND createdAt < DATEADD(MONTH, -1, GETDATE())) as previous_period
-            """;
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            int currentPeriod = rs.getInt("current_period");
-            int previousPeriod = rs.getInt("previous_period");
-            
-            if (previousPeriod == 0) {
-                return currentPeriod > 0 ? 100.0 : 0.0;
-            }
-            
-            return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
-        }
-    }
-    
-    return 0.0;
-}
-
-/**
- * Log experience actions for audit trail
- */
-private void logExperienceAction(int experienceId, String action, String details) throws SQLException {
-    String sql = """
-        INSERT INTO ExperienceActions (experienceId, action, details, createdAt)
-        VALUES (?, ?, ?, GETDATE())
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, experienceId);
-        ps.setString(2, action);
-        ps.setString(3, details);
-        
-        ps.executeUpdate();
-    } catch (SQLException e) {
-        // Log action might fail if table doesn't exist, but don't break main operation
-        LOGGER.log(Level.WARNING, "Failed to log experience action", e);
-    }
-}
-
-    public int getActiveExperiencesCount() {
+    public boolean rejectExperience(int contentId, String reason) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    public boolean softDeleteExperience(int contentId, String trim) {
+    public boolean flagExperience(int contentId, String reason) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    public boolean restoreExperience(int contentId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    public boolean deleteExperience(int experienceId) {
+    public boolean unflagExperience(int contentId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

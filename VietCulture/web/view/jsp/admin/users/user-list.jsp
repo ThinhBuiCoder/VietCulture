@@ -3,7 +3,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <!-- Security check -->
-<c:if test="${empty sessionScope.user or sessionScope.user.userType ne 'ADMIN'}">
+<c:if test="${empty sessionScope.user or sessionScope.user.role ne 'ADMIN'}">
     <c:redirect url="/login" />
 </c:if>
 
@@ -70,11 +70,11 @@
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Loại User</label>
-                                    <select class="form-select" name="userType">
+                                    <select class="form-select" name="role">
                                         <option value="">Tất cả</option>
-                                        <option value="TRAVELER" ${param.userType == 'TRAVELER' ? 'selected' : ''}>Traveler</option>
-                                        <option value="HOST" ${param.userType == 'HOST' ? 'selected' : ''}>Host</option>
-                                        <option value="ADMIN" ${param.userType == 'ADMIN' ? 'selected' : ''}>Admin</option>
+                                        <option value="TRAVELER" ${param.role == 'TRAVELER' ? 'selected' : ''}>Traveler</option>
+                                        <option value="HOST" ${param.role == 'HOST' ? 'selected' : ''}>Host</option>
+                                        <option value="ADMIN" ${param.role == 'ADMIN' ? 'selected' : ''}>Admin</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -150,13 +150,13 @@
                                             </td>
                                             <td>
                                                 <c:choose>
-                                                    <c:when test="${user.userType == 'TRAVELER'}">
+                                                    <c:when test="${user.role == 'TRAVELER'}">
                                                         <span class="badge bg-info">Traveler</span>
                                                     </c:when>
-                                                    <c:when test="${user.userType == 'HOST'}">
+                                                    <c:when test="${user.role == 'HOST'}">
                                                         <span class="badge bg-success">Host</span>
                                                     </c:when>
-                                                    <c:when test="${user.userType == 'ADMIN'}">
+                                                    <c:when test="${user.role == 'ADMIN'}">
                                                         <span class="badge bg-danger">Admin</span>
                                                     </c:when>
                                                 </c:choose>
@@ -244,7 +244,7 @@
                                 <ul class="pagination justify-content-center">
                                     <c:if test="${currentPage > 1}">
                                         <li class="page-item">
-                                            <a class="page-link" href="?page=${currentPage - 1}&userType=${param.userType}&status=${param.status}&search=${param.search}">
+                                            <a class="page-link" href="?page=${currentPage - 1}&role=${param.role}&status=${param.status}&search=${param.search}">
                                                 <i class="fas fa-chevron-left"></i>
                                             </a>
                                         </li>
@@ -252,7 +252,7 @@
                                     
                                     <c:forEach begin="1" end="${totalPages}" var="pageNum">
                                         <li class="page-item ${pageNum == currentPage ? 'active' : ''}">
-                                            <a class="page-link" href="?page=${pageNum}&userType=${param.userType}&status=${param.status}&search=${param.search}">
+                                            <a class="page-link" href="?page=${pageNum}&role=${param.role}&status=${param.status}&search=${param.search}">
                                                 ${pageNum}
                                             </a>
                                         </li>
@@ -260,7 +260,7 @@
                                     
                                     <c:if test="${currentPage < totalPages}">
                                         <li class="page-item">
-                                            <a class="page-link" href="?page=${currentPage + 1}&userType=${param.userType}&status=${param.status}&search=${param.search}">
+                                            <a class="page-link" href="?page=${currentPage + 1}&role=${param.role}&status=${param.status}&search=${param.search}">
                                                 <i class="fas fa-chevron-right"></i>
                                             </a>
                                         </li>
@@ -298,7 +298,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Loại User *</label>
-                            <select class="form-select" name="userType" required>
+                            <select class="form-select" name="role" required>
                                 <option value="">Chọn loại</option>
                                 <option value="TRAVELER">Traveler</option>
                                 <option value="HOST">Host</option>

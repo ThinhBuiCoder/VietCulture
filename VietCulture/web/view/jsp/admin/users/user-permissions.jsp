@@ -151,7 +151,7 @@
                 <p class="mb-0">${user.fullName} (${user.email})</p>
                 <p class="mb-0">
                     <small>Vai trò hiện tại: 
-                        <span class="badge bg-light text-dark">${user.userType}</span>
+                        <span class="badge bg-light text-dark">${user.role}</span>
                     </small>
                 </p>
             </div>
@@ -160,7 +160,7 @@
             <div class="permissions-body">
                 <form id="permissionsForm" onsubmit="updatePermissions(event)">
                     <input type="hidden" name="userId" value="${user.userId}">
-                    <input type="hidden" name="currentUserType" value="${user.userType}">
+                    <input type="hidden" name="currentrole" value="${user.role}">
 
                     <!-- Warning -->
                     <div class="warning-box">
@@ -175,7 +175,7 @@
 
                     <div class="row">
                         <div class="col-md-4">
-                            <div class="role-card ${user.userType == 'TRAVELER' ? 'selected' : ''}" 
+                            <div class="role-card ${user.role == 'TRAVELER' ? 'selected' : ''}" 
                                  onclick="selectRole('TRAVELER', this)">
                                 <div class="role-icon traveler">
                                     <i class="fas fa-suitcase-rolling"></i>
@@ -187,7 +187,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="role-card ${user.userType == 'HOST' ? 'selected' : ''}" 
+                            <div class="role-card ${user.role == 'HOST' ? 'selected' : ''}" 
                                  onclick="selectRole('HOST', this)">
                                 <div class="role-icon host">
                                     <i class="fas fa-store"></i>
@@ -199,7 +199,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="role-card ${user.userType == 'ADMIN' ? 'selected' : ''}" 
+                            <div class="role-card ${user.role == 'ADMIN' ? 'selected' : ''}" 
                                  onclick="selectRole('ADMIN', this)">
                                 <div class="role-icon admin">
                                     <i class="fas fa-user-shield"></i>
@@ -212,7 +212,7 @@
                         </div>
                     </div>
 
-                    <input type="hidden" name="newUserType" id="selectedRole" value="${user.userType}">
+                    <input type="hidden" name="newrole" id="selectedRole" value="${user.role}">
 
                     <!-- Permissions Detail -->
                     <div class="mt-5">
@@ -360,7 +360,7 @@
         const contextPath = '${pageContext.request.contextPath}';
         let loadingModal;
         let confirmModal;
-        let currentSelectedRole = '${user.userType}';
+        let currentSelectedRole = '${user.role}';
 
         const rolePermissions = {
             'TRAVELER': [
@@ -468,8 +468,8 @@
             const form = document.getElementById('permissionsForm');
             const formData = new FormData(form);
             
-            const currentRole = formData.get('currentUserType');
-            const newRole = formData.get('newUserType');
+            const currentRole = formData.get('currentrole');
+            const newRole = formData.get('newrole');
             const reason = formData.get('reason').trim();
             
             if (!reason) {
@@ -563,8 +563,8 @@
 
         // Prevent form submission if no changes
         function hasChanges() {
-            const currentRole = document.querySelector('input[name="currentUserType"]').value;
-            const newRole = document.querySelector('input[name="newUserType"]').value;
+            const currentRole = document.querySelector('input[name="currentrole"]').value;
+            const newRole = document.querySelector('input[name="newrole"]').value;
             
             return currentRole !== newRole;
         }
@@ -592,8 +592,8 @@
 
         // Show warning for role downgrade
         function checkRoleDowngrade() {
-            const currentRole = document.querySelector('input[name="currentUserType"]').value;
-            const newRole = document.querySelector('input[name="newUserType"]').value;
+            const currentRole = document.querySelector('input[name="currentrole"]').value;
+            const newRole = document.querySelector('input[name="newrole"]').value;
             
             if (getRoleLevel(newRole) < getRoleLevel(currentRole)) {
                 showAlert('warning', 'Bạn đang giảm cấp quyền của người dùng. Hãy chắc chắn rằng đây là điều bạn muốn làm.');

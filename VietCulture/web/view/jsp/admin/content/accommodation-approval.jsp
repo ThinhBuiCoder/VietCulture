@@ -4,7 +4,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <!-- Security check -->
-<c:if test="${empty sessionScope.user or sessionScope.user.userType ne 'ADMIN'}">
+<c:if test="${empty sessionScope.user or sessionScope.user.role ne 'ADMIN'}">
     <c:redirect url="/login" />
 </c:if>
 

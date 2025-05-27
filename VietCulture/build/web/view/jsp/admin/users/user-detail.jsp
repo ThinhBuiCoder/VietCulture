@@ -139,7 +139,7 @@
                             <div class="mb-3">
                                 <label class="form-label text-muted">Loại tài khoản</label>
                                 <p class="fw-medium">
-                                    <span class="badge bg-info">${user.userType}</span>
+                                    <span class="badge bg-info">${user.role}</span>
                                 </p>
                             </div>
                             <div class="mb-3">
@@ -227,7 +227,7 @@
                 </div>
 
                 <!-- Role Specific Information -->
-                <c:if test="${user.userType == 'HOST' and not empty hostInfo}">
+                <c:if test="${user.role == 'HOST' and not empty hostInfo}">
                     <div class="info-card">
                         <h5 class="card-title mb-3">
                             <i class="fas fa-store me-2 text-primary"></i>Thông tin Host
@@ -262,7 +262,7 @@
                     </div>
                 </c:if>
 
-                <c:if test="${user.userType == 'TRAVELER' and not empty travelerInfo}">
+                <c:if test="${user.role == 'TRAVELER' and not empty travelerInfo}">
                     <div class="info-card">
                         <h5 class="card-title mb-3">
                             <i class="fas fa-suitcase me-2 text-primary"></i>Thông tin Traveler

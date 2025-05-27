@@ -1,5 +1,6 @@
 package model;
 
+import java.security.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,7 +21,13 @@ public class Accommodation {
     private boolean isActive;
     private double averageRating;
     private int totalBookings;
-
+private int reportCount = 0;
+private boolean isDeleted = false;
+private String deleteReason;
+private Timestamp deletedAt;
+private boolean isFlagged = false;
+private String flagReason;
+private String thumbnailImage;
     // Related objects
     private User host; // Updated to User instead of Host
     private City city;
@@ -50,7 +57,77 @@ public class Accommodation {
         this.pricePerNight = pricePerNight;
         this.createdAt = new Date();
     }
+public int getReportCount() {
+    return reportCount;
+}
 
+public void setReportCount(int reportCount) {
+    this.reportCount = reportCount;
+}
+
+public boolean isDeleted() {
+    return isDeleted;
+}
+
+public void setDeleted(boolean deleted) {
+    isDeleted = deleted;
+}
+
+public String getDeleteReason() {
+    return deleteReason;
+}
+
+public void setDeleteReason(String deleteReason) {
+    this.deleteReason = deleteReason;
+}
+
+public Timestamp getDeletedAt() {
+    return deletedAt;
+}
+
+public void setDeletedAt(Timestamp deletedAt) {
+    this.deletedAt = deletedAt;
+}
+
+public boolean isFlagged() {
+    return isFlagged;
+}
+
+public void setFlagged(boolean flagged) {
+    isFlagged = flagged;
+}
+
+public String getFlagReason() {
+    return flagReason;
+}
+
+public void setFlagReason(String flagReason) {
+    this.flagReason = flagReason;
+}
+
+public String getThumbnailImage() {
+    if (thumbnailImage == null && hasImages()) {
+        return getFirstImage();
+    }
+    return thumbnailImage;
+}
+
+public void setThumbnailImage(String thumbnailImage) {
+    this.thumbnailImage = thumbnailImage;
+}
+
+// Helper methods
+public boolean isReported() {
+    return reportCount > 0;
+}
+
+public String getStatusForAdmin() {
+    if (isDeleted) return "Đã xóa";
+    if (isFlagged) return "Bị đánh dấu";
+    if (reportCount > 0) return "Bị báo cáo";
+    if (!isActive) return "Chờ duyệt";
+    return "Hoạt động";
+}
     // Getters and Setters
     public int getAccommodationId() {
         return accommodationId;

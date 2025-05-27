@@ -18,7 +18,12 @@ public class AccommodationDAO {
      */
     public Accommodation getAccommodationById(int accommodationId) throws SQLException {
         String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
@@ -51,11 +56,16 @@ public class AccommodationDAO {
      */
     public List<Accommodation> getPendingAccommodations(int page, int pageSize, String type) throws SQLException {
         StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 0
+            WHERE a.isActive = 0 AND ISNULL(a.is_deleted, 0) = 0
         """);
 
         if (type != null && !type.trim().isEmpty()) {
@@ -80,15 +90,107 @@ public class AccommodationDAO {
     }
 
     /**
+     * Get reported accommodations
+     */
+    public List<Accommodation> getReportedAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE ISNULL(a.report_count, 0) > 0 AND ISNULL(a.is_deleted, 0) = 0
+            ORDER BY a.report_count DESC, a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+
+            return executeAccommodationQuery(ps);
+        }
+    }
+
+    /**
+     * Get flagged accommodations
+     */
+    public List<Accommodation> getFlaggedAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE ISNULL(a.is_flagged, 0) = 1 AND ISNULL(a.is_deleted, 0) = 0
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+
+            return executeAccommodationQuery(ps);
+        }
+    }
+
+    /**
+     * Get deleted accommodations
+     */
+    public List<Accommodation> getDeletedAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE ISNULL(a.is_deleted, 0) = 1
+            ORDER BY a.deleted_at DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, (page - 1) * pageSize);
+            ps.setInt(2, pageSize);
+
+            return executeAccommodationQuery(ps);
+        }
+    }
+
+    /**
      * Get approved accommodations with pagination
      */
     public List<Accommodation> getApprovedAccommodations(int page, int pageSize, String type) throws SQLException {
         StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.isActive = 1 AND ISNULL(a.is_deleted, 0) = 0
         """);
 
         if (type != null && !type.trim().isEmpty()) {
@@ -117,7 +219,12 @@ public class AccommodationDAO {
      */
     public List<Accommodation> getAllAccommodations(int page, int pageSize, String type) throws SQLException {
         StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName
+            SELECT a.*, u.fullName as hostName, c.name as cityName,
+                   ISNULL(a.report_count, 0) as report_count,
+                   ISNULL(a.is_deleted, 0) as is_deleted,
+                   a.delete_reason, a.deleted_at,
+                   ISNULL(a.is_flagged, 0) as is_flagged,
+                   a.flag_reason
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
@@ -146,24 +253,155 @@ public class AccommodationDAO {
     }
 
     /**
-     * Get old pending accommodations
+     * Soft delete accommodation
      */
-    public List<Accommodation> getOldPendingAccommodations(int daysOld) throws SQLException {
+    public boolean softDeleteAccommodation(int accommodationId, String reason) throws SQLException {
         String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 0 AND a.createdAt < DATEADD(DAY, ?, GETDATE())
-            ORDER BY a.createdAt ASC
+            UPDATE Accommodations 
+            SET is_deleted = 1, delete_reason = ?, deleted_at = GETDATE() 
+            WHERE accommodationId = ?
         """;
-
+        
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, -daysOld);
-            return executeAccommodationQuery(ps);
+            
+            ps.setString(1, reason);
+            ps.setInt(2, accommodationId);
+            
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Accommodation soft deleted - ID: " + accommodationId + ", Reason: " + reason);
+            }
+            return rowsAffected > 0;
         }
+    }
+
+    /**
+     * Restore accommodation
+     */
+    public boolean restoreAccommodation(int accommodationId) throws SQLException {
+        String sql = """
+            UPDATE Accommodations 
+            SET is_deleted = 0, delete_reason = NULL, deleted_at = NULL 
+            WHERE accommodationId = ?
+        """;
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, accommodationId);
+            
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Accommodation restored - ID: " + accommodationId);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Flag accommodation
+     */
+    public boolean flagAccommodation(int accommodationId, String reason) throws SQLException {
+        String sql = "UPDATE Accommodations SET is_flagged = 1, flag_reason = ? WHERE accommodationId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, reason);
+            ps.setInt(2, accommodationId);
+            
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Accommodation flagged - ID: " + accommodationId + ", Reason: " + reason);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Unflag accommodation
+     */
+    public boolean unflagAccommodation(int accommodationId) throws SQLException {
+        String sql = "UPDATE Accommodations SET is_flagged = 0, flag_reason = NULL WHERE accommodationId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, accommodationId);
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Accommodation unflagged - ID: " + accommodationId);
+            }
+            return rowsAffected > 0;
+        }
+    }
+
+    /**
+     * Update report count
+     */
+    public boolean updateReportCount(int accommodationId, int reportCount) throws SQLException {
+        String sql = "UPDATE Accommodations SET report_count = ? WHERE accommodationId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, reportCount);
+            ps.setInt(2, accommodationId);
+            
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Get reported accommodations count
+     */
+    public int getReportedAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE ISNULL(report_count, 0) > 0 AND ISNULL(is_deleted, 0) = 0";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get flagged accommodations count
+     */
+    public int getFlaggedAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE ISNULL(is_flagged, 0) = 1 AND ISNULL(is_deleted, 0) = 0";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get deleted accommodations count
+     */
+    public int getDeletedAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE ISNULL(is_deleted, 0) = 1";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
     }
 
     /**
@@ -196,7 +434,7 @@ public class AccommodationDAO {
             ps.setInt(1, accommodationId);
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
-                LOGGER.info("Accommodation deleted - ID: " + accommodationId);
+                LOGGER.info("Accommodation permanently deleted - ID: " + accommodationId);
             }
             return rowsAffected > 0;
         }
@@ -297,7 +535,7 @@ public class AccommodationDAO {
      * Get pending accommodations count with type filter
      */
     public int getPendingAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 0");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 0 AND ISNULL(is_deleted, 0) = 0");
 
         if (type != null && !type.trim().isEmpty()) {
             sql.append(" AND type = ?");
@@ -330,7 +568,7 @@ public class AccommodationDAO {
      * Get approved accommodations count with type filter
      */
     public int getApprovedAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 1");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 1 AND ISNULL(is_deleted, 0) = 0");
 
         if (type != null && !type.trim().isEmpty()) {
             sql.append(" AND type = ?");
@@ -389,7 +627,7 @@ public class AccommodationDAO {
      * Get active accommodations count
      */
     public int getActiveAccommodationsCount() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 1";
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 1 AND ISNULL(is_deleted, 0) = 0";
 
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -412,7 +650,7 @@ public class AccommodationDAO {
             FROM Accommodations a
             JOIN Cities c ON a.cityId = c.cityId
             JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.isActive = 1 AND ISNULL(a.is_deleted, 0) = 0
             GROUP BY r.name
         """;
 
@@ -546,10 +784,37 @@ public class AccommodationDAO {
         accommodation.setAverageRating(rs.getDouble("averageRating"));
         accommodation.setTotalBookings(rs.getInt("totalBookings"));
 
+        // Thêm các field mới cho content management
+        try {
+            accommodation.setReportCount(rs.getInt("report_count"));
+            accommodation.setDeleted(rs.getBoolean("is_deleted"));
+            accommodation.setDeleteReason(rs.getString("delete_reason"));
+            accommodation.setFlagged(rs.getBoolean("is_flagged"));
+            accommodation.setFlagReason(rs.getString("flag_reason"));
+        } catch (SQLException e) {
+            // Các field này có thể không tồn tại trong một số query
+            // Set default values
+            accommodation.setReportCount(0);
+            accommodation.setDeleted(false);
+            accommodation.setFlagged(false);
+        }
+
         // Set additional fields from joins
-        accommodation.setHostName(rs.getString("hostName"));
-        accommodation.setCityName(rs.getString("cityName"));
+        try {
+            accommodation.setHostName(rs.getString("hostName"));
+            accommodation.setCityName(rs.getString("cityName"));
+        } catch (SQLException e) {
+            // These fields might not be available in all queries
+        }
 
         return accommodation;
+    }
+
+    public List<Accommodation> getApprovedAccommodations(int page, int pageSize) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public boolean rejectAccommodation(int contentId, String reason) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

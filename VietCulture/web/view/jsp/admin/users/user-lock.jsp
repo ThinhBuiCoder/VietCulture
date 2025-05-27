@@ -159,7 +159,7 @@
                         <div class="col-md-6">
                             <p><strong>Email:</strong> ${user.email}</p>
                             <p><strong>Loại tài khoản:</strong> 
-                                <span class="badge bg-info">${user.userType}</span>
+                                <span class="badge bg-info">${user.role}</span>
                             </p>
                         </div>
                         <div class="col-md-6">

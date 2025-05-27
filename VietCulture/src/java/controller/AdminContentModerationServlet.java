@@ -1,5 +1,6 @@
 package controller;
 
+import dao.ExperienceDAO;
 import dao.*;
 import model.*;
 import jakarta.servlet.ServletException;
@@ -20,9 +21,8 @@ import java.util.logging.Logger;
     "/admin/content/moderation",
     "/admin/content/moderation/*",
     "/admin/content/moderate",
-    "/admin/content/approve",
-    "/admin/content/delete",
     "/admin/content/flag"
+    // BỎ 2 dòng accommodation approval
 })
 public class AdminContentModerationServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AdminContentModerationServlet.class.getName());
@@ -35,11 +35,17 @@ public class AdminContentModerationServlet extends HttpServlet {
 
     @Override
     public void init() throws ServletException {
-        experienceDAO = new ExperienceDAO();
-        accommodationDAO = new AccommodationDAO();
-        userDAO = new UserDAO();
-        reviewDAO = new ReviewDAO();
-        gson = new Gson();
+        try {
+            experienceDAO = new ExperienceDAO();
+            accommodationDAO = new AccommodationDAO();
+            userDAO = new UserDAO();
+            reviewDAO = new ReviewDAO();
+            gson = new Gson();
+            LOGGER.info("AdminContentModerationServlet initialized successfully");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize AdminContentModerationServlet", e);
+            throw new ServletException("Initialization failed", e);
+        }
     }
 
     @Override
@@ -56,6 +62,10 @@ public class AdminContentModerationServlet extends HttpServlet {
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 handleModerationOverview(request, response);
+            } else if (pathInfo.matches("/\\d+")) {
+                // View specific content detail
+                int contentId = Integer.parseInt(pathInfo.substring(1));
+                handleContentDetail(request, response, contentId);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -63,6 +73,9 @@ public class AdminContentModerationServlet extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Error in content moderation", e);
             request.setAttribute("error", "Có lỗi xảy ra khi tải dữ liệu kiểm duyệt.");
             request.getRequestDispatcher("/view/jsp/admin/content/moderation-overview.jsp").forward(request, response);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid content ID format", e);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID không hợp lệ");
         }
     }
 
@@ -82,12 +95,6 @@ public class AdminContentModerationServlet extends HttpServlet {
                 case "/admin/content/moderate":
                     handleModerateContent(request, response);
                     break;
-                case "/admin/content/approve":
-                    handleApproveContent(request, response);
-                    break;
-                case "/admin/content/delete":
-                    handleDeleteContent(request, response);
-                    break;
                 case "/admin/content/flag":
                     handleFlagContent(request, response);
                     break;
@@ -100,29 +107,106 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handle moderation overview display
+     */
     private void handleModerationOverview(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
+        // Get filter parameters
+        String priority = request.getParameter("priority"); // HIGH, MEDIUM, LOW
+        String type = request.getParameter("type"); // experience, accommodation, review
+        String status = request.getParameter("status"); // pending, flagged, approved
+        int page = getPageFromRequest(request);
+        int pageSize = 20;
+
+        // Get moderation statistics
         Map<String, Object> stats = getModerationStatistics();
         stats.forEach(request::setAttribute);
 
-        List<ModerationItem> moderationQueue = getModerationQueue();
+        // Get moderation queue based on filters
+        List<ModerationItem> moderationQueue = getModerationQueue(priority, type, status, page, pageSize);
         request.setAttribute("moderationQueue", moderationQueue);
 
-        String priority = request.getParameter("priority");
-        String type = request.getParameter("type");
+        // Get total count for pagination
+        int totalCount = getModerationQueueCount(priority, type, status);
+        int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+
+        // Set pagination attributes
+        request.setAttribute("currentPage", page);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalCount", totalCount);
+
+        // Set current filter values
         request.setAttribute("currentPriority", priority);
         request.setAttribute("currentType", type);
+        request.setAttribute("currentStatus", status);
 
+        // Get recent moderation activities
+        List<ModerationActivity> recentActivities = getRecentModerationActivities(10);
+        request.setAttribute("recentActivities", recentActivities);
+
+        // Forward to JSP
         request.getRequestDispatcher("/view/jsp/admin/content/moderation-overview.jsp").forward(request, response);
     }
 
+    /**
+     * Handle content detail view
+     */
+    private void handleContentDetail(HttpServletRequest request, HttpServletResponse response, int contentId)
+            throws SQLException, ServletException, IOException {
+
+        String contentType = request.getParameter("type");
+        if (contentType == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Content type is required");
+            return;
+        }
+
+        Object content = null;
+        switch (contentType.toLowerCase()) {
+            case "experience":
+                content = experienceDAO.getExperienceById(contentId);
+                break;
+            case "accommodation":
+                content = accommodationDAO.getAccommodationById(contentId);
+                break;
+            case "review":
+                content = reviewDAO.getReviewById(contentId);
+                break;
+            default:
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid content type");
+                return;
+        }
+
+        if (content == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Content not found");
+            return;
+        }
+
+        // Get content history and flags
+        List<ModerationHistory> history = getModerationHistory(contentType, contentId);
+        List<ContentFlag> flags = getContentFlags(contentType, contentId);
+
+        request.setAttribute("content", content);
+        request.setAttribute("contentType", contentType);
+        request.setAttribute("contentId", contentId);
+        request.setAttribute("moderationHistory", history);
+        request.setAttribute("contentFlags", flags);
+
+        request.getRequestDispatcher("/view/jsp/admin/content/content-detail.jsp").forward(request, response);
+    }
+
+    /**
+     * Handle moderate content action
+     */
     private void handleModerateContent(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
 
         String action = request.getParameter("action");
         String contentType = request.getParameter("contentType");
         String contentIdStr = request.getParameter("contentId");
+        String reason = request.getParameter("reason");
+        String notes = request.getParameter("notes");
 
         if (action == null || contentType == null || contentIdStr == null) {
             sendJsonResponse(response, false, "Thiếu thông tin cần thiết", null);
@@ -132,13 +216,28 @@ public class AdminContentModerationServlet extends HttpServlet {
         try {
             int contentId = Integer.parseInt(contentIdStr);
             boolean success = false;
+            String message = "";
 
-            switch (action) {
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            int adminId = admin != null ? admin.getUserId() : 0;
+
+            switch (action.toLowerCase()) {
                 case "approve":
                     success = approveContent(contentType, contentId);
+                    message = success ? "Đã duyệt nội dung thành công!" : "Có lỗi xảy ra khi duyệt nội dung";
                     break;
-                case "delete":
-                    success = deleteContent(contentType, contentId);
+                case "reject":
+                    success = rejectContent(contentType, contentId, reason);
+                    message = success ? "Đã từ chối nội dung!" : "Có lỗi xảy ra khi từ chối nội dung";
+                    break;
+                case "flag":
+                    success = flagContent(contentType, contentId, reason);
+                    message = success ? "Đã đánh dấu nội dung vi phạm!" : "Có lỗi xảy ra khi đánh dấu";
+                    break;
+                case "unflag":
+                    success = unflagContent(contentType, contentId);
+                    message = success ? "Đã bỏ đánh dấu vi phạm!" : "Có lỗi xảy ra khi bỏ đánh dấu";
                     break;
                 default:
                     sendJsonResponse(response, false, "Hành động không hợp lệ", null);
@@ -146,127 +245,250 @@ public class AdminContentModerationServlet extends HttpServlet {
             }
 
             if (success) {
-                sendJsonResponse(response, true, "Đã xử lý thành công!", null);
-            } else {
-                sendJsonResponse(response, false, "Có lỗi xảy ra khi xử lý", null);
+                // Log moderation activity
+                logModerationActivity(adminId, contentType, contentId, action, reason, notes);
+                
+                LOGGER.info(String.format("Admin %d performed %s on %s ID %d", 
+                    adminId, action, contentType, contentId));
             }
+
+            sendJsonResponse(response, success, message, null);
 
         } catch (NumberFormatException e) {
             sendJsonResponse(response, false, "ID nội dung không hợp lệ", null);
         }
     }
 
-    private void handleApproveContent(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException {
-
-        String contentType = request.getParameter("type");
-        String contentIdStr = request.getParameter("id");
-
-        try {
-            int contentId = Integer.parseInt(contentIdStr);
-            boolean success = approveContent(contentType, contentId);
-
-            if (success) {
-                sendJsonResponse(response, true, "Đã duyệt nội dung thành công!", null);
-            } else {
-                sendJsonResponse(response, false, "Có lỗi xảy ra khi duyệt nội dung", null);
-            }
-        } catch (NumberFormatException e) {
-            sendJsonResponse(response, false, "ID không hợp lệ", null);
-        }
-    }
-
-    private void handleDeleteContent(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException {
-
-        String contentType = request.getParameter("type");
-        String contentIdStr = request.getParameter("id");
-
-        try {
-            int contentId = Integer.parseInt(contentIdStr);
-            boolean success = deleteContent(contentType, contentId);
-
-            if (success) {
-                sendJsonResponse(response, true, "Đã xóa nội dung!", null);
-            } else {
-                sendJsonResponse(response, false, "Có lỗi xảy ra khi xóa nội dung", null);
-            }
-        } catch (NumberFormatException e) {
-            sendJsonResponse(response, false, "ID không hợp lệ", null);
-        }
-    }
-
+    /**
+     * Handle flag content action
+     */
     private void handleFlagContent(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
 
         String contentType = request.getParameter("type");
         String contentIdStr = request.getParameter("id");
+        String reason = request.getParameter("reason");
+        String severity = request.getParameter("severity"); // LOW, MEDIUM, HIGH
+
+        if (contentType == null || contentIdStr == null || reason == null) {
+            sendJsonResponse(response, false, "Thiếu thông tin cần thiết", null);
+            return;
+        }
 
         try {
             int contentId = Integer.parseInt(contentIdStr);
-            boolean success = flagContent(contentType, contentId);
+            
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            int adminId = admin != null ? admin.getUserId() : 0;
+
+            boolean success = createContentFlag(contentType, contentId, reason, severity, adminId);
 
             if (success) {
-                sendJsonResponse(response, true, "Đã đánh dấu nội dung!", null);
+                logModerationActivity(adminId, contentType, contentId, "flag", reason, null);
+                sendJsonResponse(response, true, "Đã đánh dấu nội dung vi phạm!", null);
             } else {
-                sendJsonResponse(response, false, "Có lỗi xảy ra khi đánh dấu", null);
+                sendJsonResponse(response, false, "Có lỗi xảy ra khi đánh dấu nội dung", null);
             }
+
         } catch (NumberFormatException e) {
             sendJsonResponse(response, false, "ID không hợp lệ", null);
         }
     }
 
+    /**
+     * Get moderation statistics
+     */
     private Map<String, Object> getModerationStatistics() throws SQLException {
         Map<String, Object> stats = new HashMap<>();
-        int pendingExperiences = experienceDAO.getPendingExperiencesCount();
-        int pendingAccommodations = accommodationDAO.getPendingAccommodationsCount();
-        int pendingModerationCount = pendingExperiences + pendingAccommodations;
-        stats.put("pendingModerationCount", pendingModerationCount);
-        stats.put("pendingExperiences", pendingExperiences);
-        stats.put("pendingAccommodations", pendingAccommodations);
+        
+        try {
+            // Experience statistics
+            int pendingExperiences = experienceDAO.getPendingExperiencesCount();
+            int flaggedExperiences = experienceDAO.getFlaggedExperiencesCount();
+            int approvedExperiences = experienceDAO.getApprovedExperiencesCount();
+
+            // Accommodation statistics
+            int pendingAccommodations = accommodationDAO.getPendingAccommodationsCount();
+            int flaggedAccommodations = accommodationDAO.getFlaggedAccommodationsCount();
+            int approvedAccommodations = accommodationDAO.getApprovedAccommodationsCount();
+
+            // Review statistics (if available)
+            int pendingReviews = 0;
+            int flaggedReviews = 0;
+            if (reviewDAO != null) {
+                pendingReviews = reviewDAO.getPendingReviewsCount();
+                flaggedReviews = reviewDAO.getFlaggedReviewsCount();
+            }
+
+            // Total counts
+            int totalPending = pendingExperiences + pendingAccommodations + pendingReviews;
+            int totalFlagged = flaggedExperiences + flaggedAccommodations + flaggedReviews;
+            int totalApproved = approvedExperiences + approvedAccommodations;
+
+            // Set statistics
+            stats.put("pendingModerationCount", totalPending);
+            stats.put("flaggedContentCount", totalFlagged);
+            stats.put("approvedContentCount", totalApproved);
+            
+            stats.put("pendingExperiences", pendingExperiences);
+            stats.put("pendingAccommodations", pendingAccommodations);
+            stats.put("pendingReviews", pendingReviews);
+            
+            stats.put("flaggedExperiences", flaggedExperiences);
+            stats.put("flaggedAccommodations", flaggedAccommodations);
+            stats.put("flaggedReviews", flaggedReviews);
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting moderation statistics", e);
+            // Set default values
+            stats.put("pendingModerationCount", 0);
+            stats.put("flaggedContentCount", 0);
+            stats.put("approvedContentCount", 0);
+        }
+
         return stats;
     }
 
-    private List<ModerationItem> getModerationQueue() throws SQLException {
+    /**
+     * Get moderation queue with filters
+     */
+    private List<ModerationItem> getModerationQueue(String priority, String type, String status, int page, int pageSize) 
+            throws SQLException {
         List<ModerationItem> queue = new ArrayList<>();
-        List<Experience> pendingExperiences = experienceDAO.getPendingExperiences(1, 10);
-        List<Accommodation> pendingAccommodations = accommodationDAO.getPendingAccommodations(1, 10);
 
-        for (Experience exp : pendingExperiences) {
-            User host = userDAO.getUserById(exp.getHostId());
-            queue.add(new ModerationItem(
-                exp.getExperienceId(),
-                "experience",
-                exp.getTitle(),
-                exp.getDescription().length() > 50 ? exp.getDescription().substring(0, 50) + "..." : exp.getDescription(),
-                host != null ? host.getFullName() : "Unknown",
-                exp.getCreatedAt(),
-                "MEDIUM",
-                new ArrayList<>(),
-                false,
-                0
-            ));
-        }
+        try {
+            // Get experiences
+            if (type == null || "experience".equals(type)) {
+                List<Experience> experiences = getFilteredExperiences(status, page, pageSize);
+                for (Experience exp : experiences) {
+                    User host = userDAO.getUserById(exp.getHostId());
+                    queue.add(new ModerationItem(
+                        exp.getExperienceId(),
+                        "experience",
+                        exp.getTitle(),
+                        truncateText(exp.getDescription(), 100),
+                        host != null ? host.getFullName() : "Unknown",
+                        exp.getCreatedAt(),
+                        determinePriority(exp),
+                        getViolations(exp),
+                        false, // AI detection placeholder
+                        0      // AI confidence placeholder
+                    ));
+                }
+            }
 
-        for (Accommodation acc : pendingAccommodations) {
-            User host = userDAO.getUserById(acc.getHostId());
-            queue.add(new ModerationItem(
-                acc.getAccommodationId(),
-                "accommodation",
-                acc.getName(),
-                acc.getDescription().length() > 50 ? acc.getDescription().substring(0, 50) + "..." : acc.getDescription(),
-                host != null ? host.getFullName() : "Unknown",
-                acc.getCreatedAt(),
-                "MEDIUM",
-                new ArrayList<>(),
-                false,
-                0
-            ));
+            // Get accommodations
+            if (type == null || "accommodation".equals(type)) {
+                List<Accommodation> accommodations = getFilteredAccommodations(status, page, pageSize);
+                for (Accommodation acc : accommodations) {
+                    User host = userDAO.getUserById(acc.getHostId());
+                    queue.add(new ModerationItem(
+                        acc.getAccommodationId(),
+                        "accommodation",
+                        acc.getName(),
+                        truncateText(acc.getDescription(), 100),
+                        host != null ? host.getFullName() : "Unknown",
+                        acc.getCreatedAt(),
+                        determinePriority(acc),
+                        getViolations(acc),
+                        false, // AI detection placeholder
+                        0      // AI confidence placeholder
+                    ));
+                }
+            }
+
+            // Sort by priority and date
+            queue.sort((a, b) -> {
+                int priorityCompare = getPriorityWeight(b.getPriority()) - getPriorityWeight(a.getPriority());
+                if (priorityCompare != 0) return priorityCompare;
+                return b.getCreatedAt().compareTo(a.getCreatedAt());
+            });
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting moderation queue", e);
+            throw e;
         }
 
         return queue;
     }
 
+    /**
+     * Get moderation queue count for pagination
+     */
+    private int getModerationQueueCount(String priority, String type, String status) throws SQLException {
+        int count = 0;
+        
+        try {
+            if (type == null || "experience".equals(type)) {
+                count += getFilteredExperiencesCount(status);
+            }
+            if (type == null || "accommodation".equals(type)) {
+                count += getFilteredAccommodationsCount(status);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting moderation queue count", e);
+        }
+        
+        return count;
+    }
+
+    /**
+     * Get filtered experiences based on status
+     */
+    private List<Experience> getFilteredExperiences(String status, int page, int pageSize) throws SQLException {
+        switch (status != null ? status : "pending") {
+            case "flagged":
+                return experienceDAO.getFlaggedExperiences(page, pageSize);
+            case "approved":
+                return experienceDAO.getApprovedExperiences(page, pageSize);
+            default:
+                return experienceDAO.getPendingExperiences(page, pageSize);
+        }
+    }
+
+    /**
+     * Get filtered accommodations based on status
+     */
+    private List<Accommodation> getFilteredAccommodations(String status, int page, int pageSize) throws SQLException {
+        switch (status != null ? status : "pending") {
+            case "flagged":
+                return accommodationDAO.getFlaggedAccommodations(page, pageSize);
+            case "approved":
+                return accommodationDAO.getApprovedAccommodations(page, pageSize);
+            default:
+                return accommodationDAO.getPendingAccommodations(page, pageSize);
+        }
+    }
+
+    /**
+     * Get filtered count methods
+     */
+    private int getFilteredExperiencesCount(String status) throws SQLException {
+        switch (status != null ? status : "pending") {
+            case "flagged":
+                return experienceDAO.getFlaggedExperiencesCount();
+            case "approved":
+                return experienceDAO.getApprovedExperiencesCount();
+            default:
+                return experienceDAO.getPendingExperiencesCount();
+        }
+    }
+
+    private int getFilteredAccommodationsCount(String status) throws SQLException {
+        switch (status != null ? status : "pending") {
+            case "flagged":
+                return accommodationDAO.getFlaggedAccommodationsCount();
+            case "approved":
+                return accommodationDAO.getApprovedAccommodationsCount();
+            default:
+                return accommodationDAO.getPendingAccommodationsCount();
+        }
+    }
+
+    /**
+     * Content moderation actions
+     */
     private boolean approveContent(String contentType, int contentId) throws SQLException {
         switch (contentType.toLowerCase()) {
             case "experience":
@@ -278,20 +500,99 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
     }
 
-    private boolean deleteContent(String contentType, int contentId) throws SQLException {
+    private boolean rejectContent(String contentType, int contentId, String reason) throws SQLException {
         switch (contentType.toLowerCase()) {
             case "experience":
-                return experienceDAO.deleteExperience(contentId);
+                return experienceDAO.rejectExperience(contentId, reason);
             case "accommodation":
-                return accommodationDAO.deleteAccommodation(contentId);
+                return accommodationDAO.rejectAccommodation(contentId, reason);
             default:
                 return false;
         }
     }
 
-    private boolean flagContent(String contentType, int contentId) throws SQLException {
-        // Placeholder - implement with a FlaggedContent table
+    private boolean flagContent(String contentType, int contentId, String reason) throws SQLException {
+        switch (contentType.toLowerCase()) {
+            case "experience":
+                return experienceDAO.flagExperience(contentId, reason);
+            case "accommodation":
+                return accommodationDAO.flagAccommodation(contentId, reason);
+            default:
+                return false;
+        }
+    }
+
+    private boolean unflagContent(String contentType, int contentId) throws SQLException {
+        switch (contentType.toLowerCase()) {
+            case "experience":
+                return experienceDAO.unflagExperience(contentId);
+            case "accommodation":
+                return accommodationDAO.unflagAccommodation(contentId);
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Helper methods
+     */
+    private int getPageFromRequest(HttpServletRequest request) {
+        try {
+            String pageStr = request.getParameter("page");
+            return pageStr != null ? Math.max(1, Integer.parseInt(pageStr)) : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    private String truncateText(String text, int maxLength) {
+        if (text == null) return "";
+        return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
+    }
+
+    private String determinePriority(Object content) {
+        // Simple priority logic - can be enhanced
+        return "MEDIUM";
+    }
+
+    private List<String> getViolations(Object content) {
+        // Placeholder for violation detection
+        return new ArrayList<>();
+    }
+
+    private int getPriorityWeight(String priority) {
+        switch (priority) {
+            case "HIGH": return 3;
+            case "MEDIUM": return 2;
+            case "LOW": return 1;
+            default: return 0;
+        }
+    }
+
+    private List<ModerationActivity> getRecentModerationActivities(int limit) {
+        // Placeholder - implement with database
+        return new ArrayList<>();
+    }
+
+    private List<ModerationHistory> getModerationHistory(String contentType, int contentId) {
+        // Placeholder - implement with database
+        return new ArrayList<>();
+    }
+
+    private List<ContentFlag> getContentFlags(String contentType, int contentId) {
+        // Placeholder - implement with database
+        return new ArrayList<>();
+    }
+
+    private boolean createContentFlag(String contentType, int contentId, String reason, String severity, int adminId) {
+        // Placeholder - implement with database
         return true;
+    }
+
+    private void logModerationActivity(int adminId, String contentType, int contentId, String action, String reason, String notes) {
+        // Placeholder - implement with database logging
+        LOGGER.info(String.format("Moderation activity logged: Admin %d, %s %d, Action: %s", 
+            adminId, contentType, contentId, action));
     }
 
     private boolean isAdminAuthenticated(HttpServletRequest request) {
@@ -299,7 +600,7 @@ public class AdminContentModerationServlet extends HttpServlet {
         if (session == null) return false;
 
         User user = (User) session.getAttribute("user");
-        return user != null && "ADMIN".equals(user.getRole()); // Updated to role
+        return user != null && "ADMIN".equals(user.getRole());
     }
 
     private void sendJsonResponse(HttpServletResponse response, boolean success, String message, Object data) {
@@ -321,6 +622,9 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Moderation item class
+     */
     public static class ModerationItem {
         private int contentId;
         private String contentType;
@@ -359,5 +663,107 @@ public class AdminContentModerationServlet extends HttpServlet {
         public List<String> getViolations() { return violations; }
         public boolean isAiDetected() { return aiDetected; }
         public int getAiConfidence() { return aiConfidence; }
+    }
+
+    /**
+     * Supporting classes for moderation system
+     */
+    public static class ModerationActivity {
+        private int activityId;
+        private int adminId;
+        private String adminName;
+        private String contentType;
+        private int contentId;
+        private String action;
+        private String reason;
+        private Date timestamp;
+
+        // Constructor and getters
+        public ModerationActivity(int activityId, int adminId, String adminName, String contentType,
+                                int contentId, String action, String reason, Date timestamp) {
+            this.activityId = activityId;
+            this.adminId = adminId;
+            this.adminName = adminName;
+            this.contentType = contentType;
+            this.contentId = contentId;
+            this.action = action;
+            this.reason = reason;
+            this.timestamp = timestamp;
+        }
+
+        // Getters
+        public int getActivityId() { return activityId; }
+        public int getAdminId() { return adminId; }
+        public String getAdminName() { return adminName; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getAction() { return action; }
+        public String getReason() { return reason; }
+        public Date getTimestamp() { return timestamp; }
+    }
+
+    public static class ModerationHistory {
+        private int historyId;
+        private String contentType;
+        private int contentId;
+        private String action;
+        private String reason;
+        private String adminName;
+        private Date timestamp;
+
+        // Constructor and getters
+        public ModerationHistory(int historyId, String contentType, int contentId, String action,
+                               String reason, String adminName, Date timestamp) {
+            this.historyId = historyId;
+            this.contentType = contentType;
+            this.contentId = contentId;
+            this.action = action;
+            this.reason = reason;
+            this.adminName = adminName;
+            this.timestamp = timestamp;
+        }
+
+        // Getters
+        public int getHistoryId() { return historyId; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getAction() { return action; }
+        public String getReason() { return reason; }
+        public String getAdminName() { return adminName; }
+        public Date getTimestamp() { return timestamp; }
+    }
+
+    public static class ContentFlag {
+        private int flagId;
+        private String contentType;
+        private int contentId;
+        private String reason;
+        private String severity;
+        private String reporterName;
+        private Date reportedAt;
+        private boolean resolved;
+
+        // Constructor and getters
+        public ContentFlag(int flagId, String contentType, int contentId, String reason,
+                         String severity, String reporterName, Date reportedAt, boolean resolved) {
+            this.flagId = flagId;
+            this.contentType = contentType;
+            this.contentId = contentId;
+            this.reason = reason;
+            this.severity = severity;
+            this.reporterName = reporterName;
+            this.reportedAt = reportedAt;
+            this.resolved = resolved;
+        }
+
+        // Getters
+        public int getFlagId() { return flagId; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getReason() { return reason; }
+        public String getSeverity() { return severity; }
+        public String getReporterName() { return reporterName; }
+        public Date getReportedAt() { return reportedAt; }
+        public boolean isResolved() { return resolved; }
     }
 }
