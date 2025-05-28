@@ -438,7 +438,7 @@
     <div class="register-container">
         <div class="register-header">
             <h2>
-                <img src="${pageContext.request.contextPath}/view/assets/home/img/logo.jpg" alt="VietCulture Logo" class="brand-logo">
+                <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="VietCulture Logo" class="brand-logo">
                 VietCulture
             </h2>
             <p>Tham gia cộng đồng du lịch ngay hôm nay!</p>

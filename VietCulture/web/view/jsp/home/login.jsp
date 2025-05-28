@@ -388,7 +388,7 @@
     <div class="login-container">
         <div class="login-header">
             <h2>
-                <img src="${pageContext.request.contextPath}/view/assets/home/img/logo.jpg" alt="VietCulture Logo" class="brand-logo">
+                <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="VietCulture Logo" class="brand-logo">
                 VietCulture
             </h2>
             <p>Chào mừng bạn trở lại!</p>
@@ -520,7 +520,7 @@
                 
                 <div class="form-floating position-relative">
                     <i class="fas fa-lock input-icon"></i>
-                    <input type="password" class="form-control" name="password" id="password" placeholder="Mật khẩu" required minlength="8">
+                    <input type="password" class="form-control" name="password" id="password" placeholder="Mật khẩu" required minlength="6">
                     <label for="password">Mật khẩu</label>
                 </div>
                 
@@ -571,8 +571,8 @@
                     return;
                 }
                 
-                if (password.length < 8) {
-                    showNotification('Mật khẩu phải có ít nhất 8 ký tự', 'error');
+                if (password.length < 6) {
+                    showNotification('Mật khẩu phải có ít nhất 6 ký tự', 'error');
                     return;
                 }
                 

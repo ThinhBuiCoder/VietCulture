@@ -6,6 +6,7 @@
             <file>file:/D:/Project/Project/VietCulture/src/java/model/Report.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminContentDeleteServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/BookingDAO.java</file>
+            <file>file:/D:/Project/Project/VietCulture/src/java/controller/MainServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/login.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/users/user-lock.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/GoogleOAuthServlet.java</file>
@@ -38,7 +39,6 @@
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminDashboardServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/LoginServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/RegionDAO.java</file>
-            <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/includes/admin-sidebar.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/moderation-overview.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/Accommodation.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/utils/DBUtils.java</file>
@@ -56,6 +56,7 @@
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminContentModerationServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminStatisticsServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/RegisterServlet.java</file>
+            <file>file:/D:/Project/Project/VietCulture/web/view/jsp/error/404.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/ExperienceDAO.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/experience-approval.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/content-delete.jsp</file>

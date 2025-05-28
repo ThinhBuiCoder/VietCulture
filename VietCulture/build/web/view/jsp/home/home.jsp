@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -59,9 +61,12 @@
     color: #10466C ;
 }
 .navbar-brand img {
-    height: 80px;
-    margin-right: 12px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    height: 50px !important;
+    width: auto !important;
+    margin-right: 12px !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)) !important;
+    object-fit: contain !important;
+    display: inline-block !important;
 }
         :root {
             --primary-color: #FF385C;
@@ -163,11 +168,7 @@
     text-decoration: none;
 }
 
-      .navbar-brand img {
-    height: 50px;
-    margin-right: 12px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
+
 
         .nav-center {
             display: flex;
@@ -1012,10 +1013,10 @@
       <%-- Navigation (modified to work with servlet-based authentication) --%>
     <nav class="custom-navbar">
         <div class="container">
-           <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-            <img src="${pageContext.request.contextPath}/view/assets/home/img/logo.jpg" alt="VietCulture Logo">
-            <span>VIETCULTURE</span>
-        </a>
+         <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="VietCulture Logo">
+    <span>VIETCULTURE</span>
+</a>
 
  <div class="nav-center">
     <a href="#home" class="nav-center-item">
@@ -1297,387 +1298,7 @@
     </section>
 
     <!-- Main Content Tabs -->
-    <section class="py-5" id="main-content">
-        <div class="container">
-            <div class="tabs-section">
-                <ul class="nav nav-tabs" id="contentTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="experiences-tab" data-bs-toggle="tab" data-bs-target="#experiences-tab-pane" type="button" role="tab" aria-controls="experiences-tab-pane" aria-selected="true">
-                            <i class="ri-compass-3-line me-2"></i>Trải Nghiệm
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="accommodations-tab" data-bs-toggle="tab" data-bs-target="#accommodations-tab-pane" type="button" role="tab" aria-controls="accommodations-tab-pane" aria-selected="false">
-                            <i class="ri-hotel-line me-2"></i>Lưu Trú
-                        </button>
-                    </li>
-                </ul>
-                
-                <div class="tab-content" id="contentTabsContent">
-                    <!-- Experiences Tab -->
-                    <div class="tab-pane fade show active" id="experiences-tab-pane" role="tabpanel" aria-labelledby="experiences-tab" tabindex="0">
-                        <h2 class="fade-up" id="experiences">Khám Phá Trải Nghiệm</h2>
-                        
-                        <!-- Search Container for Experiences -->
-                        <div class="search-container fade-up">
-                            <form class="search-form" id="experience-search" action="${pageContext.request.contextPath}/experiences/search" method="GET">
-                                <div class="form-group">
-                                    <label for="regionSelect">Miền</label>
-                                    <select class="form-control" id="regionSelect" name="regionId">
-                                        <option value="">Chọn Miền</option>
-                                        <c:forEach var="region" items="${regions}">
-                                            <option value="${region.regionId}">${region.vietnameseName}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="citySelect">Thành Phố</label>
-                                    <select class="form-control" id="citySelect" name="cityId" disabled>
-                                        <option value="">Chọn Thành Phố</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="categorySelect">Danh Mục</label>
-                                    <select class="form-control" id="categorySelect" name="categoryId">
-                                        <option value="">Tất Cả</option>
-                                        <c:forEach var="category" items="${categories}">
-                                            <option value="${category.categoryId}">
-                                                <c:choose>
-                                                    <c:when test="${category.name == 'Food'}">Ẩm Thực</c:when>
-                                                    <c:when test="${category.name == 'Culture'}">Văn Hóa</c:when>
-                                                    <c:when test="${category.name == 'Adventure'}">Phiêu Lưu</c:when>
-                                                    <c:when test="${category.name == 'History'}">Lịch Sử</c:when>
-                                                    <c:otherwise>${category.name}</c:otherwise>
-                                                </c:choose>
-                                            </option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="guests">Số Khách</label>
-                                    <div class="input-group">
-                                        <button type="button" class="btn" onclick="decreaseGuests()">-</button>
-                                        <input type="text" class="form-control text-center" id="guests" name="guests" value="1" readonly>
-                                        <button type="button" class="btn" onclick="increaseGuests()">+</button>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="ri-search-line"></i> Tìm Kiếm Trải Nghiệm
-                                </button>
-                            </form>
-                        </div>
 
-                        <!-- Experiences Grid -->
-                        <div class="cards-grid" id="experiences-grid">
-                            <c:forEach var="experience" items="${experiences}">
-                                <div class="card-item stagger-item experience-card" data-region="${experience.city.region.name}" data-city="${experience.city.name}" data-category="${experience.type}">
-                                    <div class="card-image">
-                                        <c:choose>
-                                            <c:when test="${not empty experience.images}">
-                                                <c:set var="firstImage" value="${fn:split(experience.images, ',')[0]}" />
-                                                <img src="${pageContext.request.contextPath}/assets/images/experiences/${firstImage}" alt="${experience.title}">
-                                            </c:when>
-                                            <c:otherwise>
-                                                <img src="https://cdn.pixabay.com/photo/2017/02/01/10/00/vietnam-2029597_1280.jpg" alt="${experience.title}">
-                                            </c:otherwise>
-                                        </c:choose>
-                                        <div class="card-badge">${experience.type}</div>
-                                        <div class="difficulty-badge">${experience.difficulty}</div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h5>${experience.title}</h5>
-                                        <div class="location">
-                                            <i class="ri-map-pin-line"></i>
-                                            <span>${experience.location}, ${experience.city.vietnameseName}</span>
-                                        </div>
-                                        <p>${experience.description}</p>
-                                        
-                                        <div class="info-row">
-                                            <span><i class="ri-time-line"></i> ${experience.duration}</span>
-                                            <span><i class="ri-user-line"></i> Tối đa ${experience.maxGroupSize} người</span>
-                                        </div>
-                                        <div class="info-row">
-                                            <span><i class="ri-translate-2"></i> ${experience.language}</span>
-                                            <c:if test="${not empty experience.includedItems}">
-                                                <span><i class="ri-gift-line"></i> ${fn:substring(experience.includedItems, 0, 20)}...</span>
-                                            </c:if>
-                                        </div>
-                                        
-                                        <div class="card-footer">
-                                            <div class="price">${experience.price}$ / người</div>
-                                            <div class="rating">
-                                                <i class="ri-star-fill"></i> 
-                                                <c:choose>
-                                                    <c:when test="${experience.averageRating > 0}">
-                                                        ${experience.averageRating}
-                                                    </c:when>
-                                                    <c:otherwise>Chưa có đánh giá</c:otherwise>
-                                                </c:choose>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="host-info">
-                                            <c:choose>
-                                                <c:when test="${not empty experience.host.avatar}">
-                                                    <img src="${pageContext.request.contextPath}/assets/images/avatars/${experience.host.avatar}" alt="Host" class="host-avatar">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" alt="Host" class="host-avatar">
-                                                </c:otherwise>
-                                            </c:choose>
-                                            <span class="host-name">${experience.host.fullName}</span>
-                                        </div>
-                                        
-                                        <div class="card-action">
-                                            <a href="${pageContext.request.contextPath}/experiences/${experience.experienceId}" class="btn btn-outline-primary">Chi Tiết</a>
-                                            <button class="btn-copy" onclick="copyExperience('${experience.title}')">
-                                                <i class="ri-file-copy-line"></i> Sao chép
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:forEach>
-                            
-                            <!-- Default experiences if none from database -->
-                            <c:if test="${empty experiences}">
-                                <div class="card-item stagger-item experience-card" data-region="North" data-city="Hanoi" data-category="Adventure">
-                                    <div class="card-image">
-                                        <img src="https://cdn.pixabay.com/photo/2017/02/01/10/00/vietnam-2029597_1280.jpg" alt="Tour đạp xe quanh Hà Nội">
-                                        <div class="card-badge">Adventure</div>
-                                        <div class="difficulty-badge">MODERATE</div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h5>Tour đạp xe quanh Hà Nội</h5>
-                                        <div class="location">
-                                            <i class="ri-map-pin-line"></i>
-                                            <span>Phố cổ Hà Nội, Hà Nội</span>
-                                        </div>
-                                        <p>Tour đạp xe khám phá phố cổ và hồ Tây. Trải nghiệm nhịp sống Hà Nội từ góc nhìn độc đáo.</p>
-                                        
-                                        <div class="info-row">
-                                            <span><i class="ri-time-line"></i> 3 giờ</span>
-                                            <span><i class="ri-user-line"></i> Tối đa 8 người</span>
-                                        </div>
-                                        <div class="info-row">
-                                            <span><i class="ri-translate-2"></i> Tiếng Việt, Tiếng Anh</span>
-                                            <span><i class="ri-bike-line"></i> Xe đạp được cung cấp</span>
-                                        </div>
-                                        
-                                        <div class="card-footer">
-                                            <div class="price">500.000đ / người</div>
-                                            <div class="rating"><i class="ri-star-fill"></i> 4.8</div>
-                                        </div>
-                                        
-                                        <div class="host-info">
-                                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" alt="Host" class="host-avatar">
-                                            <span class="host-name">Nguyễn Host</span>
-                                        </div>
-                                        
-                                        <div class="card-action">
-                                            <a href="#" class="btn btn-outline-primary">Chi Tiết</a>
-                                            <button class="btn-copy" onclick="copyExperience('Tour đạp xe quanh Hà Nội')">
-                                                <i class="ri-file-copy-line"></i> Sao chép
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:if>
-                        </div>
-                        
-                        <!-- "Xem thêm" Button for Experiences -->
-                        <div class="text-center mt-5 fade-up">
-                            <a href="${pageContext.request.contextPath}/experiences" class="btn btn-outline-primary" id="load-more-experiences">
-                                <i class="ri-arrow-down-line"></i> Xem Thêm Trải Nghiệm
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Accommodations Tab -->
-                    <div class="tab-pane fade" id="accommodations-tab-pane" role="tabpanel" aria-labelledby="accommodations-tab" tabindex="0">
-                        <h2 class="fade-up" id="accommodations">Tìm Nơi Lưu Trú</h2>
-                        
-                        <!-- Search Container for Accommodations -->
-                        <div class="search-container fade-up">
-                            <form class="search-form" id="accommodation-search" action="${pageContext.request.contextPath}/accommodations/search" method="GET">
-                                <div class="form-group">
-                                    <label for="accommodationRegionSelect">Miền</label>
-                                    <select class="form-control" id="accommodationRegionSelect" name="regionId">
-                                        <option value="">Chọn Miền</option>
-                                        <c:forEach var="region" items="${regions}">
-                                            <option value="${region.regionId}">${region.vietnameseName}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="accommodationCitySelect">Thành Phố</label>
-                                    <select class="form-control" id="accommodationCitySelect" name="cityId" disabled>
-                                        <option value="">Chọn Thành Phố</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="accommodationType">Loại Hình</label>
-                                    <select class="form-control" id="accommodationType" name="type">
-                                        <option value="">Tất Cả</option>
-                                        <option value="Homestay">Homestay</option>
-                                        <option value="Hotel">Khách sạn</option>
-                                        <option value="Resort">Resort</option>
-                                        <option value="Guesthouse">Nhà nghỉ</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="accommodationGuests">Số Khách</label>
-                                    <div class="input-group">
-                                        <button type="button" class="btn" onclick="decreaseAccommodationGuests()">-</button>
-                                        <input type="text" class="form-control text-center" id="accommodationGuests" name="guests" value="2" readonly>
-                                        <button type="button" class="btn" onclick="increaseAccommodationGuests()">+</button>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="ri-search-line"></i> Tìm Kiếm Nơi Lưu Trú
-                                </button>
-                            </form>
-                        </div>
-
-                        <!-- Accommodations Grid -->
-                        <div class="cards-grid" id="accommodations-grid">
-                            <c:forEach var="accommodation" items="${accommodations}">
-                                <div class="card-item stagger-item accommodation-card" data-region="${accommodation.city.region.name}" data-city="${accommodation.city.name}" data-type="${accommodation.type}">
-                                    <div class="card-image">
-                                        <c:choose>
-                                            <c:when test="${not empty accommodation.images}">
-                                                <c:set var="firstImage" value="${fn:split(accommodation.images, ',')[0]}" />
-                                                <img src="${pageContext.request.contextPath}/assets/images/accommodations/${firstImage}" alt="${accommodation.name}">
-                                            </c:when>
-                                            <c:otherwise>
-                                                <img src="https://cdn.pixabay.com/photo/2016/04/15/11/45/hotel-1330841_1280.jpg" alt="${accommodation.name}">
-                                            </c:otherwise>
-                                        </c:choose>
-                                        <div class="card-badge">${accommodation.type}</div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h5>${accommodation.name}</h5>
-                                        <div class="location">
-                                            <i class="ri-map-pin-line"></i>
-                                            <span>${accommodation.address}, ${accommodation.city.vietnameseName}</span>
-                                        </div>
-                                        <p>${accommodation.description}</p>
-                                        
-                                        <div class="rooms-info">
-                                            <i class="ri-door-line"></i> ${accommodation.numberOfRooms} phòng
-                                        </div>
-                                        
-                                        <div class="amenities">
-                                            <c:forEach var="amenity" items="${fn:split(accommodation.amenities, ',')}">
-                                                <span class="amenity">
-                                                    <c:choose>
-                                                        <c:when test="${fn:contains(amenity, 'Wifi')}"><i class="ri-wifi-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Bãi đỗ xe')}"><i class="ri-car-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Bữa sáng')}"><i class="ri-restaurant-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Hồ bơi')}"><i class="ri-water-flash-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Gym')}"><i class="ri-run-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Spa')}"><i class="ri-hearts-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Nhà hàng')}"><i class="ri-restaurant-line"></i></c:when>
-                                                        <c:when test="${fn:contains(amenity, 'Biển')}"><i class="ri-ship-line"></i></c:when>
-                                                        <c:otherwise><i class="ri-check-line"></i></c:otherwise>
-                                                    </c:choose>
-                                                    ${amenity}
-                                                </span>
-                                            </c:forEach>
-                                        </div>
-                                        
-                                        <div class="card-footer">
-                                            <div class="price">${accommodation.pricePerNight}đ / đêm</div>
-                                            <div class="rating">
-                                                <i class="ri-star-fill"></i> 
-                                                <c:choose>
-                                                    <c:when test="${accommodation.averageRating > 0}">
-                                                        ${accommodation.averageRating}
-                                                    </c:when>
-                                                    <c:otherwise>Chưa có đánh giá</c:otherwise>
-                                                </c:choose>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="host-info">
-                                            <c:choose>
-                                                <c:when test="${not empty accommodation.host.avatar}">
-                                                    <img src="${pageContext.request.contextPath}/assets/images/avatars/${accommodation.host.avatar}" alt="Host" class="host-avatar">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" alt="Host" class="host-avatar">
-                                                </c:otherwise>
-                                            </c:choose>
-                                            <span class="host-name">${accommodation.host.fullName}</span>
-                                        </div>
-                                        
-                                        <div class="card-action">
-                                            <a href="${pageContext.request.contextPath}/accommodations/${accommodation.accommodationId}" class="btn btn-outline-primary">Chi Tiết</a>
-                                            <button class="btn-copy" onclick="copyAccommodation('${accommodation.name}')">
-                                                <i class="ri-file-copy-line"></i> Sao chép
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:forEach>
-                            
-                            <!-- Default accommodations if none from database -->
-                            <c:if test="${empty accommodations}">
-                                <div class="card-item stagger-item accommodation-card" data-region="North" data-city="Hanoi" data-type="Homestay">
-                                    <div class="card-image">
-                                        <img src="https://cdn.pixabay.com/photo/2016/04/15/11/45/hotel-1330841_1280.jpg" alt="Homestay Hoa Mai">
-                                        <div class="card-badge">Homestay</div>
-                                    </div>
-                                    <div class="card-content">
-                                        <h5>Homestay Hoa Mai</h5>
-                                        <div class="location">
-                                            <i class="ri-map-pin-line"></i>
-                                            <span>456 Đường Láng, Hà Nội</span>
-                                        </div>
-                                        <p>Không gian ấm cúng, gần hồ Tây với cách bài trí hiện đại pha trộn phong cách truyền thống.</p>
-                                        
-                                        <div class="rooms-info">
-                                            <i class="ri-door-line"></i> 6 phòng
-                                        </div>
-                                        
-                                        <div class="amenities">
-                                            <span class="amenity"><i class="ri-wifi-line"></i> Wifi</span>
-                                            <span class="amenity"><i class="ri-car-line"></i> Bãi đỗ xe</span>
-                                            <span class="amenity"><i class="ri-restaurant-line"></i> Bữa sáng</span>
-                                        </div>
-                                        
-                                        <div class="card-footer">
-                                            <div class="price">400.000đ / đêm</div>
-                                            <div class="rating"><i class="ri-star-fill"></i> 4.8</div>
-                                        </div>
-                                        
-                                        <div class="host-info">
-                                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" alt="Host" class="host-avatar">
-                                            <span class="host-name">Nguyễn Host</span>
-                                        </div>
-                                        
-                                        <div class="card-action">
-                                            <a href="#" class="btn btn-outline-primary">Chi Tiết</a>
-                                            <button class="btn-copy" onclick="copyAccommodation('Homestay Hoa Mai')">
-                                                <i class="ri-file-copy-line"></i> Sao chép
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:if>
-                        </div>
-                        
-                        <!-- "Xem thêm" Button for Accommodations -->
-                        <div class="text-center mt-5 fade-up">
-                            <a href="${pageContext.request.contextPath}/accommodations" class="btn btn-outline-primary" id="load-more-accommodations">
-                                <i class="ri-arrow-down-line"></i> Xem Thêm Nơi Lưu Trú
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
     <!-- Testimonials Section -->
     <section class="py-5 bg-light">
         <div class="container">
