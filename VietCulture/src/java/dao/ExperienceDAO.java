@@ -264,6 +264,310 @@ public class ExperienceDAO {
     }
 
     /**
+     * Tìm kiếm trải nghiệm với bộ lọc nâng cao (hỗ trợ ExperiencesServlet)
+     */
+    public List<Experience> searchExperiences(Integer categoryId, Integer regionId, Integer cityId,
+                                             String search, String sort, int offset, int limit) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE e.isActive = 1
+        """);
+        List<Object> parameters = new ArrayList<>();
+
+        if (categoryId != null) {
+            sqlBuilder.append(" AND e.type = (SELECT name FROM Categories WHERE categoryId = ?)");
+            parameters.add(categoryId);
+        }
+        if (regionId != null) {
+            sqlBuilder.append(" AND c.regionId = ?");
+            parameters.add(regionId);
+        }
+        if (cityId != null) {
+            sqlBuilder.append(" AND e.cityId = ?");
+            parameters.add(cityId);
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            sqlBuilder.append(" AND (e.title LIKE ? OR e.description LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        // Apply sorting
+        if ("price-asc".equals(sort)) {
+            sqlBuilder.append(" ORDER BY e.price ASC");
+        } else if ("price-desc".equals(sort)) {
+            sqlBuilder.append(" ORDER BY e.price DESC");
+        } else if ("rating-desc".equals(sort)) {
+            sqlBuilder.append(" ORDER BY e.averageRating DESC");
+        } else {
+            sqlBuilder.append(" ORDER BY e.createdAt DESC");
+        }
+
+        sqlBuilder.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add(offset);
+        parameters.add(limit);
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Experience experience = mapExperienceFromResultSet(rs);
+                    experiences.add(experience);
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy tổng số trải nghiệm theo bộ lọc (hỗ trợ ExperiencesServlet)
+     */
+    public int getFilteredExperiencesCount(Integer categoryId, Integer regionId, Integer cityId,
+                                          String search) throws SQLException {
+        StringBuilder sqlBuilder = new StringBuilder("""
+            SELECT COUNT(*)
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE e.isActive = 1
+        """);
+        List<Object> parameters = new ArrayList<>();
+
+        if (categoryId != null) {
+            sqlBuilder.append(" AND e.type = (SELECT name FROM Categories WHERE categoryId = ?)");
+            parameters.add(categoryId);
+        }
+        if (regionId != null) {
+            sqlBuilder.append(" AND c.regionId = ?");
+            parameters.add(regionId);
+        }
+        if (cityId != null) {
+            sqlBuilder.append(" AND e.cityId = ?");
+            parameters.add(cityId);
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            sqlBuilder.append(" AND (e.title LIKE ? OR e.description LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm phổ biến
+     */
+    public List<Experience> getPopularExperiences(int offset, int limit) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 1
+            ORDER BY e.totalBookings DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Experience experience = mapExperienceFromResultSet(rs);
+                    experiences.add(experience);
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số lượng trải nghiệm phổ biến
+     */
+    public int getPopularExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm mới nhất
+     */
+    public List<Experience> getNewestExperiences(int offset, int limit) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 1
+            ORDER BY e.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Experience experience = mapExperienceFromResultSet(rs);
+                    experiences.add(experience);
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số lượng trải nghiệm mới nhất
+     */
+    public int getNewestExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm được đánh giá cao nhất
+     */
+    public List<Experience> getTopRatedExperiences(int offset, int limit) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 1 AND e.averageRating IS NOT NULL
+            ORDER BY e.averageRating DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Experience experience = mapExperienceFromResultSet(rs);
+                    experiences.add(experience);
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số lượng trải nghiệm được đánh giá cao nhất
+     */
+    public int getTopRatedExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1 AND averageRating IS NOT NULL";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách trải nghiệm giá thấp nhất
+     */
+    public List<Experience> getLowPriceExperiences(int offset, int limit) throws SQLException {
+        List<Experience> experiences = new ArrayList<>();
+        String sql = """
+            SELECT e.experienceId, e.hostId, e.title, e.description, e.location,
+                   e.cityId, e.type, e.price, e.maxGroupSize, e.duration,
+                   e.difficulty, e.language, e.includedItems, e.requirements,
+                   e.createdAt, e.isActive, e.images, e.averageRating, e.totalBookings,
+                   c.vietnameseName as cityName, u.fullName as hostName
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Users u ON e.hostId = u.userId
+            WHERE e.isActive = 1
+            ORDER BY e.price ASC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Experience experience = mapExperienceFromResultSet(rs);
+                    experiences.add(experience);
+                }
+            }
+        }
+        return experiences;
+    }
+
+    /**
+     * Lấy số lượng trải nghiệm giá thấp nhất
+     */
+    public int getLowPriceExperiencesCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 1";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Cập nhật điểm đánh giá trung bình
      */
     public boolean updateExperienceRating(int experienceId, double averageRating) throws SQLException {
@@ -821,14 +1125,14 @@ public class ExperienceDAO {
     }
 
     public boolean rejectExperience(int contentId, String reason) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public boolean flagExperience(int contentId, String reason) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public boolean unflagExperience(int contentId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

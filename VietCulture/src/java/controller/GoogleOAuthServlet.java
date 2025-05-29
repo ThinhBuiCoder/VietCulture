@@ -29,8 +29,8 @@ public class GoogleOAuthServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(GoogleOAuthServlet.class.getName());
 
     // Google OAuth configuration
-    private static final String GOOGLE_CLIENT_ID = "261457043485-kueaa5fdmd5l28jokri6k3vtae4cm954.apps.googleusercontent.com";
-    private static final String GOOGLE_CLIENT_SECRET = "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";
+    private static final String GOOGLE_CLIENT_ID = "261457043485-of46j7ornrnb5h4ch0qvrk5sngmoj72n.apps.googleusercontent.com";
+    private static final String GOOGLE_CLIENT_SECRET = "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";
     private static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/Travel/auth/google";
     private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";

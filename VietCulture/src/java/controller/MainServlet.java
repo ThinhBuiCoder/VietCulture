@@ -24,7 +24,7 @@ import java.util.logging.Logger;
     "/",
     "/home", 
     "/index",
-    "/experiences",
+    
     "/accommodations"
 })
 public class MainServlet extends HttpServlet {

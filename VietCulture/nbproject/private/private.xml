@@ -27,6 +27,7 @@
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/statistics/system-reports.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/ReviewDAO.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/CityDAO.java</file>
+            <file>file:/D:/Project/Project/VietCulture/src/java/controller/ExperiencesServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/forgot-password.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/City.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/AccommodationDAO.java</file>
@@ -39,11 +40,13 @@
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminDashboardServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/LoginServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/RegionDAO.java</file>
+            <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/includes/admin-sidebar.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/moderation-overview.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/Accommodation.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/utils/DBUtils.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminAccommodationApprovalServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/profile.jsp</file>
+            <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/experiences.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/utils/OAuthConstants.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/Region.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/User.java</file>
@@ -51,16 +54,19 @@
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/verification-result.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/home/register.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/users/user-list.jsp</file>
+            <file>file:/D:/Project/Project/VietCulture/src/java/utils/FileUploadUtils.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/model/Review.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/LogoutServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminContentModerationServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/AdminStatisticsServlet.java</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/controller/RegisterServlet.java</file>
+            <file>file:/D:/Project/Project/VietCulture/src/java/dao/CategoryDAO.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/error/404.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/src/java/dao/ExperienceDAO.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/experience-approval.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/content-delete.jsp</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/statistics/user-stats.jsp</file>
+            <file>file:/D:/Project/Project/VietCulture/src/java/utils/PasswordUtils.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/statistics/content-stats.jsp</file>
         </group>
     </open-files>

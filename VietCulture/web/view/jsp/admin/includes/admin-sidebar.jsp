@@ -124,7 +124,7 @@
     <div class="position-sticky pt-3">
         <!-- Logo -->
         <div class="text-center mb-4">
-            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="Logo" style="height: 60px;"
+            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="Logo" style="height: 60px;"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div style="display: none;">
                 <i class="fas fa-mountain fa-3x text-white"></i>

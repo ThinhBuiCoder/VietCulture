@@ -388,7 +388,7 @@
     <div class="login-container">
         <div class="login-header">
             <h2>
-                <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="VietCulture Logo" class="brand-logo">
+                <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo" class="brand-logo">
                 VietCulture
             </h2>
             <p>Chào mừng bạn trở lại!</p>
@@ -487,7 +487,7 @@
                 "?scope=email%20profile%20openid" +
                 "&redirect_uri=http://localhost:8080" + contextPath + "/auth/google" +
                 "&response_type=code" +
-                "&client_id=261457043485-kueaa5fdmd5l28jokri6k3vtae4cm954.apps.googleusercontent.com" +
+                "&client_id=261457043485-of46j7ornrnb5h4ch0qvrk5sngmoj72n.apps.googleusercontent.com" +
                 "&access_type=offline" +
                 "&prompt=consent";
                 

@@ -1014,7 +1014,7 @@
     <nav class="custom-navbar">
         <div class="container">
          <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo.jpg?raw=true" alt="VietCulture Logo">
+    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
     <span>VIETCULTURE</span>
 </a>
 
@@ -1022,9 +1022,9 @@
     <a href="#home" class="nav-center-item">
         Trang Chủ
     </a>
-    <a href="#experiences" class="nav-center-item">
-        Trải Nghiệm
-    </a>
+   <a href="/Travel/experiences" class="nav-center-item">
+    Trải Nghiệm
+</a>
     <a href="#accommodations" class="nav-center-item">
         Lưu Trú
     </a>

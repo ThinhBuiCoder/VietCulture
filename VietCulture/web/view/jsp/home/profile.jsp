@@ -398,7 +398,7 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                    <img src="${pageContext.request.contextPath}/images/logo.jpg" alt="VietCulture Logo">
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
                 </a>
 
@@ -447,18 +447,20 @@
                 <div class="avatar-upload me-4">
                     <c:choose>
                         <c:when test="${not empty sessionScope.user.avatar}">
-                            <img src="${pageContext.request.contextPath}/assets/images/avatars/${sessionScope.user.avatar}" 
+                            <img src="${pageContext.request.contextPath}/view/assets/images/avatars/${sessionScope.user.avatar}" 
                                  alt="Avatar" class="profile-avatar" id="profileAvatar">
                         </c:when>
                         <c:otherwise>
-                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/woman-2563491_1280.jpg" 
+                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg" 
                                  alt="Default Avatar" class="profile-avatar" id="profileAvatar">
                         </c:otherwise>
                     </c:choose>
+                    <!-- SỬA LỖI: Đã sửa onclick từ "document.getElement undergoes .click()" thành "document.getElementById('avatarInput').click()" -->
                     <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
                         <i class="ri-camera-line"></i>
                     </button>
-                    <input type="file" id="avatarInput" accept="image/*" onchange="previewAvatar(this)">
+                    <input type="file" id="avatarInput" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" 
+                           onchange="updateAvatar(this)">
                 </div>
                 
                 <div class="profile-info flex-grow-1">
@@ -668,7 +670,8 @@
                                         <div class="form-group">
                                             <label class="form-label" for="avatarFile">Ảnh đại diện</label>
                                             <input type="file" class="form-control" id="avatarFile" name="avatarFile" 
-                                                   accept="image/*" onchange="previewAvatar(this)">
+                                                   accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" onchange="previewAvatarInForm(this)">
+                                            <small class="text-muted">Chọn file ảnh (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg). Tối đa 10MB.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -727,41 +730,130 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Preview avatar
-        function previewAvatar(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('profileAvatar').src = e.target.result;
-                };
-                reader.readAsDataURL(input.files[0]);
+        // Preview avatar from header button
+        function updateAvatar(inputElement) {
+            console.log('updateAvatar called from header button');
+            if (inputElement.files && inputElement.files[0]) {
+                const file = inputElement.files[0];
+                console.log('File selected:', file.name, file.size, 'bytes');
+                
+                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
+                
+                if (validImageTypes.includes(file.type)) {
+                    // Check file size (10MB max)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                        inputElement.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('profileAvatar').src = e.target.result;
+                        console.log('Avatar preview updated');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Also update the form input to sync both inputs
+                    const formInput = document.getElementById('avatarFile');
+                    if (formInput && inputElement.id !== 'avatarFile') {
+                        // Create a new FileList with the selected file
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        formInput.files = dt.files;
+                        console.log('Form input synced');
+                    }
+                } else {
+                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+                    inputElement.value = '';
+                }
+            }
+        }
+
+        // Preview avatar from form input
+        function previewAvatarInForm(inputElement) {
+            console.log('previewAvatarInForm called from form input');
+            if (inputElement.files && inputElement.files[0]) {
+                const file = inputElement.files[0];
+                console.log('File selected:', file.name, file.size, 'bytes');
+                
+                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
+                
+                if (validImageTypes.includes(file.type)) {
+                    // Check file size (10MB max)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                        inputElement.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('profileAvatar').src = e.target.result;
+                        console.log('Avatar preview updated from form');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Also update the header input to sync both inputs
+                    const headerInput = document.getElementById('avatarInput');
+                    if (headerInput && inputElement.id !== 'avatarInput') {
+                        // Create a new FileList with the selected file
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        headerInput.files = dt.files;
+                        console.log('Header input synced');
+                    }
+                } else {
+                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+                    inputElement.value = '';
+                }
             }
         }
 
         // Password confirmation validation
-        document.getElementById('confirmPassword').addEventListener('input', function() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = this.value;
-            
-            if (newPassword !== confirmPassword) {
-                this.setCustomValidity('Mật khẩu xác nhận không khớp');
-            } else {
-                this.setCustomValidity('');
-            }
-        });
-
-        // Form validation
         document.addEventListener('DOMContentLoaded', function() {
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            if (confirmPasswordInput) {
+                confirmPasswordInput.addEventListener('input', function() {
+                    const password = document.getElementById('newPassword').value;
+                    const confirmPassword = this.value;
+                    
+                    if (password !== confirmPassword) {
+                        this.setCustomValidity('Mật khẩu xác nhận không khớp');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Form validation
             const forms = document.querySelectorAll('form');
             forms.forEach(form => {
                 form.addEventListener('submit', function(e) {
+                    console.log('Form submitted:', form.action);
+                    
+                    // Check if this is the profile update form
+                    if (form.action.includes('/profile/update')) {
+                        const avatarFile = document.getElementById('avatarFile');
+                        if (avatarFile && avatarFile.files.length > 0) {
+                            console.log('Avatar file will be uploaded:', avatarFile.files[0].name);
+                        } else {
+                            console.log('No avatar file selected');
+                        }
+                    }
+                    
                     if (!form.checkValidity()) {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Form validation failed');
                     }
                     form.classList.add('was-validated');
                 });
             });
+            
+            console.log('Profile page JavaScript initialized');
         });
     </script>
 </body>
