@@ -11,6 +11,63 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <style>
+          .email-display {
+            position: relative;
+        }
+        
+        .email-readonly {
+            background-color: #f8f9fa !important;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+        
+        .email-note {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            pointer-events: none;
+        }
+        
+        .email-note i {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .password-field {
+            position: relative;
+        }
+        
+        .password-field .form-control {
+            padding-right: 45px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            z-index: 5;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .password-toggle:hover {
+            color: #10466C;
+            background: rgba(16, 70, 108, 0.1);
+        }
+        
+        .password-toggle:focus {
+            outline: 2px solid #83C5BE;
+            outline-offset: 2px;
+        }
         :root {
             --primary-color: #10466C;
             --secondary-color: #83C5BE;
@@ -455,7 +512,6 @@
                                  alt="Default Avatar" class="profile-avatar" id="profileAvatar">
                         </c:otherwise>
                     </c:choose>
-                    <!-- SỬA LỖI: Đã sửa onclick từ "document.getElement undergoes .click()" thành "document.getElementById('avatarInput').click()" -->
                     <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
                         <i class="ri-camera-line"></i>
                     </button>
@@ -630,9 +686,17 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-label" for="email">Email *</label>
-                                            <input type="email" class="form-control" id="email" name="email" 
-                                                   value="${sessionScope.user.email}" required>
+                                            <label class="form-label" for="email">Email</label>
+                                            <div class="email-display">
+                                                <input type="email" class="form-control email-readonly" id="email" 
+                                                       value="${sessionScope.user.email}" readonly>
+                                                <div class="email-note">
+                                                    <i class="ri-information-line me-1"></i>
+                                                    <small class="text-muted">Email không thể thay đổi</small>
+                                                </div>
+                                            </div>
+                                            <!-- Hidden input to ensure email is sent with form -->
+                                            <input type="hidden" name="email" value="${sessionScope.user.email}">
                                         </div>
                                     </div>
                                 </div>
@@ -700,20 +764,35 @@
                             <form action="${pageContext.request.contextPath}/profile/change-password" method="post">
                                 <div class="form-group">
                                     <label class="form-label" for="currentPassword">Mật khẩu hiện tại *</label>
-                                    <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                    <div class="password-field position-relative">
+                                        <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+                                        <button type="button" class="password-toggle" onclick="togglePassword('currentPassword')">
+                                            <i class="fas fa-eye" id="currentPasswordIcon"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">
                                     <label class="form-label" for="newPassword">Mật khẩu mới *</label>
-                                    <input type="password" class="form-control" id="newPassword" name="newPassword" 
-                                           minlength="6" required>
+                                    <div class="password-field position-relative">
+                                        <input type="password" class="form-control" id="newPassword" name="newPassword" 
+                                               minlength="6" required>
+                                        <button type="button" class="password-toggle" onclick="togglePassword('newPassword')">
+                                            <i class="fas fa-eye" id="newPasswordIcon"></i>
+                                        </button>
+                                    </div>
                                     <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
                                 </div>
 
                                 <div class="form-group">
                                     <label class="form-label" for="confirmPassword">Xác nhận mật khẩu mới *</label>
-                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
-                                           minlength="6" required>
+                                    <div class="password-field position-relative">
+                                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
+                                               minlength="6" required>
+                                        <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                            <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary">
@@ -727,9 +806,28 @@
         </div>
     </div>
 
+    <!-- Additional CSS for readonly email field -->
+    
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Password toggle functionality
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + 'Icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         // Preview avatar from header button
         function updateAvatar(inputElement) {
             console.log('updateAvatar called from header button');

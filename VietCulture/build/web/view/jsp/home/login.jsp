@@ -223,6 +223,40 @@
             z-index: 5;
         }
 
+        /* Password field specific styles */
+        .password-field {
+            position: relative;
+        }
+
+        .password-field .form-control {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            z-index: 5;
+            padding: 5px;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-color);
+            background: rgba(16, 70, 108, 0.1);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+
         .btn-login {
             width: 100%;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -518,10 +552,13 @@
                     <label for="email">Email</label>
                 </div>
                 
-                <div class="form-floating position-relative">
+                <div class="form-floating position-relative password-field">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" class="form-control" name="password" id="password" placeholder="Mật khẩu" required minlength="6">
                     <label for="password">Mật khẩu</label>
+                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Hiển thị/ẩn mật khẩu">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -558,6 +595,26 @@
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
             const loginBtn = document.getElementById('loginBtn');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            // Password toggle functionality
+            togglePassword.addEventListener('click', function() {
+                const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordField.setAttribute('type', type);
+                
+                // Update icon
+                if (type === 'text') {
+                    toggleIcon.classList.remove('fa-eye');
+                    toggleIcon.classList.add('fa-eye-slash');
+                    togglePassword.setAttribute('aria-label', 'Ẩn mật khẩu');
+                } else {
+                    toggleIcon.classList.remove('fa-eye-slash');
+                    toggleIcon.classList.add('fa-eye');
+                    togglePassword.setAttribute('aria-label', 'Hiển thị mật khẩu');
+                }
+            });
             
             // Form validation
             form.addEventListener('submit', function(e) {
@@ -620,6 +677,12 @@
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
                     form.dispatchEvent(new Event('submit'));
+                }
+                
+                // Alt + P to toggle password visibility
+                if (e.altKey && e.key === 'p') {
+                    e.preventDefault();
+                    togglePassword.click();
                 }
             });
         });
