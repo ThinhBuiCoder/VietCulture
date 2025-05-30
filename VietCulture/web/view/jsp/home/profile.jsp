@@ -502,22 +502,24 @@
         <div class="profile-header">
             <div class="d-flex align-items-center">
                 <div class="avatar-upload me-4">
-                    <c:choose>
-                        <c:when test="${not empty sessionScope.user.avatar}">
-                            <img src="${pageContext.request.contextPath}/view/assets/images/avatars/${sessionScope.user.avatar}" 
-                                 alt="Avatar" class="profile-avatar" id="profileAvatar">
-                        </c:when>
-                        <c:otherwise>
-                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg" 
-                                 alt="Default Avatar" class="profile-avatar" id="profileAvatar">
-                        </c:otherwise>
-                    </c:choose>
-                    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
-                        <i class="ri-camera-line"></i>
-                    </button>
-                    <input type="file" id="avatarInput" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" 
-                           onchange="updateAvatar(this)">
-                </div>
+    <c:choose>
+        <c:when test="${not empty sessionScope.user.avatar}">
+            <!-- Sử dụng ImageServlet -->
+            <img src="${pageContext.request.contextPath}/images/avatars/${sessionScope.user.avatar}?t=${System.currentTimeMillis()}" 
+                 alt="Avatar" class="profile-avatar" id="profileAvatar"
+                 onerror="this.src='https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg'">
+        </c:when>
+        <c:otherwise>
+            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg" 
+                 alt="Default Avatar" class="profile-avatar" id="profileAvatar">
+        </c:otherwise>
+    </c:choose>
+    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+        <i class="ri-camera-line"></i>
+    </button>
+    <input type="file" id="avatarInput" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" 
+           onchange="updateAvatar(this)">
+</div>
                 
                 <div class="profile-info flex-grow-1">
                     <h2>${sessionScope.user.fullName}</h2>
@@ -829,86 +831,102 @@
         }
 
         // Preview avatar from header button
-        function updateAvatar(inputElement) {
-            console.log('updateAvatar called from header button');
-            if (inputElement.files && inputElement.files[0]) {
-                const file = inputElement.files[0];
-                console.log('File selected:', file.name, file.size, 'bytes');
-                
-                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
-                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
-                
-                if (validImageTypes.includes(file.type)) {
-                    // Check file size (10MB max)
-                    if (file.size > 10 * 1024 * 1024) {
-                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                        inputElement.value = '';
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('profileAvatar').src = e.target.result;
-                        console.log('Avatar preview updated');
-                    };
-                    reader.readAsDataURL(file);
-                    
-                    // Also update the form input to sync both inputs
-                    const formInput = document.getElementById('avatarFile');
-                    if (formInput && inputElement.id !== 'avatarFile') {
-                        // Create a new FileList with the selected file
-                        const dt = new DataTransfer();
-                        dt.items.add(file);
-                        formInput.files = dt.files;
-                        console.log('Form input synced');
-                    }
-                } else {
-                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-                    inputElement.value = '';
-                }
+function updateAvatar(inputElement) {
+    console.log('updateAvatar called from header button');
+    if (inputElement.files && inputElement.files[0]) {
+        const file = inputElement.files[0];
+        console.log('File selected:', file.name, file.size, 'bytes');
+        
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                'image/bmp', 'image/tiff', 'image/svg+xml'];
+        
+        if (validImageTypes.includes(file.type)) {
+            // Check file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                inputElement.value = '';
+                return;
             }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const profileAvatar = document.getElementById('profileAvatar');
+                // Thêm timestamp để tránh cache
+                profileAvatar.src = e.target.result;
+                console.log('Avatar preview updated');
+                
+                // Đánh dấu rằng có file mới được chọn
+                profileAvatar.setAttribute('data-new-upload', 'true');
+            };
+            reader.readAsDataURL(file);
+            
+            // Đồng bộ với form input
+            const formInput = document.getElementById('avatarFile');
+            if (formInput && inputElement.id !== 'avatarFile') {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                formInput.files = dt.files;
+                console.log('Form input synced');
+            }
+        } else {
+            alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+            inputElement.value = '';
         }
+    }
+    
+}
 
         // Preview avatar from form input
-        function previewAvatarInForm(inputElement) {
-            console.log('previewAvatarInForm called from form input');
-            if (inputElement.files && inputElement.files[0]) {
-                const file = inputElement.files[0];
-                console.log('File selected:', file.name, file.size, 'bytes');
-                
-                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
-                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
-                
-                if (validImageTypes.includes(file.type)) {
-                    // Check file size (10MB max)
-                    if (file.size > 10 * 1024 * 1024) {
-                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                        inputElement.value = '';
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('profileAvatar').src = e.target.result;
-                        console.log('Avatar preview updated from form');
-                    };
-                    reader.readAsDataURL(file);
-                    
-                    // Also update the header input to sync both inputs
-                    const headerInput = document.getElementById('avatarInput');
-                    if (headerInput && inputElement.id !== 'avatarInput') {
-                        // Create a new FileList with the selected file
-                        const dt = new DataTransfer();
-                        dt.items.add(file);
-                        headerInput.files = dt.files;
-                        console.log('Header input synced');
-                    }
-                } else {
-                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-                    inputElement.value = '';
-                }
+ function previewAvatarInForm(inputElement) {
+    console.log('previewAvatarInForm called from form input');
+    if (inputElement.files && inputElement.files[0]) {
+        const file = inputElement.files[0];
+        console.log('File selected:', file.name, file.size, 'bytes');
+        
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                'image/bmp', 'image/tiff', 'image/svg+xml'];
+        
+        if (validImageTypes.includes(file.type)) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                inputElement.value = '';
+                return;
             }
+            
+            function reloadAvatarAfterUpload(newAvatarName) {
+    if (newAvatarName) {
+        const profileAvatar = document.getElementById('profileAvatar');
+        const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+        const timestamp = new Date().getTime();
+        
+        profileAvatar.src = `${contextPath}/view/assets/images/avatars/${newAvatarName}?t=${timestamp}`;
+        profileAvatar.removeAttribute('data-new-upload');
+        console.log('Avatar reloaded after upload:', newAvatarName);
+    }
+}
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const profileAvatar = document.getElementById('profileAvatar');
+                profileAvatar.src = e.target.result;
+                profileAvatar.setAttribute('data-new-upload', 'true');
+                console.log('Avatar preview updated from form');
+            };
+            reader.readAsDataURL(file);
+            
+            // Đồng bộ với header input
+            const headerInput = document.getElementById('avatarInput');
+            if (headerInput && inputElement.id !== 'avatarInput') {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                headerInput.files = dt.files;
+                console.log('Header input synced');
+            }
+        } else {
+            alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+            inputElement.value = '';
         }
+    }
+}
 
         // Password confirmation validation
         document.addEventListener('DOMContentLoaded', function() {
@@ -953,6 +971,22 @@
             
             console.log('Profile page JavaScript initialized');
         });
+         const successMessage = document.querySelector('.alert-success');
+    if (successMessage && successMessage.textContent.includes('thành công')) {
+        // Nếu có upload avatar mới, reload ảnh
+        const profileAvatar = document.getElementById('profileAvatar');
+        if (profileAvatar.hasAttribute('data-new-upload')) {
+            setTimeout(() => {
+                // Force reload ảnh từ server với timestamp mới
+                const currentSrc = profileAvatar.src;
+                if (currentSrc.includes('/view/assets/images/avatars/')) {
+                    const timestamp = new Date().getTime();
+                    profileAvatar.src = currentSrc.split('?')[0] + '?t=' + timestamp;
+                    profileAvatar.removeAttribute('data-new-upload');
+                }
+            }, 500);
+        }
+    }
     </script>
 </body>
 </html>
