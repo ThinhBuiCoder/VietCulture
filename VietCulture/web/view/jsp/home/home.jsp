@@ -1025,7 +1025,7 @@
    <a href="/Travel/experiences" class="nav-center-item">
     Trải Nghiệm
 </a>
-    <a href="#accommodations" class="nav-center-item">
+    <a href="/Travel/accommodations" class="nav-center-item">
         Lưu Trú
     </a>
 </div>

@@ -8,7 +8,9 @@ public class City {
     private String description;
     private String imageUrl;
     private String attractions;
-    private Region region; // Reference to parent region
+    
+    // Related objects
+    private Region region;
     
     // Constructors
     public City() {}
@@ -87,13 +89,29 @@ public class City {
         }
     }
     
+    // Helper methods
+    public String getDisplayName() {
+        return vietnameseName != null ? vietnameseName : name;
+    }
+    
+    public String[] getAttractionsList() {
+        if (attractions == null || attractions.trim().isEmpty()) {
+            return new String[0];
+        }
+        return attractions.split(",");
+    }
+    
+    public boolean hasAttractions() {
+        return attractions != null && !attractions.trim().isEmpty();
+    }
+    
     @Override
     public String toString() {
         return "City{" +
-                "cityId=" + cityId +
-                ", name='" + name + '\'' +
-                ", vietnameseName='" + vietnameseName + '\'' +
-                ", regionId=" + regionId +
-                '}';
+               "cityId=" + cityId +
+               ", name='" + name + '\'' +
+               ", vietnameseName='" + vietnameseName + '\'' +
+               ", regionId=" + regionId +
+               '}';
     }
 }
