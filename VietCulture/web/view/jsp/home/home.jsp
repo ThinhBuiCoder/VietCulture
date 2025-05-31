@@ -1050,8 +1050,18 @@
                                 </c:if>
                                 <c:if test="${sessionScope.user.role == 'HOST'}">
                                     <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard">
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard" style="color: #10466C; font-weight: 600;">
                                             <i class="ri-dashboard-line"></i> Quản Lý Host
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/experiences/create" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-add-circle-line"></i> Tạo Trải Nghiệm
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/experiences/manage" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-settings-4-line"></i> Quản Lý Trải Nghiệm
                                         </a>
                                     </li>
                                 </c:if>
