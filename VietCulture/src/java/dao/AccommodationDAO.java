@@ -805,6 +805,7 @@ public class AccommodationDAO {
         }
         return 0;
     }
+    
 
     /**
      * Update accommodation
@@ -987,6 +988,8 @@ public class AccommodationDAO {
     /**
      * Get monthly growth data
      */
+
+    
     public List<Integer> getMonthlyGrowthData(int months) throws SQLException {
         List<Integer> data = new ArrayList<>();
         String sql = """
@@ -1139,5 +1142,21 @@ public class AccommodationDAO {
         accommodation.setFlagged(false);
 
         return accommodation;
+    }
+
+    public List<Accommodation> getAccommodationsByCity(int cityId, int page, int pageSize, String type) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public List<Accommodation> getAccommodationsByRegion(int regionId, int page, int pageSize, String type) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public int getAccommodationsCountByCity(int cityId, String type) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public int getAccommodationsCountByRegion(int regionId, String type) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

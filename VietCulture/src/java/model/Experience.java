@@ -32,6 +32,8 @@ public class Experience {
     private Timestamp deletedAt;
     private boolean isFlagged = false;
     private String flagReason;
+    private String firstImage;
+private String categoryName;
 
     // Các trường bổ sung để hiển thị
     private String cityName;
@@ -60,6 +62,18 @@ public class Experience {
         this.totalBookings = 0;
     }
 
+
+public void setFirstImage(String firstImage) {
+    this.firstImage = firstImage;
+}
+
+public String getCategoryName() {
+    return categoryName;
+}
+
+public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
+}
     // Getters và Setters cho các trường liên quan đến báo cáo và xóa
     public int getReportCount() {
         return reportCount;
@@ -366,4 +380,6 @@ public class Experience {
         this.cityId = city.getCityId();
         this.cityName = city.getVietnameseName();
     }
+
+
 }

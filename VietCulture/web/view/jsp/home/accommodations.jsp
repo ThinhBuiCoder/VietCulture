@@ -975,12 +975,12 @@
                                 <div class="card-image">
                                     <c:choose>
                                         <c:when test="${not empty accommodation.firstImage}">
-                                            <img src="${pageContext.request.contextPath}/assets/images/accommodations/${accommodation.firstImage}" alt="${accommodation.name}">
+                                            <img src="${pageContext.request.contextPath}/images/accommodations/${accommodation.firstImage}" alt="${accommodation.name}">
                                         </c:when>
                                         <c:when test="${not empty accommodation.images}">
                                             <c:set var="imageList" value="${fn:split(accommodation.images, ',')}" />
                                             <c:if test="${fn:length(imageList) > 0}">
-                                                <img src="${pageContext.request.contextPath}/assets/images/accommodations/${fn:trim(imageList[0])}" alt="${accommodation.name}">
+                                                <img src="${pageContext.request.contextPath}/images/accommodations/${fn:trim(imageList[0])}" alt="${accommodation.name}">
                                             </c:if>
                                         </c:when>
                                         <c:otherwise>

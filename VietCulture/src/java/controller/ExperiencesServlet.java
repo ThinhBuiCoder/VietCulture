@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-@WebServlet("/experiences")
+@WebServlet({"/experiences", "/experiences/*"})
 public class ExperiencesServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(ExperiencesServlet.class.getName());
     
@@ -37,98 +37,235 @@ public class ExperiencesServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        experienceDAO = new ExperienceDAO();
-        regionDAO = new RegionDAO();
-        cityDAO = new CityDAO();
-        categoryDAO = new CategoryDAO();
+        try {
+            experienceDAO = new ExperienceDAO();
+            regionDAO = new RegionDAO();
+            cityDAO = new CityDAO();
+            categoryDAO = new CategoryDAO();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Failed to initialize DAOs", e);
+            throw new ServletException("Failed to initialize servlet", e);
+        }
     }
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        
+        // Set UTF-8 encoding
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
+        
+        String pathInfo = request.getPathInfo();
+        
         try {
-            // Lấy parameters từ request
-            String categoryParam = request.getParameter("category");
-            String regionParam = request.getParameter("region");
-            String cityParam = request.getParameter("city");
-            String sortParam = request.getParameter("sort");
-            String filterParam = request.getParameter("filter");
-            String searchParam = request.getParameter("search");
-            String pageParam = request.getParameter("page");
-            
-            // Parse parameters
-            Integer categoryId = parseInteger(categoryParam);
-            Integer regionId = parseInteger(regionParam);
-            Integer cityId = parseInteger(cityParam);
-            int currentPage = parseInteger(pageParam, DEFAULT_PAGE);
-            
-            // Validate page number
-            if (currentPage < 1) {
-                currentPage = DEFAULT_PAGE;
+            if (pathInfo != null && pathInfo.length() > 1) {
+                // Handle individual experience view: /experiences/{id}
+                handleExperienceDetail(request, response, pathInfo);
+            } else {
+                // Handle experiences list: /experiences
+                handleExperiencesList(request, response);
             }
-            
-            // Calculate pagination
-            int offset = (currentPage - 1) * DEFAULT_PAGE_SIZE;
-            
-            // Load dropdown data for filters
-            loadFilterData(request);
-            
-            // Get experiences based on filters
-            List<Experience> experiences = getFilteredExperiences(
-                categoryId, regionId, cityId, sortParam, filterParam, 
-                searchParam, offset, DEFAULT_PAGE_SIZE
-            );
-            
-            // Get total count for pagination
-            int totalExperiences = getTotalFilteredExperiences(
-                categoryId, regionId, cityId, filterParam, searchParam
-            );
-            
-            int totalPages = (int) Math.ceil((double) totalExperiences / DEFAULT_PAGE_SIZE);
-            
-            // Set attributes for JSP
-            request.setAttribute("experiences", experiences);
-            request.setAttribute("totalExperiences", totalExperiences);
-            request.setAttribute("currentPage", currentPage);
-            request.setAttribute("totalPages", totalPages);
-            request.setAttribute("pageSize", DEFAULT_PAGE_SIZE);
-            
-            // Preserve search parameters for pagination
-            StringBuilder queryString = new StringBuilder();
-            appendParam(queryString, "category", categoryParam);
-            appendParam(queryString, "region", regionParam);
-            appendParam(queryString, "city", cityParam);
-            appendParam(queryString, "sort", sortParam);
-            appendParam(queryString, "filter", filterParam);
-            appendParam(queryString, "search", searchParam);
-            
-            request.setAttribute("queryString", queryString.toString());
-            
-            // Log request info
-            LOGGER.info("Experiences page accessed - Filters: category=" + categoryParam + 
-                       ", region=" + regionParam + ", city=" + cityParam + 
-                       ", page=" + currentPage + ", total=" + totalExperiences);
-            
-            // Forward to JSP
-            request.getRequestDispatcher("/view/jsp/home/experiences.jsp").forward(request, response);
-            
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in ExperiencesServlet", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                             "Đã xảy ra lỗi khi tải danh sách trải nghiệm");
+            
+            // Set error message for user
+            request.setAttribute("errorMessage", "Đã xảy ra lỗi khi truy xuất dữ liệu. Vui lòng thử lại sau.");
+            request.setAttribute("experiences", new ArrayList<Experience>());
+            request.setAttribute("regions", new ArrayList<Region>());
+            request.setAttribute("categories", new ArrayList<Category>());
+            
+            // Forward to JSP with error
+            request.getRequestDispatcher("/view/jsp/home/experiences.jsp")
+                   .forward(request, response);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Unexpected error in ExperiencesServlet", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                             "Đã xảy ra lỗi không mong muốn");
+                             "Đã xảy ra lỗi không mong đợi.");
         }
     }
     
     /**
-     * Load filter data (regions, categories) for dropdowns
+     * Handle experience detail view
      */
-    private void loadFilterData(HttpServletRequest request) throws SQLException {
+    private void handleExperienceDetail(HttpServletRequest request, HttpServletResponse response, 
+                                       String pathInfo) throws ServletException, IOException, SQLException {
         try {
-            // Load regions
+            // Extract experience ID from path
+            String experienceIdStr = pathInfo.substring(1); // Remove leading "/"
+            int experienceId = Integer.parseInt(experienceIdStr);
+            
+            // Get experience details
+            Experience experience = experienceDAO.getExperienceById(experienceId);
+            
+            if (experience == null || !experience.isActive()) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Trải nghiệm không tồn tại hoặc đã bị tạm ngừng.");
+                return;
+            }
+            
+            // Process experience data for detail view
+            processExperienceForDetail(experience);
+            
+            // Load additional data for detail page
+            loadDetailPageData(request);
+            
+            // Set experience data
+            request.setAttribute("experience", experience);
+            
+            // Log access
+            LOGGER.info("Experience detail accessed - ID: " + experienceId + 
+                       ", Title: " + experience.getTitle());
+            
+            // Forward to detail page
+            request.getRequestDispatcher("/view/jsp/home/experience-detail.jsp")
+                   .forward(request, response);
+            
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID trải nghiệm không hợp lệ.");
+        }
+    }
+    
+    /**
+     * Handle experiences list view
+     */
+    private void handleExperiencesList(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException, SQLException {
+        
+        // Lấy parameters từ request
+        String categoryParam = request.getParameter("category");
+        String regionParam = request.getParameter("region");
+        String cityParam = request.getParameter("city");
+        String sortParam = request.getParameter("sort");
+        String filterParam = request.getParameter("filter");
+        String searchParam = request.getParameter("search");
+        String pageParam = request.getParameter("page");
+        
+        // Parse parameters
+        Integer categoryId = parseInteger(categoryParam);
+        Integer regionId = parseInteger(regionParam);
+        Integer cityId = parseInteger(cityParam);
+        int currentPage = parseInteger(pageParam, DEFAULT_PAGE);
+        
+        // Validate page number
+        if (currentPage < 1) {
+            currentPage = DEFAULT_PAGE;
+        }
+        
+        // Calculate pagination
+        int offset = (currentPage - 1) * DEFAULT_PAGE_SIZE;
+        
+        List<Experience> experiences = new ArrayList<>();
+        List<Region> regions = new ArrayList<>();
+        List<Category> categories = new ArrayList<>();
+        int totalExperiences = 0;
+        
+        try {
+            // Load dropdown data for filters
+            regions = regionDAO.getAllRegions();
+            categories = categoryDAO.getAllCategories();
+            
+            // Get experiences based on filters
+            experiences = getFilteredExperiences(
+                categoryId, regionId, cityId, sortParam, filterParam, 
+                searchParam, offset, DEFAULT_PAGE_SIZE
+            );
+            
+            // Process experiences for list view
+            for (Experience experience : experiences) {
+                processExperienceForList(experience);
+            }
+            
+            // Get total count for pagination
+            totalExperiences = getTotalFilteredExperiences(
+                categoryId, regionId, cityId, filterParam, searchParam
+            );
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error getting experiences data", e);
+            // Continue with empty lists - error will be shown in JSP
+        }
+        
+        int totalPages = (int) Math.ceil((double) totalExperiences / DEFAULT_PAGE_SIZE);
+        
+        // Set attributes for JSP
+        request.setAttribute("experiences", experiences);
+        request.setAttribute("regions", regions);
+        request.setAttribute("categories", categories);
+        request.setAttribute("totalExperiences", totalExperiences);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("pageSize", DEFAULT_PAGE_SIZE);
+        
+        // Preserve search parameters for pagination
+        StringBuilder queryString = new StringBuilder();
+        appendParam(queryString, "category", categoryParam);
+        appendParam(queryString, "region", regionParam);
+        appendParam(queryString, "city", cityParam);
+        appendParam(queryString, "sort", sortParam);
+        appendParam(queryString, "filter", filterParam);
+        appendParam(queryString, "search", searchParam);
+        
+        request.setAttribute("queryString", queryString.toString());
+        
+        // Set filter parameters back to JSP for form state
+        request.setAttribute("selectedCategory", categoryParam);
+        request.setAttribute("selectedRegion", regionParam);
+        request.setAttribute("selectedCity", cityParam);
+        request.setAttribute("selectedSort", sortParam);
+        request.setAttribute("selectedFilter", filterParam);
+        request.setAttribute("searchKeyword", searchParam);
+        
+        // Log request info
+        LOGGER.info("Experiences page accessed - Filters: category=" + categoryParam + 
+                   ", region=" + regionParam + ", city=" + cityParam + 
+                   ", page=" + currentPage + ", total=" + totalExperiences);
+        
+        // Forward to JSP
+        request.getRequestDispatcher("/view/jsp/home/experiences.jsp").forward(request, response);
+    }
+    
+    /**
+     * Process experience data for detail view
+     */
+    private void processExperienceForDetail(Experience experience) throws SQLException {
+        // Process images - tách chuỗi images thành mảng
+        if (experience.getImages() != null && !experience.getImages().trim().isEmpty()) {
+            String[] imageArray = experience.getImages().split(",");
+            if (imageArray.length > 0) {
+                // Set first image cho detail view
+                experience.setFirstImage(imageArray[0].trim());
+            }
+        }
+        
+        // Get category name từ type
+        String categoryName = getCategoryNameByType(experience.getType());
+        experience.setCategoryName(categoryName);
+    }
+    
+    /**
+     * Process experience data for list view
+     */
+    private void processExperienceForList(Experience experience) throws SQLException {
+        // Process images for list view
+        if (experience.getImages() != null && !experience.getImages().trim().isEmpty()) {
+            String[] imageArray = experience.getImages().split(",");
+            if (imageArray.length > 0) {
+                experience.setFirstImage(imageArray[0].trim());
+            }
+        }
+        
+        // Get category name
+        String categoryName = getCategoryNameByType(experience.getType());
+        experience.setCategoryName(categoryName);
+    }
+    
+    /**
+     * Load additional data for detail page
+     */
+    private void loadDetailPageData(HttpServletRequest request) throws SQLException {
+        try {
+            // Load regions cho dropdown (nếu cần)
             List<Region> regions = regionDAO.getAllRegions();
             request.setAttribute("regions", regions);
             
@@ -136,16 +273,29 @@ public class ExperiencesServlet extends HttpServlet {
             List<Category> categories = categoryDAO.getAllCategories();
             request.setAttribute("categories", categories);
             
-            LOGGER.info("Filter data loaded - Regions: " + regions.size() + 
-                       ", Categories: " + categories.size());
-            
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error loading filter data", e);
-            // Set empty lists to prevent JSP errors
-            request.setAttribute("regions", new ArrayList<Region>());
-            request.setAttribute("categories", new ArrayList<Category>());
+            LOGGER.log(Level.WARNING, "Error loading additional data for detail page", e);
             throw e;
         }
+    }
+    
+    /**
+     * Get category name từ type
+     */
+    private String getCategoryNameByType(String type) throws SQLException {
+        if (type == null) return null;
+        
+        try {
+            List<Category> categories = categoryDAO.getAllCategories();
+            for (Category category : categories) {
+                if (type.equals(category.getName())) {
+                    return category.getName();
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error getting category name for type: " + type, e);
+        }
+        return type; // Return original type if not found
     }
     
     /**
@@ -233,7 +383,12 @@ public class ExperiencesServlet extends HttpServlet {
             if (queryString.length() > 0) {
                 queryString.append("&");
             }
-            queryString.append(name).append("=").append(value);
+            try {
+                queryString.append(name).append("=")
+                          .append(java.net.URLEncoder.encode(value, "UTF-8"));
+            } catch (java.io.UnsupportedEncodingException e) {
+                queryString.append(name).append("=").append(value);
+            }
         }
     }
     
@@ -241,6 +396,7 @@ public class ExperiencesServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         // Redirect POST to GET to prevent form resubmission
-        doGet(request, response);
+        response.sendRedirect(request.getRequestURI() + 
+                            (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
     }
 }
