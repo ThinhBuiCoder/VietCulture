@@ -988,45 +988,29 @@
                     <div class="cards-grid fade-up">
                         <c:forEach var="experience" items="${experiences}">
                             <div class="card-item">
-                                <div class="card-image">
-                                    <c:choose>
-                                        <c:when test="${not empty experience.firstImage}">
-                                            <img src="${pageContext.request.contextPath}/assets/images/experiences/${experience.firstImage}" alt="${experience.title}">
-                                        </c:when>
-                                        <c:when test="${not empty experience.images}">
-                                            <c:set var="imageList" value="${fn:split(experience.images, ',')}" />
-                                            <c:if test="${fn:length(imageList) > 0}">
-                                                <img src="${pageContext.request.contextPath}/assets/images/experiences/${fn:trim(imageList[0])}" alt="${experience.title}">
-                                            </c:if>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=300&q=80" alt="${experience.title}">
-                                        </c:otherwise>
-                                    </c:choose>
-                                    
-                                    <c:if test="${not empty experience.type}">
-                                        <div class="card-badge">
-                                            <c:choose>
-                                                <c:when test="${experience.type == 'Food'}">Ẩm Thực</c:when>
-                                                <c:when test="${experience.type == 'Culture'}">Văn Hóa</c:when>
-                                                <c:when test="${experience.type == 'Adventure'}">Phiêu Lưu</c:when>
-                                                <c:when test="${experience.type == 'History'}">Lịch Sử</c:when>
-                                                <c:otherwise>${experience.type}</c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                    </c:if>
-                                    
-                                    <c:if test="${not empty experience.difficulty}">
-                                        <div class="difficulty-badge">
-                                            <c:choose>
-                                                <c:when test="${fn:toLowerCase(experience.difficulty) == 'easy'}">Dễ</c:when>
-                                                <c:when test="${fn:toLowerCase(experience.difficulty) == 'moderate' or fn:toLowerCase(experience.difficulty) == 'medium'}">Trung Bình</c:when>
-                                                <c:when test="${fn:toLowerCase(experience.difficulty) == 'challenging' or fn:toLowerCase(experience.difficulty) == 'hard'}">Khó</c:when>
-                                                <c:otherwise>${experience.difficultyText}</c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                    </c:if>
-                                </div>
+                     <div class="card-image">
+    <c:choose>
+        <c:when test="${not empty experience.firstImage}">
+            <img src="${pageContext.request.contextPath}/images/experiences/${experience.firstImage}" 
+                 alt="${experience.title}"
+                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>❌ Không tải được ảnh</div>';">
+        </c:when>
+        <c:when test="${not empty experience.images}">
+            <c:set var="imageList" value="${fn:split(experience.images, ',')}" />
+            <c:if test="${fn:length(imageList) > 0}">
+                <img src="${pageContext.request.contextPath}/images/experiences/${fn:trim(imageList[0])}" 
+                     alt="${experience.title}"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>❌ Không tải được ảnh</div>';">
+            </c:if>
+        </c:when>
+        <c:otherwise>
+            <div class="no-image-placeholder">
+                <i class="ri-image-line"></i>
+                <span>Không có ảnh</span>
+            </div>
+        </c:otherwise>
+    </c:choose>
+</div>
                                 
                                 <div class="card-content">
                                     <h5>${experience.title}</h5>

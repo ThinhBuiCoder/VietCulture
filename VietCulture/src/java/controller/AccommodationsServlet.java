@@ -97,8 +97,8 @@ public class AccommodationsServlet extends HttpServlet {
             // Set accommodation data
             request.setAttribute("accommodation", accommodation);
             
-            // Forward to detail page (you need to create this JSP)
-            request.getRequestDispatcher("/WEB-INF/views/accommodation-detail.jsp")
+            // Forward to detail page - Updated path to match project structure
+            request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")
                    .forward(request, response);
             
         } catch (NumberFormatException e) {
@@ -224,26 +224,37 @@ public class AccommodationsServlet extends HttpServlet {
     private List<Accommodation> searchAccommodations(String type, int regionId, int cityId, 
                                                     int page, int pageSize) throws SQLException {
         
-        if (type != null && !type.trim().isEmpty()) {
+        // Enhanced search logic with region and city filters
+        if (cityId > 0) {
+            // Search by city (most specific)
+            return accommodationDAO.getAccommodationsByCity(cityId, page, pageSize, type);
+        } else if (regionId > 0) {
+            // Search by region
+            return accommodationDAO.getAccommodationsByRegion(regionId, page, pageSize, type);
+        } else if (type != null && !type.trim().isEmpty()) {
+            // Search by type only
             return accommodationDAO.getApprovedAccommodations(page, pageSize, type);
         } else {
+            // Get all approved accommodations
             return accommodationDAO.getApprovedAccommodations(page, pageSize, null);
         }
     }
     
     /**
-     * Get popular accommodations (placeholder - would need custom DAO method)
+     * Get popular accommodations (based on bookings and ratings)
      */
     private List<Accommodation> getPopularAccommodations(int page, int pageSize) throws SQLException {
-        // For now, return regular accommodations sorted by rating
-        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(page, pageSize, null);
+        // Get accommodations with high ratings and bookings
+        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(1, 100, null);
         return accommodations.stream()
                 .filter(a -> a.getTotalBookings() >= 5 && a.getAverageRating() >= 4.0)
                 .sorted((a1, a2) -> {
-                    int bookingCompare = Integer.compare(a2.getTotalBookings(), a1.getTotalBookings());
-                    return bookingCompare != 0 ? bookingCompare : 
-                           Double.compare(a2.getAverageRating(), a1.getAverageRating());
+                    // Sort by combination of bookings and rating
+                    double score1 = a1.getTotalBookings() * 0.7 + a1.getAverageRating() * 0.3;
+                    double score2 = a2.getTotalBookings() * 0.7 + a2.getAverageRating() * 0.3;
+                    return Double.compare(score2, score1);
                 })
+                .skip((page - 1) * pageSize)
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -252,9 +263,10 @@ public class AccommodationsServlet extends HttpServlet {
      * Get newest accommodations
      */
     private List<Accommodation> getNewestAccommodations(int page, int pageSize) throws SQLException {
-        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(page, pageSize, null);
+        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(1, 100, null);
         return accommodations.stream()
                 .sorted((a1, a2) -> a2.getCreatedAt().compareTo(a1.getCreatedAt()))
+                .skip((page - 1) * pageSize)
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -263,7 +275,7 @@ public class AccommodationsServlet extends HttpServlet {
      * Get top-rated accommodations
      */
     private List<Accommodation> getTopRatedAccommodations(int page, int pageSize) throws SQLException {
-        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(page, pageSize, null);
+        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(1, 100, null);
         return accommodations.stream()
                 .filter(a -> a.getAverageRating() > 0)
                 .sorted((a1, a2) -> {
@@ -271,6 +283,7 @@ public class AccommodationsServlet extends HttpServlet {
                     return ratingCompare != 0 ? ratingCompare : 
                            Integer.compare(a2.getTotalBookings(), a1.getTotalBookings());
                 })
+                .skip((page - 1) * pageSize)
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -279,9 +292,10 @@ public class AccommodationsServlet extends HttpServlet {
      * Get low-price accommodations
      */
     private List<Accommodation> getLowPriceAccommodations(int page, int pageSize) throws SQLException {
-        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(page, pageSize, null);
+        List<Accommodation> accommodations = accommodationDAO.getApprovedAccommodations(1, 100, null);
         return accommodations.stream()
                 .sorted((a1, a2) -> Double.compare(a1.getPricePerNight(), a2.getPricePerNight()))
+                .skip((page - 1) * pageSize)
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -318,14 +332,35 @@ public class AccommodationsServlet extends HttpServlet {
     }
     
     /**
-     * Get total accommodations count
+     * Get total accommodations count with enhanced filtering
      */
     private int getTotalAccommodationsCount(String type, String region, String city, String filter) throws SQLException {
         try {
-            if (type != null && !type.trim().isEmpty()) {
-                return accommodationDAO.getApprovedAccommodationsCount(type);
-            } else {
-                return accommodationDAO.getApprovedAccommodationsCount();
+            int regionId = getIntFromString(region);
+            int cityId = getIntFromString(city);
+            
+            // Count based on specific filters
+            switch (filter != null ? filter : "") {
+                case "popular":
+                    // Count popular accommodations (would need custom DAO method)
+                    return getPopularAccommodations(1, Integer.MAX_VALUE).size();
+                case "newest":
+                case "top-rated":
+                case "low-price":
+                case "homestay":
+                    // For these filters, we need to count all and then filter
+                    return getFilteredAccommodations(type, region, city, filter, null, 1, Integer.MAX_VALUE).size();
+                default:
+                    // Standard count based on search criteria
+                    if (cityId > 0) {
+                        return accommodationDAO.getAccommodationsCountByCity(cityId, type);
+                    } else if (regionId > 0) {
+                        return accommodationDAO.getAccommodationsCountByRegion(regionId, type);
+                    } else if (type != null && !type.trim().isEmpty()) {
+                        return accommodationDAO.getApprovedAccommodationsCount(type);
+                    } else {
+                        return accommodationDAO.getApprovedAccommodationsCount();
+                    }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.WARNING, "Error getting accommodations count", e);

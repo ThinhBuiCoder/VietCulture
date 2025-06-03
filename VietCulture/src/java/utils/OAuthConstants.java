@@ -3,8 +3,8 @@ package utils;
 public class OAuthConstants {
     
     // Google OAuth Configuration
-    public static final String GOOGLE_CLIENT_ID = "261457043485-of46j7ornrnb5h4ch0qvrk5sngmoj72n.apps.googleusercontent.com";
-    public static final String GOOGLE_CLIENT_SECRET = "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"; // Bạn cần lấy từ Google Console
+    public static final String GOOGLE_CLIENT_ID = "106009165959-sbaj5qlt77p65jj33qp62kjle5ggchff.apps.googleusercontent.com";
+    public static final String GOOGLE_CLIENT_SECRET = "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"; // Bạn cần lấy từ Google Console
     public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/Travel/auth/google";
     
     // OAuth URLs

@@ -521,7 +521,7 @@
                 "?scope=email%20profile%20openid" +
                 "&redirect_uri=http://localhost:8080" + contextPath + "/auth/google" +
                 "&response_type=code" +
-                "&client_id=261457043485-of46j7ornrnb5h4ch0qvrk5sngmoj72n.apps.googleusercontent.com" +
+                "&client_id=106009165959-sbaj5qlt77p65jj33qp62kjle5ggchff.apps.googleusercontent.com" +
                 "&access_type=offline" +
                 "&prompt=consent";
                 
