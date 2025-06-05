@@ -59,7 +59,7 @@
             <nav class="col-md-3 col-lg-2 d-md-block admin-sidebar collapse">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
-                        <img src="${pageContext.request.contextPath}/view/assets/home/img/logo.jpg" alt="Logo" style="height: 60px;">
+                        <img src="${pageContext.request.contextPath}/view/assets/home/img/logo1.jpg" alt="Logo" style="height: 60px;">
                         <h5 class="mt-2">ADMIN VIETCULTURE</h5>
                     </div>
                     

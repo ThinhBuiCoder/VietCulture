@@ -1510,7 +1510,7 @@
                         <div class="price-unit">mỗi người</div>
                     </div>
 
-                    <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="post">
+                    <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="get">
                         <input type="hidden" name="experienceId" value="${experience.experienceId}">
                         
                         <div class="form-group">
@@ -1884,43 +1884,37 @@
         });
 
         // Handle booking form submission
-        document.querySelector('.booking-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const bookingDate = bookingDateInput.value;
-            const participants = participantsSelect.value;
-            const timeSlot = timeSlotSelect.value;
-            
-            if (!bookingDate || !participants || !timeSlot) {
-                showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
-                return;
-            }
-            
-            const selectedDate = new Date(bookingDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (selectedDate < today) {
-                showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
-                return;
-            }
-            
-            // Show loading state
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
-            submitBtn.disabled = true;
-            
-            // Simulate booking process (replace with actual submission)
-            setTimeout(() => {
-                showToast('Đặt chỗ thành công! Bạn sẽ nhận được email xác nhận.', 'success');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                // In real implementation, submit the form or redirect
-                // this.submit();
-            }, 2000);
-        });
+       // Handle booking form submission
+document.querySelector('.booking-form').addEventListener('submit', function(e) {
+    // Bỏ e.preventDefault(); để cho phép form submit bình thường
+    
+    const bookingDate = bookingDateInput.value;
+    const participants = participantsSelect.value;
+    const timeSlot = timeSlotSelect.value;
+    
+    if (!bookingDate || !participants || !timeSlot) {
+        e.preventDefault(); // Chỉ preventDefault khi có lỗi
+        showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
+        return;
+    }
+    
+    const selectedDate = new Date(bookingDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+        e.preventDefault(); // Chỉ preventDefault khi có lỗi
+        showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
+        return;
+    }
+    
+    // Nếu không có lỗi, form sẽ submit bình thường và chuyển trang
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
+    submitBtn.disabled = true;
+});
 
         // Image lazy loading
         const images = document.querySelectorAll('img');

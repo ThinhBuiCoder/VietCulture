@@ -520,4 +520,8 @@ public class BookingDAO {
                 """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
         };
     }
+
+    public void deleteBooking(int bookingId) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
