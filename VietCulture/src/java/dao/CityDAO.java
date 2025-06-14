@@ -35,6 +35,22 @@ public class CityDAO {
     }
     
     /**
+     * Get all cities
+     */
+    public List<City> getAllCities() throws SQLException {
+        List<City> cities = new ArrayList<>();
+        String sql = "SELECT cityId, name, vietnameseName, regionId, description, imageUrl, attractions FROM Cities ORDER BY name";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                cities.add(mapCityFromResultSet(rs));
+            }
+        }
+        return cities;
+    }
+    
+    /**
      * Get top cities with statistics
      */
     public List<CityStats> getTopCitiesWithStats(int limit) throws SQLException {

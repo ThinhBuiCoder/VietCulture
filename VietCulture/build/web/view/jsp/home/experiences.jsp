@@ -778,6 +778,35 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* New CSS for image handling */
+        .card-image {
+            position: relative; /* Added for absolute positioning of placeholder */
+        }
+        .card-image .no-image-placeholder {
+            display: none; /* Hidden by default */
+            background-color: #f0f0f0; /* Light grey background */
+            color: #888; /* Dark grey text */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            text-align: center;
+            border-radius: var(--border-radius);
+        }
+
+        .card-image.image-error img {
+            display: none; /* Hide the image when .image-error is present on parent */
+        }
+
+        .card-image.image-error .no-image-placeholder {
+            display: flex; /* Show the placeholder when .image-error is present on parent */
+        }
     </style>
 </head>
 <body>
@@ -988,30 +1017,22 @@
                     <div class="cards-grid fade-up">
                         <c:forEach var="experience" items="${experiences}">
                             <div class="card-item">
-                     <div class="card-image">
-    <c:choose>
-        <c:when test="${not empty experience.firstImage}">
-            <img src="${pageContext.request.contextPath}/images/experiences/${experience.firstImage}" 
-                 alt="${experience.title}"
-                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>❌ Không tải được ảnh</div>';">
-        </c:when>
-        <c:when test="${not empty experience.images}">
-            <c:set var="imageList" value="${fn:split(experience.images, ',')}" />
-            <c:if test="${fn:length(imageList) > 0}">
-                <img src="${pageContext.request.contextPath}/images/experiences/${fn:trim(imageList[0])}" 
-                     alt="${experience.title}"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>❌ Không tải được ảnh</div>';">
-            </c:if>
-        </c:when>
-        <c:otherwise>
-            <div class="no-image-placeholder">
-                <i class="ri-image-line"></i>
-                <span>Không có ảnh</span>
-            </div>
-        </c:otherwise>
-    </c:choose>
-</div>
-                                
+                                <div class="card-image" id="experience-image-${experience.experienceId}">
+                                    <c:choose>
+                                        <c:when test="${not empty experience.firstImage}">
+                                            <img src="VietCulture/view/assets/images/experiences/${experience.firstImage}" alt="${experience.title}">
+                                        </c:when>
+                                        <c:when test="${not empty experience.images}">
+                                            <c:set var="imageList" value="${fn:split(experience.images, ',')}" />
+                                            <c:if test="${fn:length(imageList) > 0}">
+                                                <img src="VietCulture/view/assets/images/experiences/${fn:trim(imageList[0])}" alt="${experience.title}">
+                                            </c:if>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=300&q=80" alt="${experience.title}">
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                                 <div class="card-content">
                                     <h5>${experience.title}</h5>
                                     

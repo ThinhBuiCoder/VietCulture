@@ -2,6 +2,13 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/web/view/jsp/home/experiences.jsp</file>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/web/view/jsp/host/experiences/create_experience.jsp</file>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/web/view/jsp/host/accommodations/create_accommodation.jsp</file>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/src/java/controller/CreateExperienceServlet.java</file>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/src/java/controller/ExperienceDetailServlet.java</file>
+            <file>file:/D:/DOWNLOADS/project_swp291_13_6/VietCulture_v1.0/VietCulture/src/java/controller/CreateAccommodationServlet.java</file>
+        </group>
     </open-files>
 </project-private>
