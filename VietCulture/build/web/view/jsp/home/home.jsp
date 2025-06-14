@@ -1014,7 +1014,7 @@
         <nav class="custom-navbar">
             <div class="container">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
                 </a>
 
@@ -1039,47 +1039,52 @@
                                     <i class="ri-user-line" style="color: white;"></i> 
                                     ${sessionScope.user.fullName}
                                 </a>
-                                <ul class="dropdown-menu">
-                                    <%-- Role-based dashboard access --%>
-                                    <c:if test="${sessionScope.user.role == 'ADMIN'}">
-                                        <li>
-                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard">
-                                                <i class="ri-dashboard-line"></i> Quản Trị
-                                            </a>
-                                        </li>
-                                    </c:if>
-                                    <c:if test="${sessionScope.user.role == 'HOST'}">
-                                        <li>
-                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard" style="color: #10466C; font-weight: 600;">
-                                                <i class="ri-dashboard-line"></i> Quản Lý Host
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/experiences/create" style="color: #10466C; font-weight: 600;">
-                                                <i class="ri-add-circle-line"></i> Tạo Trải Nghiệm
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/experiences/manage" style="color: #10466C; font-weight: 600;">
-                                                <i class="ri-settings-4-line"></i> Quản Lý Trải Nghiệm
-                                            </a>
-                                        </li>
-                                    </c:if>
-
-                                    <%-- Common profile options --%>
-                                    <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C;">
-                                            <i class="ri-user-settings-line" style="color: #10466C;"></i> Hồ Sơ
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C;">
-                                            <i class="ri-logout-circle-r-line" style="color: #10466C;"></i> Đăng Xuất
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
+<ul class="dropdown-menu">
+    <%-- Role-based dashboard access --%>
+    <c:if test="${sessionScope.user.role == 'ADMIN'}">
+        <li>
+            <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard">
+                <i class="ri-dashboard-line"></i> Quản Trị
+            </a>
+        </li>
+    </c:if>
+    <c:if test="${sessionScope.user.role == 'HOST'}">
+        <li>
+            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard" style="color: #10466C; font-weight: 600;">
+                <i class="ri-dashboard-line"></i> Quản Lý Host
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+            </a>
+        </li>
+    </c:if>
+    <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+        <li>
+            <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                <i class="ri-vip-crown-line"></i> Nâng Lên Host
+            </a>
+        </li>
+    </c:if>
+    <%-- Common profile options --%>
+    <li>
+        <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C;">
+            <i class="ri-user-settings-line" style="color: #10466C;"></i> Hồ Sơ
+        </a>
+    </li>
+    <li><hr class="dropdown-divider"></li>
+    <li>
+        <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C;">
+            <i class="ri-logout-circle-r-line" style="color: #10466C;"></i> Đăng Xuất
+        </a>
+    </li>
+</ul>                            </div>
                         </c:when>
                         <c:otherwise>
                             <%-- Not logged in state --%>

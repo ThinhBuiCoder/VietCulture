@@ -46,6 +46,7 @@ public class BookingDAO {
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
                    e.title as experienceName, a.name as accommodationName
             FROM Bookings b
             LEFT JOIN Experiences e ON b.experienceId = e.experienceId
@@ -80,6 +81,7 @@ public class BookingDAO {
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
                    e.title as experienceName, a.name as accommodationName
             FROM Bookings b
             LEFT JOIN Experiences e ON b.experienceId = e.experienceId
@@ -108,8 +110,9 @@ public class BookingDAO {
         String sql = """
             INSERT INTO Bookings (experienceId, accommodationId, travelerId, bookingDate, 
                                 bookingTime, numberOfPeople, totalPrice, status, 
-                                specialRequests, contactInfo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                specialRequests, contactInfo, paymentMethod, paymentStatus,
+                                paymentOrderCode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
         
         try (Connection conn = DBUtils.getConnection();
@@ -125,6 +128,9 @@ public class BookingDAO {
             ps.setString(8, booking.getStatus());
             ps.setString(9, booking.getSpecialRequests());
             ps.setString(10, booking.getContactInfo());
+            ps.setString(11, booking.getPaymentMethod());
+            ps.setString(12, booking.getPaymentStatus());
+            ps.setObject(13, booking.getPaymentOrderCode());
             
             int affectedRows = ps.executeUpdate();
             
@@ -160,6 +166,41 @@ public class BookingDAO {
     }
     
     /**
+     * Update payment status
+     */
+    public boolean updatePaymentStatus(int bookingId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE Bookings SET paymentStatus = ? WHERE bookingId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, bookingId);
+            
+            int rowsAffected = ps.executeUpdate();
+            LOGGER.info("Payment status updated: " + bookingId + " -> " + paymentStatus);
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Delete booking by ID
+     */
+    public boolean deleteBooking(int bookingId) throws SQLException {
+        String sql = "DELETE FROM Bookings WHERE bookingId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, bookingId);
+            
+            int rowsAffected = ps.executeUpdate();
+            LOGGER.info("Booking deleted: " + bookingId);
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
      * Get bookings by host (for host dashboard)
      */
     public List<Booking> getBookingsByHost(int hostId, int offset, int limit) throws SQLException {
@@ -169,6 +210,7 @@ public class BookingDAO {
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
                    e.title as experienceName, a.name as accommodationName,
                    u.fullName as travelerName, u.email as travelerEmail
             FROM Bookings b
@@ -482,12 +524,27 @@ public class BookingDAO {
         booking.setContactInfo(rs.getString("contactInfo"));
         booking.setCreatedAt(rs.getDate("createdAt"));
         
-        // Set experience or accommodation name if available
-        if (rs.getString("experienceName") != null) {
-            booking.setExperienceName(rs.getString("experienceName"));
+        // Payment fields
+        try {
+            booking.setPaymentMethod(rs.getString("paymentMethod"));
+            booking.setPaymentStatus(rs.getString("paymentStatus"));
+            booking.setPaymentOrderCode(rs.getObject("paymentOrderCode") != null ? rs.getLong("paymentOrderCode") : null);
+        } catch (SQLException e) {
+            // Payment fields may not exist in some queries
+            LOGGER.log(Level.FINE, "Payment fields not available in query", e);
         }
-        if (rs.getString("accommodationName") != null) {
-            booking.setAccommodationName(rs.getString("accommodationName"));
+        
+        // Set experience or accommodation name if available
+        try {
+            if (rs.getString("experienceName") != null) {
+                booking.setExperienceName(rs.getString("experienceName"));
+            }
+            if (rs.getString("accommodationName") != null) {
+                booking.setAccommodationName(rs.getString("accommodationName"));
+            }
+        } catch (SQLException e) {
+            // Name fields may not exist in some queries
+            LOGGER.log(Level.FINE, "Name fields not available in query", e);
         }
         
         return booking;
@@ -519,9 +576,5 @@ public class BookingDAO {
                      AND createdAt < DATEADD(MONTH, -1, GETDATE()) %s) as previous_period
                 """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
         };
-    }
-
-    public void deleteBooking(int bookingId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

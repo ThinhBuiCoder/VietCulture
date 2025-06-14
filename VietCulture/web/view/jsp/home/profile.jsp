@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <style>
-          .email-display {
+        .email-display {
             position: relative;
         }
         
@@ -68,6 +68,7 @@
             outline: 2px solid #83C5BE;
             outline-offset: 2px;
         }
+
         :root {
             --primary-color: #10466C;
             --secondary-color: #83C5BE;
@@ -257,6 +258,11 @@
             display: block;
         }
 
+        .form-label.required::after {
+            content: ' *';
+            color: #dc3545;
+        }
+
         .form-control {
             border: 2px solid #e9ecef;
             border-radius: 10px;
@@ -386,12 +392,54 @@
             color: white;
         }
 
+        .badge-host {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
         /* Success/Error Messages */
         .alert {
             border-radius: 10px;
             border: none;
             padding: 15px 20px;
             margin-bottom: 20px;
+        }
+
+        /* Host Info Section */
+        .host-info-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .host-info-section h4 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .host-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .host-info-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .host-info-item .label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .host-info-item .value {
+            font-weight: 600;
         }
 
         /* Responsive */
@@ -412,6 +460,10 @@
             
             .profile-info h2 {
                 font-size: 2rem;
+            }
+
+            .host-info-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -455,7 +507,7 @@
         <div class="container">
             <div class="d-flex justify-content-between align-items-center">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
                 </a>
 
@@ -466,6 +518,11 @@
                     <c:if test="${sessionScope.user.role == 'HOST'}">
                         <a href="${pageContext.request.contextPath}/host/dashboard">
                             <i class="ri-dashboard-line me-2"></i>Dashboard
+                        </a>
+                    </c:if>
+                    <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                        <a href="${pageContext.request.contextPath}/traveler/upgrade-to-host">
+                            <i class="ri-vip-crown-line me-2"></i>Nâng Lên Host
                         </a>
                     </c:if>
                     <a href="${pageContext.request.contextPath}/logout">
@@ -502,24 +559,23 @@
         <div class="profile-header">
             <div class="d-flex align-items-center">
                 <div class="avatar-upload me-4">
-    <c:choose>
-        <c:when test="${not empty sessionScope.user.avatar}">
-            <!-- Sử dụng ImageServlet -->
-            <img src="${pageContext.request.contextPath}/images/avatars/${sessionScope.user.avatar}?t=${System.currentTimeMillis()}" 
-                 alt="Avatar" class="profile-avatar" id="profileAvatar"
-                 onerror="this.src='https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg'">
-        </c:when>
-        <c:otherwise>
-            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg" 
-                 alt="Default Avatar" class="profile-avatar" id="profileAvatar">
-        </c:otherwise>
-    </c:choose>
-    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
-        <i class="ri-camera-line"></i>
-    </button>
-    <input type="file" id="avatarInput" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" 
-           onchange="updateAvatar(this)">
-</div>
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user.avatar}">
+                            <img src="${pageContext.request.contextPath}/images/avatars/${sessionScope.user.avatar}?t=${System.currentTimeMillis()}" 
+                                 alt="Avatar" class="profile-avatar" id="profileAvatar"
+                                 onerror="this.src='https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg'">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="https://cdn.pixabay.com/photo/2017/08/01/08/29/animation-2563491_1280.jpg" 
+                                 alt="Default Avatar" class="profile-avatar" id="profileAvatar">
+                        </c:otherwise>
+                    </c:choose>
+                    <button type="button" class="avatar-upload-btn" onclick="document.getElementById('avatarInput').click()">
+                        <i class="ri-camera-line"></i>
+                    </button>
+                    <input type="file" id="avatarInput" accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg" 
+                           onchange="updateAvatar(this)">
+                </div>
                 
                 <div class="profile-info flex-grow-1">
                     <h2>${sessionScope.user.fullName}</h2>
@@ -527,7 +583,23 @@
                         <i class="ri-mail-line me-2"></i>${sessionScope.user.email}
                     </p>
                     <div class="d-flex align-items-center gap-3">
-                        <span class="badge badge-primary">${sessionScope.user.role}</span>
+                        <c:choose>
+                            <c:when test="${sessionScope.user.role == 'HOST'}">
+                                <span class="badge badge-host">
+                                    <i class="ri-vip-crown-line me-1"></i>Host
+                                </span>
+                            </c:when>
+                            <c:when test="${sessionScope.user.role == 'ADMIN'}">
+                                <span class="badge badge-warning">
+                                    <i class="ri-shield-star-line me-1"></i>Admin
+                                </span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge badge-primary">
+                                    <i class="ri-user-line me-1"></i>Traveler
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
                         <c:choose>
                             <c:when test="${sessionScope.user.active}">
                                 <span class="badge badge-success">Đang hoạt động</span>
@@ -551,6 +623,10 @@
                                 <span class="stat-number">${totalRevenue}đ</span>
                                 <span class="stat-label">Doanh thu</span>
                             </div>
+                            <div class="stat-item">
+                                <span class="stat-number">${sessionScope.user.averageRating}/5</span>
+                                <span class="stat-label">Đánh giá</span>
+                            </div>
                         </c:if>
                         <div class="stat-item">
                             <span class="stat-number">
@@ -562,6 +638,48 @@
                 </div>
             </div>
         </div>
+
+        <!-- Host Business Info (if HOST) -->
+        <c:if test="${sessionScope.user.role == 'HOST'}">
+            <div class="host-info-section">
+                <h4><i class="ri-building-line me-2"></i>Thông Tin Doanh Nghiệp</h4>
+                <div class="host-info-grid">
+                    <div class="host-info-item">
+                        <div class="label">Tên doanh nghiệp</div>
+                        <div class="value">
+                            <c:choose>
+                                <c:when test="${not empty sessionScope.user.businessName}">
+                                    ${sessionScope.user.businessName}
+                                </c:when>
+                                <c:otherwise>Chưa cập nhật</c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                    <div class="host-info-item">
+                        <div class="label">Khu vực hoạt động</div>
+                        <div class="value">
+                            <c:choose>
+                                <c:when test="${sessionScope.user.region == 'North'}">Miền Bắc</c:when>
+                                <c:when test="${sessionScope.user.region == 'Central'}">Miền Trung</c:when>
+                                <c:when test="${sessionScope.user.region == 'South'}">Miền Nam</c:when>
+                                <c:otherwise>Chưa cập nhật</c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                    <div class="host-info-item">
+                        <div class="label">Kỹ năng</div>
+                        <div class="value">
+                            <c:choose>
+                                <c:when test="${not empty sessionScope.user.skills}">
+                                    ${sessionScope.user.skills}
+                                </c:when>
+                                <c:otherwise>Chưa cập nhật</c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </c:if>
 
         <!-- Profile Content -->
         <div class="profile-content">
@@ -655,6 +773,32 @@
                         </c:choose>
                     </p>
                 </div>
+
+                <!-- Business Info Card (for HOST only) -->
+                <c:if test="${sessionScope.user.role == 'HOST'}">
+                    <div class="profile-card">
+                        <h4><i class="ri-building-line"></i>Chi Tiết Doanh Nghiệp</h4>
+                        
+                        <c:if test="${not empty sessionScope.user.businessAddress}">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="ri-map-pin-line"></i>
+                                </div>
+                                <div class="info-content">
+                                    <div class="info-label">Địa chỉ</div>
+                                    <div class="info-value">${sessionScope.user.businessAddress}</div>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${not empty sessionScope.user.businessDescription}">
+                            <div class="mt-3">
+                                <div class="info-label">Mô tả doanh nghiệp</div>
+                                <p class="text-muted mb-0">${sessionScope.user.businessDescription}</p>
+                            </div>
+                        </c:if>
+                    </div>
+                </c:if>
             </div>
 
             <!-- Main Content -->
@@ -678,10 +822,15 @@
                     <div class="tab-pane fade show active" id="edit-pane" role="tabpanel">
                         <div class="profile-card">
                             <form action="${pageContext.request.contextPath}/profile/update" method="post" enctype="multipart/form-data">
+                                <!-- Basic Information Section -->
+                                <h5 class="mb-4 text-primary">
+                                    <i class="ri-user-line me-2"></i>Thông Tin Cơ Bản
+                                </h5>
+                                
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label class="form-label" for="fullName">Họ và tên *</label>
+                                            <label class="form-label required" for="fullName">Họ và tên</label>
                                             <input type="text" class="form-control" id="fullName" name="fullName" 
                                                    value="${sessionScope.user.fullName}" required>
                                         </div>
@@ -697,7 +846,6 @@
                                                     <small class="text-muted">Email không thể thay đổi</small>
                                                 </div>
                                             </div>
-                                            <!-- Hidden input to ensure email is sent with form -->
                                             <input type="hidden" name="email" value="${sessionScope.user.email}">
                                         </div>
                                     </div>
@@ -748,7 +896,61 @@
                                               placeholder="Viết vài dòng giới thiệu về bản thân...">${sessionScope.user.bio}</textarea>
                                 </div>
 
-                                <div class="d-flex gap-3">
+                                <!-- Host Business Information Section (only for HOST role) -->
+                                <c:if test="${sessionScope.user.role == 'HOST'}">
+                                    <hr class="my-4">
+                                    <h5 class="mb-4 text-primary">
+                                        <i class="ri-building-line me-2"></i>Thông Tin Doanh Nghiệp
+                                    </h5>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label class="form-label required" for="businessName">Tên doanh nghiệp</label>
+                                                <input type="text" class="form-control" id="businessName" name="businessName" 
+                                                       value="${sessionScope.user.businessName}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="businessAddress">Địa chỉ kinh doanh</label>
+                                        <input type="text" class="form-control" id="businessAddress" name="businessAddress" 
+                                               value="${sessionScope.user.businessAddress}"
+                                               placeholder="Nhập địa chỉ chi tiết của doanh nghiệp">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label" for="businessDescription">Mô tả doanh nghiệp</label>
+                                        <textarea class="form-control" id="businessDescription" name="businessDescription" rows="4" 
+                                                  placeholder="Mô tả về doanh nghiệp và dịch vụ của bạn...">${sessionScope.user.businessDescription}</textarea>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label required" for="region">Khu vực hoạt động</label>
+                                                <select class="form-control" id="region" name="region" required>
+                                                    <option value="">Chọn khu vực</option>
+                                                    <option value="North" ${sessionScope.user.region == 'North' ? 'selected' : ''}>Miền Bắc</option>
+                                                    <option value="Central" ${sessionScope.user.region == 'Central' ? 'selected' : ''}>Miền Trung</option>
+                                                    <option value="South" ${sessionScope.user.region == 'South' ? 'selected' : ''}>Miền Nam</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label" for="skills">Kỹ năng & Chuyên môn</label>
+                                                <input type="text" class="form-control" id="skills" name="skills" 
+                                                       value="${sessionScope.user.skills}"
+                                                       placeholder="VD: Hướng dẫn viên, Nấu ăn, Nhiếp ảnh...">
+                                                <small class="text-muted">Liệt kê các kỹ năng của bạn, phân cách bằng dấu phẩy</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:if>
+
+                                <div class="d-flex gap-3 mt-4">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="ri-save-line me-2"></i>Lưu Thay Đổi
                                     </button>
@@ -763,36 +965,40 @@
                     <!-- Change Password Tab -->
                     <div class="tab-pane fade" id="password-pane" role="tabpanel">
                         <div class="profile-card">
+                            <h5 class="mb-4 text-primary">
+                                <i class="ri-lock-line me-2"></i>Đổi Mật Khẩu
+                            </h5>
+                            
                             <form action="${pageContext.request.contextPath}/profile/change-password" method="post">
                                 <div class="form-group">
-                                    <label class="form-label" for="currentPassword">Mật khẩu hiện tại *</label>
+                                    <label class="form-label required" for="currentPassword">Mật khẩu hiện tại</label>
                                     <div class="password-field position-relative">
                                         <input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
                                         <button type="button" class="password-toggle" onclick="togglePassword('currentPassword')">
-                                            <i class="fas fa-eye" id="currentPasswordIcon"></i>
+                                            <i class="ri-eye-line" id="currentPasswordIcon"></i>
                                         </button>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" for="newPassword">Mật khẩu mới *</label>
+                                    <label class="form-label required" for="newPassword">Mật khẩu mới</label>
                                     <div class="password-field position-relative">
                                         <input type="password" class="form-control" id="newPassword" name="newPassword" 
                                                minlength="6" required>
                                         <button type="button" class="password-toggle" onclick="togglePassword('newPassword')">
-                                            <i class="fas fa-eye" id="newPasswordIcon"></i>
+                                            <i class="ri-eye-line" id="newPasswordIcon"></i>
                                         </button>
                                     </div>
                                     <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="form-label" for="confirmPassword">Xác nhận mật khẩu mới *</label>
+                                    <label class="form-label required" for="confirmPassword">Xác nhận mật khẩu mới</label>
                                     <div class="password-field position-relative">
                                         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" 
                                                minlength="6" required>
                                         <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
-                                            <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                            <i class="ri-eye-line" id="confirmPasswordIcon"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -808,9 +1014,6 @@
         </div>
     </div>
 
-    <!-- Additional CSS for readonly email field -->
-    
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -821,112 +1024,97 @@
             
             if (field.type === 'password') {
                 field.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                icon.classList.remove('ri-eye-line');
+                icon.classList.add('ri-eye-off-line');
             } else {
                 field.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                icon.classList.remove('ri-eye-off-line');
+                icon.classList.add('ri-eye-line');
             }
         }
 
         // Preview avatar from header button
-function updateAvatar(inputElement) {
-    console.log('updateAvatar called from header button');
-    if (inputElement.files && inputElement.files[0]) {
-        const file = inputElement.files[0];
-        console.log('File selected:', file.name, file.size, 'bytes');
-        
-        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
-                                'image/bmp', 'image/tiff', 'image/svg+xml'];
-        
-        if (validImageTypes.includes(file.type)) {
-            // Check file size (10MB max)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                inputElement.value = '';
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const profileAvatar = document.getElementById('profileAvatar');
-                // Thêm timestamp để tránh cache
-                profileAvatar.src = e.target.result;
-                console.log('Avatar preview updated');
+        function updateAvatar(inputElement) {
+            console.log('updateAvatar called from header button');
+            if (inputElement.files && inputElement.files[0]) {
+                const file = inputElement.files[0];
+                console.log('File selected:', file.name, file.size, 'bytes');
                 
-                // Đánh dấu rằng có file mới được chọn
-                profileAvatar.setAttribute('data-new-upload', 'true');
-            };
-            reader.readAsDataURL(file);
-            
-            // Đồng bộ với form input
-            const formInput = document.getElementById('avatarFile');
-            if (formInput && inputElement.id !== 'avatarFile') {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                formInput.files = dt.files;
-                console.log('Form input synced');
+                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
+                
+                if (validImageTypes.includes(file.type)) {
+                    // Check file size (10MB max)
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                        inputElement.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const profileAvatar = document.getElementById('profileAvatar');
+                        profileAvatar.src = e.target.result;
+                        console.log('Avatar preview updated');
+                        profileAvatar.setAttribute('data-new-upload', 'true');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Đồng bộ với form input
+                    const formInput = document.getElementById('avatarFile');
+                    if (formInput && inputElement.id !== 'avatarFile') {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        formInput.files = dt.files;
+                        console.log('Form input synced');
+                    }
+                } else {
+                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+                    inputElement.value = '';
+                }
             }
-        } else {
-            alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-            inputElement.value = '';
         }
-    }
-    
-}
 
         // Preview avatar from form input
- function previewAvatarInForm(inputElement) {
-    console.log('previewAvatarInForm called from form input');
-    if (inputElement.files && inputElement.files[0]) {
-        const file = inputElement.files[0];
-        console.log('File selected:', file.name, file.size, 'bytes');
-        
-        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
-                                'image/bmp', 'image/tiff', 'image/svg+xml'];
-        
-        if (validImageTypes.includes(file.type)) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                inputElement.value = '';
-                return;
+        function previewAvatarInForm(inputElement) {
+            console.log('previewAvatarInForm called from form input');
+            if (inputElement.files && inputElement.files[0]) {
+                const file = inputElement.files[0];
+                console.log('File selected:', file.name, file.size, 'bytes');
+                
+                const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
+                                        'image/bmp', 'image/tiff', 'image/svg+xml'];
+                
+                if (validImageTypes.includes(file.type)) {
+                    if (file.size > 10 * 1024 * 1024) {
+                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
+                        inputElement.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const profileAvatar = document.getElementById('profileAvatar');
+                        profileAvatar.src = e.target.result;
+                        profileAvatar.setAttribute('data-new-upload', 'true');
+                        console.log('Avatar preview updated from form');
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Đồng bộ với header input
+                    const headerInput = document.getElementById('avatarInput');
+                    if (headerInput && inputElement.id !== 'avatarInput') {
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        headerInput.files = dt.files;
+                        console.log('Header input synced');
+                    }
+                } else {
+                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
+                    inputElement.value = '';
+                }
             }
-            
-            function reloadAvatarAfterUpload(newAvatarName) {
-    if (newAvatarName) {
-        const profileAvatar = document.getElementById('profileAvatar');
-        const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-        const timestamp = new Date().getTime();
-        
-        profileAvatar.src = `${contextPath}/view/assets/images/avatars/${newAvatarName}?t=${timestamp}`;
-        profileAvatar.removeAttribute('data-new-upload');
-        console.log('Avatar reloaded after upload:', newAvatarName);
-    }
-}
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const profileAvatar = document.getElementById('profileAvatar');
-                profileAvatar.src = e.target.result;
-                profileAvatar.setAttribute('data-new-upload', 'true');
-                console.log('Avatar preview updated from form');
-            };
-            reader.readAsDataURL(file);
-            
-            // Đồng bộ với header input
-            const headerInput = document.getElementById('avatarInput');
-            if (headerInput && inputElement.id !== 'avatarInput') {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                headerInput.files = dt.files;
-                console.log('Header input synced');
-            }
-        } else {
-            alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-            inputElement.value = '';
         }
-    }
-}
 
         // Password confirmation validation
         document.addEventListener('DOMContentLoaded', function() {
@@ -950,8 +1138,27 @@ function updateAvatar(inputElement) {
                 form.addEventListener('submit', function(e) {
                     console.log('Form submitted:', form.action);
                     
-                    // Check if this is the profile update form
+                    // Validate required fields for HOST
                     if (form.action.includes('/profile/update')) {
+                        const userRole = '${sessionScope.user.role}';
+                        if (userRole === 'HOST') {
+                            const businessName = document.getElementById('businessName').value.trim();
+                            const businessType = document.getElementById('businessType').value;
+                            const region = document.getElementById('region').value;
+                            
+                            if (!businessName) {
+                                alert('Vui lòng nhập tên doanh nghiệp');
+                                e.preventDefault();
+                                return;
+                            }
+                           
+                            if (!region) {
+                                alert('Vui lòng chọn khu vực hoạt động');
+                                e.preventDefault();
+                                return;
+                            }
+                        }
+                        
                         const avatarFile = document.getElementById('avatarFile');
                         if (avatarFile && avatarFile.files.length > 0) {
                             console.log('Avatar file will be uploaded:', avatarFile.files[0].name);
@@ -970,23 +1177,25 @@ function updateAvatar(inputElement) {
             });
             
             console.log('Profile page JavaScript initialized');
-        });
-         const successMessage = document.querySelector('.alert-success');
-    if (successMessage && successMessage.textContent.includes('thành công')) {
-        // Nếu có upload avatar mới, reload ảnh
-        const profileAvatar = document.getElementById('profileAvatar');
-        if (profileAvatar.hasAttribute('data-new-upload')) {
-            setTimeout(() => {
-                // Force reload ảnh từ server với timestamp mới
-                const currentSrc = profileAvatar.src;
-                if (currentSrc.includes('/view/assets/images/avatars/')) {
-                    const timestamp = new Date().getTime();
-                    profileAvatar.src = currentSrc.split('?')[0] + '?t=' + timestamp;
-                    profileAvatar.removeAttribute('data-new-upload');
+            
+            // Handle success message and avatar reload
+            const successMessage = document.querySelector('.alert-success');
+            if (successMessage && successMessage.textContent.includes('thành công')) {
+                // Nếu có upload avatar mới, reload ảnh
+                const profileAvatar = document.getElementById('profileAvatar');
+                if (profileAvatar.hasAttribute('data-new-upload')) {
+                    setTimeout(() => {
+                        // Force reload ảnh từ server với timestamp mới
+                        const currentSrc = profileAvatar.src;
+                        if (currentSrc.includes('/images/avatars/')) {
+                            const timestamp = new Date().getTime();
+                            profileAvatar.src = currentSrc.split('?')[0] + '?t=' + timestamp;
+                            profileAvatar.removeAttribute('data-new-upload');
+                        }
+                    }, 500);
                 }
-            }, 500);
-        }
-    }
+            }
+        });
     </script>
 </body>
 </html>

@@ -16,64 +16,80 @@ public class AccommodationDAO {
     /**
      * Get accommodation by ID
      */
-    public Accommodation getAccommodationById(int accommodationId) throws SQLException {
-        String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.accommodationId = ?
-        """;
+public Accommodation getAccommodationById(int accommodationId) throws SQLException {
+    String sql = """
+        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
+               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
+               u.fullName as hostName, c.vietnameseName as cityName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE a.accommodationId = ?
+    """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, accommodationId);
+        ps.setInt(1, accommodationId);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToAccommodation(rs);
-                }
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapAccommodationFromResultSet(rs);
             }
         }
-        return null;
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting accommodation by ID: " + accommodationId, e);
+        return null; // Return null instead of throwing
     }
-
+    return null;
+}
     /**
      * Get approved accommodations with pagination and type filter
      */
-    public List<Accommodation> getApprovedAccommodations(int page, int pageSize, String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
-        """);
-
-        List<Object> parameters = new ArrayList<>();
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND a.type = ?");
-            parameters.add(type);
-        }
-
-        sql.append(" ORDER BY a.createdAt DESC");
-        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-        
-        parameters.add((page - 1) * pageSize);
-        parameters.add(pageSize);
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            return executeAccommodationQuery(ps);
-        }
+public List<Accommodation> getApprovedAccommodations(int page, int pageSize, String type) throws SQLException {
+    List<Accommodation> accommodations = new ArrayList<>();
+    StringBuilder sql = new StringBuilder("""
+        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
+               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
+               u.fullName as hostName, c.vietnameseName as cityName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE a.isActive = 1
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
     }
+    
+    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    parameters.add((page - 1) * pageSize);
+    parameters.add(pageSize);
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                accommodations.add(mapAccommodationFromResultSet(rs));
+            }
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting approved accommodations", e);
+        throw e;
+    }
+    
+    return accommodations;
+}
 
     /**
      * Get approved accommodations with pagination (overload without type)
@@ -92,39 +108,49 @@ public class AccommodationDAO {
     /**
      * Get pending accommodations with pagination and type filter
      */
-    public List<Accommodation> getPendingAccommodations(int page, int pageSize, String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 0
-        """);
-
-        List<Object> parameters = new ArrayList<>();
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND a.type = ?");
-            parameters.add(type);
-        }
-
-        sql.append(" ORDER BY a.createdAt DESC");
-        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-
-        parameters.add((page - 1) * pageSize);
-        parameters.add(pageSize);
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            return executeAccommodationQuery(ps);
-        }
+public List<Accommodation> getPendingAccommodations(int page, int pageSize, String type) throws SQLException {
+    List<Accommodation> accommodations = new ArrayList<>();
+    StringBuilder sql = new StringBuilder("""
+        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
+               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
+               u.fullName as hostName, c.vietnameseName as cityName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE a.isActive = 0
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
     }
-
+    
+    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    parameters.add((page - 1) * pageSize);
+    parameters.add(pageSize);
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                accommodations.add(mapAccommodationFromResultSet(rs));
+            }
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting pending accommodations", e);
+        throw e;
+    }
+    
+    return accommodations;
+}
     /**
      * Get accommodations with advanced filtering and search
      */
@@ -554,61 +580,72 @@ public class AccommodationDAO {
     /**
      * Get all accommodations with pagination
      */
-    public List<Accommodation> getAllAccommodations(int page, int pageSize, String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("""
-            SELECT a.*, u.fullName as hostName, c.name as cityName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE 1=1
-        """);
-
-        List<Object> parameters = new ArrayList<>();
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND a.type = ?");
-            parameters.add(type);
-        }
-
-        sql.append(" ORDER BY a.createdAt DESC");
-        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-
-        parameters.add((page - 1) * pageSize);
-        parameters.add(pageSize);
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            return executeAccommodationQuery(ps);
-        }
+public List<Accommodation> getAllAccommodations(int page, int pageSize, String type) throws SQLException {
+    List<Accommodation> accommodations = new ArrayList<>();
+    StringBuilder sql = new StringBuilder("""
+        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
+               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
+               u.fullName as hostName, c.vietnameseName as cityName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE 1=1
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
     }
-
+    
+    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    parameters.add((page - 1) * pageSize);
+    parameters.add(pageSize);
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                accommodations.add(mapAccommodationFromResultSet(rs));
+            }
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting all accommodations", e);
+        throw e;
+    }
+    
+    return accommodations;
+}
     /**
      * Soft delete accommodation
      */
-    public boolean softDeleteAccommodation(int accommodationId, String reason) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ?";
+public boolean softDeleteAccommodation(int accommodationId, String reason) throws SQLException {
+    String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ? AND isActive = 1";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
         
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, accommodationId);
-            
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation soft deleted - ID: " + accommodationId + ", Reason: " + reason);
-            }
-            return rowsAffected > 0;
-        }
+        pstmt.setInt(1, accommodationId);
+        int rowsAffected = pstmt.executeUpdate();
+        
+        boolean success = rowsAffected > 0;
+        LOGGER.info("Soft delete accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
+                   " - Reason: " + reason);
+        
+        return success;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error soft deleting accommodation " + accommodationId, e);
+        throw e;
     }
-
-    /**
-     * Restore accommodation
-     */
+}
     public boolean restoreAccommodation(int accommodationId) throws SQLException {
         String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ?";
         
@@ -707,104 +744,357 @@ public class AccommodationDAO {
     /**
      * Approve accommodation
      */
-    public boolean approveAccommodation(int accommodationId) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ?";
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, accommodationId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation approved - ID: " + accommodationId);
-            }
-            return rowsAffected > 0;
+public boolean approveAccommodation(int accommodationId) throws SQLException {
+    String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ? AND isActive = 0";
+    
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    
+    try {
+        conn = DBUtils.getConnection();
+        if (conn == null) {
+            LOGGER.severe("Database connection is null!");
+            throw new SQLException("Cannot get database connection");
+        }
+        
+        pstmt = conn.prepareStatement(sql);
+        pstmt.setInt(1, accommodationId);
+        
+        int rowsAffected = pstmt.executeUpdate();
+        boolean success = rowsAffected > 0;
+        
+        LOGGER.info("Approve accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
+                   " (rows affected: " + rowsAffected + ")");
+        
+        return success;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "SQL Error approving accommodation " + accommodationId, e);
+        throw e;
+    } finally {
+        try {
+            if (pstmt != null) pstmt.close();
+            if (conn != null) conn.close();
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error closing database resources", e);
         }
     }
-
-    /**
-     * Reject accommodation
-     */
-    public boolean rejectAccommodation(int accommodationId, String reason) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ?";
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, accommodationId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation rejected - ID: " + accommodationId + ", Reason: " + reason);
+}
+public boolean rejectAccommodation(int accommodationId, String reason) throws SQLException {
+    String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ?";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        
+        pstmt.setInt(1, accommodationId);
+        int rowsAffected = pstmt.executeUpdate();
+        
+        boolean success = rowsAffected > 0;
+        LOGGER.info("Reject accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
+                   " - Reason: " + reason);
+        
+        return success;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error rejecting accommodation " + accommodationId, e);
+        throw e;
+    }
+}
+public List<Accommodation> getAccommodationsByHostId(int hostId) throws SQLException {
+    List<Accommodation> accommodations = new ArrayList<>();
+    String sql = """
+        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE a.hostId = ?
+        ORDER BY a.createdAt DESC
+    """;
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setInt(1, hostId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                accommodations.add(mapResultSetToAccommodation(rs));
             }
-            return rowsAffected > 0;
         }
     }
+    return accommodations;
+}
 
+/**
+ * Đếm tổng số accommodation theo hostId
+ */
+public int countAccommodationsByHostId(int hostId) throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ?";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setInt(1, hostId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * Đếm số accommodation đang hoạt động theo hostId
+ */
+public int countActiveAccommodationsByHostId(int hostId) throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ? AND isActive = 1";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setInt(1, hostId);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * Lấy accommodations theo city
+ */
+public List<Accommodation> getAccommodationsByCity(int cityId, int page, int pageSize, String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("""
+        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        WHERE a.cityId = ? AND a.isActive = 1
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    parameters.add(cityId);
+    
+    if (type != null && !type.trim().isEmpty()) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
+    }
+    
+    sql.append(" ORDER BY a.createdAt DESC");
+    sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    parameters.add((page - 1) * pageSize);
+    parameters.add(pageSize);
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        return executeAccommodationQuery(ps);
+    }
+}
+
+/**
+ * Lấy accommodations theo region
+ */
+public List<Accommodation> getAccommodationsByRegion(int regionId, int page, int pageSize, String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("""
+        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
+        FROM Accommodations a
+        LEFT JOIN Users u ON a.hostId = u.userId
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        LEFT JOIN Regions r ON c.regionId = r.regionId
+        WHERE r.regionId = ? AND a.isActive = 1
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    parameters.add(regionId);
+    
+    if (type != null && !type.trim().isEmpty()) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
+    }
+    
+    sql.append(" ORDER BY a.createdAt DESC");
+    sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    parameters.add((page - 1) * pageSize);
+    parameters.add(pageSize);
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        return executeAccommodationQuery(ps);
+    }
+}
+
+/**
+ * Đếm accommodations theo city
+ */
+public int getAccommodationsCountByCity(int cityId, String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE cityId = ? AND isActive = 1");
+    
+    List<Object> parameters = new ArrayList<>();
+    parameters.add(cityId);
+    
+    if (type != null && !type.trim().isEmpty()) {
+        sql.append(" AND type = ?");
+        parameters.add(type);
+    }
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * Đếm accommodations theo region
+ */
+public int getAccommodationsCountByRegion(int regionId, String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*) FROM Accommodations a
+        LEFT JOIN Cities c ON a.cityId = c.cityId
+        LEFT JOIN Regions r ON c.regionId = r.regionId
+        WHERE r.regionId = ? AND a.isActive = 1
+    """);
+    
+    List<Object> parameters = new ArrayList<>();
+    parameters.add(regionId);
+    
+    if (type != null && !type.trim().isEmpty()) {
+        sql.append(" AND a.type = ?");
+        parameters.add(type);
+    }
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        for (int i = 0; i < parameters.size(); i++) {
+            ps.setObject(i + 1, parameters.get(i));
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * Đếm accommodations gần đây
+ */
+public int getRecentAccommodationsCount(int days) throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations WHERE createdAt >= DATEADD(DAY, ?, GETDATE())";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        
+        ps.setInt(1, -days);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+    }
+    return 0;
+}
     /**
      * Delete accommodation (hard delete)
      */
-    public boolean deleteAccommodation(int accommodationId) throws SQLException {
-        String sql = "DELETE FROM Accommodations WHERE accommodationId = ?";
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, accommodationId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation permanently deleted - ID: " + accommodationId);
-            }
-            return rowsAffected > 0;
-        }
+public boolean deleteAccommodation(int accommodationId) throws SQLException {
+    String sql = "DELETE FROM Accommodations WHERE accommodationId = ?";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        
+        pstmt.setInt(1, accommodationId);
+        int rowsAffected = pstmt.executeUpdate();
+        
+        boolean success = rowsAffected > 0;
+        LOGGER.info("Delete accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED"));
+        
+        return success;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error deleting accommodation " + accommodationId, e);
+        throw e;
     }
-
+}
     /**
      * Create new accommodation
      */
-    public int createAccommodation(Accommodation accommodation) throws SQLException {
-        String sql = """
-            INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
-                                       numberOfRooms, amenities, pricePerNight, images, createdAt, 
-                                       isActive, averageRating, totalBookings)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
+public int createAccommodation(Accommodation accommodation) throws SQLException {
+    String sql = """
+        INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
+                                   numberOfRooms, amenities, pricePerNight, images, createdAt, 
+                                   isActive, averageRating, totalBookings)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, accommodation.getHostId());
-            ps.setString(2, accommodation.getName());
-            ps.setString(3, accommodation.getDescription());
-            ps.setInt(4, accommodation.getCityId());
-            ps.setString(5, accommodation.getAddress());
-            ps.setString(6, accommodation.getType());
-            ps.setInt(7, accommodation.getNumberOfRooms());
-            ps.setString(8, accommodation.getAmenities());
-            ps.setDouble(9, accommodation.getPricePerNight());
-            ps.setString(10, accommodation.getImages());
-            ps.setDate(11, accommodation.getCreatedAt() != null ? new java.sql.Date(accommodation.getCreatedAt().getTime()) : new java.sql.Date(System.currentTimeMillis()));
-            ps.setBoolean(12, accommodation.isActive());
-            ps.setDouble(13, accommodation.getAverageRating());
-            ps.setInt(14, accommodation.getTotalBookings());
+        ps.setInt(1, accommodation.getHostId());
+        ps.setString(2, accommodation.getName());
+        ps.setString(3, accommodation.getDescription());
+        ps.setInt(4, accommodation.getCityId());
+        ps.setString(5, accommodation.getAddress());
+        ps.setString(6, accommodation.getType());
+        ps.setInt(7, accommodation.getNumberOfRooms());
+        ps.setString(8, accommodation.getAmenities());
+        ps.setDouble(9, accommodation.getPricePerNight());
+        ps.setString(10, accommodation.getImages());
+        ps.setDate(11, accommodation.getCreatedAt() != null ? 
+                   new java.sql.Date(accommodation.getCreatedAt().getTime()) : 
+                   new java.sql.Date(System.currentTimeMillis()));
+        // *** QUAN TRỌNG: Sử dụng giá trị isActive từ object ***
+        ps.setBoolean(12, accommodation.isActive()); // Sẽ là true nếu set ở servlet
+        ps.setDouble(13, accommodation.getAverageRating());
+        ps.setInt(14, accommodation.getTotalBookings());
 
-            int affectedRows = ps.executeUpdate();
+        int affectedRows = ps.executeUpdate();
 
-            if (affectedRows > 0) {
-                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int accommodationId = generatedKeys.getInt(1);
-                        accommodation.setAccommodationId(accommodationId);
-                        LOGGER.info("Accommodation created successfully with ID: " + accommodationId);
-                        return accommodationId;
-                    }
+        if (affectedRows > 0) {
+            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int accommodationId = generatedKeys.getInt(1);
+                    accommodation.setAccommodationId(accommodationId);
+                    LOGGER.info("Accommodation created with ID: " + accommodationId + 
+                               ", isActive: " + accommodation.isActive());
+                    return accommodationId;
                 }
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating accommodation: " + accommodation.getName(), e);
-            throw e;
         }
-        return 0;
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error creating accommodation: " + accommodation.getName(), e);
+        throw e;
     }
+    return 0;
+}
     
 
     /**
@@ -846,102 +1136,198 @@ public class AccommodationDAO {
     /**
      * Get pending accommodations count
      */
-    public int getPendingAccommodationsCount() throws SQLException {
-        return getPendingAccommodationsCount(null);
-    }
-
-    /**
-     * Get pending accommodations count with type filter
-     */
-    public int getPendingAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 0");
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND type = ?");
+   public int getPendingAccommodationsCount() throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 0";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        if (rs.next()) {
+            return rs.getInt(1);
         }
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            if (type != null && !type.trim().isEmpty()) {
-                ps.setString(1, type);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
+        return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting pending accommodations count", e);
+        return 0;
+    }
+}
+/**
+ * Get pending accommodations count with type filter
+ */
+public int getPendingAccommodationsCount(String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 0");
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" AND type = ?");
+    }
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            ps.setString(1, type);
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
             }
         }
         return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting pending accommodations count with type filter", e);
+        return 0;
     }
-
+}
+private Accommodation mapAccommodationFromResultSet(ResultSet rs) throws SQLException {
+    Accommodation accommodation = new Accommodation();
+    
+    try {
+        accommodation.setAccommodationId(rs.getInt("accommodationId"));
+        accommodation.setHostId(rs.getInt("hostId"));
+        accommodation.setName(rs.getString("name"));
+        accommodation.setDescription(rs.getString("description"));
+        accommodation.setCityId(rs.getInt("cityId"));
+        accommodation.setAddress(rs.getString("address"));
+        accommodation.setType(rs.getString("type"));
+        accommodation.setNumberOfRooms(rs.getInt("numberOfRooms"));
+        accommodation.setAmenities(rs.getString("amenities"));
+        accommodation.setPricePerNight(rs.getDouble("pricePerNight"));
+        accommodation.setImages(rs.getString("images"));
+        accommodation.setCreatedAt(rs.getDate("createdAt"));
+        accommodation.setActive(rs.getBoolean("isActive"));
+        accommodation.setAverageRating(rs.getDouble("averageRating"));
+        accommodation.setTotalBookings(rs.getInt("totalBookings"));
+        
+        // Set joined fields
+        accommodation.setHostName(rs.getString("hostName"));
+        accommodation.setCityName(rs.getString("cityName"));
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error mapping accommodation from ResultSet", e);
+        throw e;
+    }
+    
+    return accommodation;
+}
+private int getAccommodationCount(String sql) throws SQLException {
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql);
+         ResultSet rs = pstmt.executeQuery()) {
+        
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
+        return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting accommodation count", e);
+        return 0; // Return 0 instead of throwing to prevent servlet crash
+    }
+}
     /**
      * Get approved accommodations count
      */
-    public int getApprovedAccommodationsCount() throws SQLException {
-        return getApprovedAccommodationsCount(null);
-    }
-
-    /**
-     * Get approved accommodations count with type filter
-     */
-    public int getApprovedAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 1");
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND type = ?");
+public int getApprovedAccommodationsCount() throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 1";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        if (rs.next()) {
+            return rs.getInt(1);
         }
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            if (type != null && !type.trim().isEmpty()) {
-                ps.setString(1, type);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
+        return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting approved accommodations count", e);
+        return 0;
+    }
+}
+/**
+ * Get approved accommodations count with type filter
+ */
+public int getApprovedAccommodationsCount(String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 1");
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" AND type = ?");
+    }
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            ps.setString(1, type);
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
             }
         }
         return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting approved accommodations count with type filter", e);
+        return 0;
     }
+}
 
     /**
      * Get total accommodations count
      */
-    public int getTotalAccommodationsCount() throws SQLException {
-        return getTotalAccommodationsCount(null);
-    }
-
-    /**
-     * Get total accommodations count with type filter
-     */
-    public int getTotalAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE 1=1");
-
-        if (type != null && !type.trim().isEmpty()) {
-            sql.append(" AND type = ?");
+public int getTotalAccommodationsCount() throws SQLException {
+    String sql = "SELECT COUNT(*) FROM Accommodations";
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        
+        if (rs.next()) {
+            return rs.getInt(1);
         }
+        return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting total accommodations count", e);
+        return 0; // Return 0 instead of throwing to prevent servlet crash
+    }
+}
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            if (type != null && !type.trim().isEmpty()) {
-                ps.setString(1, type);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
+/**
+ * Get total accommodations count with type filter
+ */
+public int getTotalAccommodationsCount(String type) throws SQLException {
+    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations");
+    
+    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+        sql.append(" WHERE type = ?");
+    }
+    
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            ps.setString(1, type);
+        }
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
             }
         }
         return 0;
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting total accommodations count with type filter", e);
+        return 0;
     }
-
+}
     /**
      * Get active accommodations count
      */
@@ -1144,19 +1530,6 @@ public class AccommodationDAO {
         return accommodation;
     }
 
-    public List<Accommodation> getAccommodationsByCity(int cityId, int page, int pageSize, String type) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 
-    public List<Accommodation> getAccommodationsByRegion(int regionId, int page, int pageSize, String type) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 
-    public int getAccommodationsCountByCity(int cityId, String type) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    public int getAccommodationsCountByRegion(int regionId, String type) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

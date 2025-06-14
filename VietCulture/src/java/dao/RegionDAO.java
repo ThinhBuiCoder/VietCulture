@@ -26,7 +26,12 @@ public class RegionDAO {
             while (rs.next()) {
                 regions.add(mapRegionFromResultSet(rs));
             }
+        } catch (SQLException e) {
+            LOGGER.severe("Error getting all regions: " + e.getMessage());
+            throw e;
         }
+        
+        LOGGER.info("Loaded " + regions.size() + " regions");
         return regions;
     }
     
@@ -65,6 +70,9 @@ public class RegionDAO {
                     return region;
                 }
             }
+        } catch (SQLException e) {
+            LOGGER.severe("Error getting region by ID " + regionId + ": " + e.getMessage());
+            throw e;
         }
         return null;
     }
@@ -75,12 +83,10 @@ public class RegionDAO {
     public List<City> getCitiesByRegionId(int regionId) throws SQLException {
         List<City> cities = new ArrayList<>();
         
-        String sql = """
-            SELECT cityId, name, vietnameseName, regionId, description, imageUrl, attractions 
-            FROM Cities 
-            WHERE regionId = ? 
-            ORDER BY name
-        """;
+        String sql = "SELECT cityId, name, vietnameseName, regionId, description, imageUrl, attractions " +
+                    "FROM Cities " +
+                    "WHERE regionId = ? " +
+                    "ORDER BY name";
         
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -92,6 +98,9 @@ public class RegionDAO {
                     cities.add(mapCityFromResultSet(rs));
                 }
             }
+        } catch (SQLException e) {
+            LOGGER.severe("Error getting cities by region ID " + regionId + ": " + e.getMessage());
+            throw e;
         }
         return cities;
     }
@@ -130,10 +139,8 @@ public class RegionDAO {
      * Create new region
      */
     public int createRegion(Region region) throws SQLException {
-        String sql = """
-            INSERT INTO Regions (name, vietnameseName, description, imageUrl, climate, culture)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """;
+        String sql = "INSERT INTO Regions (name, vietnameseName, description, imageUrl, climate, culture) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)";
         
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -157,6 +164,9 @@ public class RegionDAO {
                     }
                 }
             }
+        } catch (SQLException e) {
+            LOGGER.severe("Error creating region: " + e.getMessage());
+            throw e;
         }
         return 0;
     }
@@ -165,11 +175,9 @@ public class RegionDAO {
      * Update region
      */
     public boolean updateRegion(Region region) throws SQLException {
-        String sql = """
-            UPDATE Regions 
-            SET name = ?, vietnameseName = ?, description = ?, imageUrl = ?, climate = ?, culture = ?
-            WHERE regionId = ?
-        """;
+        String sql = "UPDATE Regions " +
+                    "SET name = ?, vietnameseName = ?, description = ?, imageUrl = ?, climate = ?, culture = ? " +
+                    "WHERE regionId = ?";
         
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -187,6 +195,9 @@ public class RegionDAO {
                 LOGGER.info("Region updated successfully: " + region.getRegionId());
             }
             return rowsAffected > 0;
+        } catch (SQLException e) {
+            LOGGER.severe("Error updating region: " + e.getMessage());
+            throw e;
         }
     }
     
@@ -205,6 +216,9 @@ public class RegionDAO {
                 LOGGER.info("Region deleted - ID: " + regionId);
             }
             return rowsAffected > 0;
+        } catch (SQLException e) {
+            LOGGER.severe("Error deleting region: " + e.getMessage());
+            throw e;
         }
     }
     
@@ -221,6 +235,9 @@ public class RegionDAO {
             if (rs.next()) {
                 return rs.getInt(1);
             }
+        } catch (SQLException e) {
+            LOGGER.severe("Error counting regions: " + e.getMessage());
+            throw e;
         }
         return 0;
     }

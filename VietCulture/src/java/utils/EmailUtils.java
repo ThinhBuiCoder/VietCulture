@@ -530,4 +530,251 @@ private static String createPasswordResetConfirmationTemplate(String userName) {
         """.formatted(userName, java.time.LocalDateTime.now().format(
             java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
 }
+/**
+ * Send booking confirmation email
+ */
+public static boolean sendBookingConfirmationEmail(String toEmail, String customerName, 
+                                                 int bookingId, String serviceName, 
+                                                 String bookingDate, String timeSlot, 
+                                                 int numberOfPeople, String totalPrice) {
+    LOGGER.info("📧 Sending booking confirmation to: " + toEmail);
+    
+    try {
+        Session session = getEmailSession();
+        MimeMessage message = new MimeMessage(session);
+        
+        message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+        message.setSubject("Xác nhận đặt chỗ thành công - VietCulture", "UTF-8");
+        
+        String htmlContent = createBookingConfirmationTemplate(
+            customerName, bookingId, serviceName, bookingDate, 
+            timeSlot, numberOfPeople, totalPrice);
+        message.setContent(htmlContent, "text/html; charset=UTF-8");
+        
+        Transport.send(message);
+        LOGGER.info("✅ Booking confirmation sent successfully to: " + toEmail);
+        return true;
+        
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "❌ Failed to send booking confirmation to: " + toEmail, e);
+        return false;
+    }
+}
+
+/**
+ * Create booking confirmation email template
+ */
+private static String createBookingConfirmationTemplate(String customerName, int bookingId, 
+                                                      String serviceName, String bookingDate, 
+                                                      String timeSlot, int numberOfPeople, 
+                                                      String totalPrice) {
+    return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Xác nhận đặt chỗ thành công</title>
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+                .container { max-width: 600px; margin: 0 auto; background: white; }
+                .header { 
+                    background: linear-gradient(135deg, #10466C, #83C5BE); 
+                    color: white; 
+                    padding: 30px; 
+                    text-align: center; 
+                    border-radius: 0;
+                }
+                .content { padding: 30px; }
+                .booking-card {
+                    background: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 25px;
+                    margin: 20px 0;
+                }
+                .booking-id {
+                    background: #10466C;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    display: inline-block;
+                    margin-bottom: 20px;
+                }
+                .service-name {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #10466C;
+                    margin-bottom: 15px;
+                }
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                .detail-row:last-child {
+                    border-bottom: none;
+                }
+                .detail-label {
+                    font-weight: 600;
+                    color: #666;
+                }
+                .detail-value {
+                    font-weight: bold;
+                    color: #333;
+                }
+                .total-price {
+                    background: #e8f5e8;
+                    border: 2px solid #10466C;
+                    border-radius: 8px;
+                    padding: 15px;
+                    text-align: center;
+                    margin: 20px 0;
+                }
+                .total-price .amount {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #10466C;
+                }
+                .status-badge {
+                    background: #28a745;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 15px;
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                .next-steps {
+                    background: #fff3cd;
+                    border-left: 4px solid #ffc107;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 0 8px 8px 0;
+                }
+                .cta-section {
+                    text-align: center;
+                    margin: 30px 0;
+                }
+                .cta-button {
+                    display: inline-block;
+                    background: #10466C;
+                    color: white;
+                    padding: 15px 30px;
+                    text-decoration: none;
+                    border-radius: 25px;
+                    font-weight: bold;
+                    margin: 10px;
+                }
+                .contact-info {
+                    background: #e3f2fd;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .footer { 
+                    background: #333; 
+                    color: white; 
+                    padding: 25px; 
+                    text-align: center; 
+                    font-size: 14px; 
+                }
+                .highlight { color: #10466C; font-weight: bold; }
+                .icon { font-size: 18px; margin-right: 8px; }
+                
+                @media (max-width: 600px) {
+                    .detail-row { flex-direction: column; align-items: flex-start; }
+                    .detail-value { margin-top: 5px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Đặt Chỗ Thành Công!</h1>
+                    <p>VietCulture - Trải nghiệm đáng nhớ đang chờ bạn</p>
+                </div>
+                
+                <div class="content">
+                    <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                    <p>Cảm ơn bạn đã đặt chỗ với VietCulture. Đơn đặt chỗ của bạn đã được xác nhận thành công!</p>
+                    
+                    <div class="booking-card">
+                        <div class="booking-id">📋 Mã đặt chỗ: #%d</div>
+                        <div class="status-badge">✅ Đã xác nhận</div>
+                        
+                        <div class="service-name">🌟 %s</div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">📅</span>Ngày:</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">⏰</span>Thời gian:</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">👥</span>Số người:</span>
+                            <span class="detail-value">%d người</span>
+                        </div>
+                        
+                        <div class="total-price">
+                            <div>💰 Tổng thanh toán</div>
+                            <div class="amount">%s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="next-steps">
+                        <h3>📋 Các bước tiếp theo:</h3>
+                        <ul>
+                            <li><strong>Chuẩn bị:</strong> Vui lòng có mặt đúng giờ đã đặt</li>
+                            <li><strong>Liên hệ:</strong> Host sẽ liên hệ với bạn trước 24h</li>
+                            <li><strong>Thay đổi:</strong> Liên hệ với chúng tôi nếu cần điều chỉnh</li>
+                            <li><strong>Đánh giá:</strong> Chia sẻ trải nghiệm sau chuyến đi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cta-section">
+                        <a href="#" class="cta-button">📱 Xem Chi Tiết</a>
+                        <a href="#" class="cta-button">💬 Liên Hệ Host</a>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <h3>🆘 Cần hỗ trợ?</h3>
+                        <p><strong>Hotline:</strong> 1900 1234 (24/7)<br>
+                        <strong>Email:</strong> support@vietculture.com<br>
+                        <strong>Live Chat:</strong> Trên website VietCulture</p>
+                    </div>
+                    
+                    <p style="text-align: center; color: #666; font-style: italic;">
+                        Chúc bạn có những trải nghiệm tuyệt vời cùng VietCulture! 🎊
+                    </p>
+                </div>
+                
+                <div class="footer">
+                    <p><strong>© 2025 VietCulture</strong> - Nền tảng trải nghiệm du lịch cộng đồng</p>
+                    <p>Email tự động - vui lòng không trả lời trực tiếp</p>
+                    <p>Mã đặt chỗ: #%d | Ngày gửi: %s</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """.formatted(
+            customerName,           // %s - tên khách hàng
+            bookingId,             // %d - mã đặt chỗ
+            serviceName,           // %s - tên dịch vụ
+            bookingDate,           // %s - ngày đặt
+            timeSlot,              // %s - khung giờ
+            numberOfPeople,        // %d - số người
+            totalPrice,            // %s - tổng tiền
+            bookingId,             // %d - mã đặt chỗ (footer)
+            java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))  // ngày gửi
+        );
+}
 }

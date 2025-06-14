@@ -59,8 +59,7 @@
             <nav class="col-md-3 col-lg-2 d-md-block admin-sidebar collapse">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
-                        <img src="${pageContext.request.contextPath}/view/assets/home/img/logo1.jpg" alt="Logo" style="height: 60px;">
-                        <h5 class="mt-2">ADMIN VIETCULTURE</h5>
+<img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="Logo" style="height: 60px;">                        <h5 class="mt-2">ADMIN VIETCULTURE</h5>
                     </div>
                     
                     <ul class="nav flex-column">
@@ -79,16 +78,7 @@
                                 <i class="fas fa-eye me-2"></i> Kiểm duyệt nội dung
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/experiences/approval">
-                                <i class="fas fa-check-circle me-2"></i> Duyệt Experiences
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/accommodations/approval">
-                                <i class="fas fa-home me-2"></i> Duyệt Accommodations
-                            </a>
-                        </li>
+                   
                         <li class="nav-item">
                             <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/statistics/users">
                                 <i class="fas fa-chart-bar me-2"></i> Thống kê

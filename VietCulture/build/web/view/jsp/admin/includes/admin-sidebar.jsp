@@ -101,6 +101,17 @@
     transform: translateY(-1px);
 }
 
+/* Special badge for combined content approval */
+.badge-combined {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    animation: gradient-shift 3s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+    0%, 100% { background: linear-gradient(45deg, #28a745, #20c997); }
+    50% { background: linear-gradient(45deg, #20c997, #28a745); }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .admin-sidebar {
@@ -124,7 +135,7 @@
     <div class="position-sticky pt-3">
         <!-- Logo -->
         <div class="text-center mb-4">
-            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="Logo" style="height: 60px;"
+            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="Logo" style="height: 60px;"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div style="display: none;">
                 <i class="fas fa-mountain fa-3x text-white"></i>
@@ -165,6 +176,19 @@
                 </h6>
             </li>
             
+            <!-- NEW: Combined Content Approval -->
+            <li class="nav-item">
+                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/content/approval') ? 'active text-white' : 'text-white-50'}" 
+                   href="${pageContext.request.contextPath}/admin/content/approval">
+                    <i class="fas fa-check-double me-2"></i> 
+                    <span>Duyệt nội dung tổng hợp</span>
+                    <c:set var="totalPending" value="${(not empty pendingExperiences ? pendingExperiences : 0) + (not empty pendingAccommodations ? pendingAccommodations : 0)}" />
+                    <c:if test="${totalPending > 0}">
+                        <span class="badge badge-combined ms-auto" title="Tổng experiences + accommodations chờ duyệt">${totalPending}</span>
+                    </c:if>
+                </a>
+            </li>
+            
             <li class="nav-item">
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/content/moderation') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/content/moderation">
@@ -176,11 +200,12 @@
                 </a>
             </li>
             
+            <!-- Separated Experience and Accommodation Management (for detailed view) -->
             <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/experiences') ? 'active text-white' : 'text-white-50'}" 
+                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/experiences') and not fn:contains(pageContext.request.requestURI, '/admin/content/approval') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/experiences/approval">
                     <i class="fas fa-compass me-2"></i> 
-                    <span>Duyệt Experiences</span>
+                    <span>Chi tiết Experiences</span>
                     <c:if test="${not empty pendingExperiences and pendingExperiences > 0}">
                         <span class="badge bg-warning ms-auto">${pendingExperiences}</span>
                     </c:if>
@@ -188,10 +213,10 @@
             </li>
             
             <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/accommodations') ? 'active text-white' : 'text-white-50'}" 
+                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/accommodations') and not fn:contains(pageContext.request.requestURI, '/admin/content/approval') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/accommodations/approval">
                     <i class="fas fa-home me-2"></i> 
-                    <span>Duyệt Accommodations</span>
+                    <span>Chi tiết Accommodations</span>
                     <c:if test="${not empty pendingAccommodations and pendingAccommodations > 0}">
                         <span class="badge bg-warning ms-auto">${pendingAccommodations}</span>
                     </c:if>
@@ -336,6 +361,9 @@
                 <span><i class="fas fa-bolt me-2"></i>Thao tác nhanh</span>
             </h6>
             <div class="px-3">
+                <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2" onclick="quickApproveAll()" title="Duyệt tất cả nội dung pending">
+                    <i class="fas fa-check-double me-1"></i> Duyệt tất cả
+                </button>
                 <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2" onclick="quickBackup()" title="Sao lưu dữ liệu hệ thống">
                     <i class="fas fa-database me-1"></i> Backup ngay
                 </button>
@@ -362,6 +390,9 @@
             </div>
             <div class="mt-1">
                 <small class="text-white-50">Cập nhật: <span id="lastUpdate"></span></small>
+            </div>
+            <div class="mt-1">
+                <small class="text-white-50">Pending: <span id="totalPendingCount">${(not empty pendingExperiences ? pendingExperiences : 0) + (not empty pendingAccommodations ? pendingAccommodations : 0)}</span> nội dung</small>
             </div>
         </div>
         
@@ -412,6 +443,10 @@
                     <i class="fas fa-history me-2"></i> Login History
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/admin/content/approval">
+                    <i class="fas fa-check-double me-2"></i> Duyệt nội dung nhanh
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
                     <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
                 </a></li>
@@ -423,6 +458,59 @@
 <script>
 // Context path for consistent URL building
 const contextPath = '${pageContext.request.contextPath}';
+
+// NEW: Quick approve all function
+function quickApproveAll() {
+    if (confirm('Bạn có chắc chắn muốn duyệt TẤT CẢ nội dung đang chờ?\nBao gồm cả experiences và accommodations.')) {
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang duyệt...';
+        btn.disabled = true;
+        
+        fetch(contextPath + '/admin/content/approve-all', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const count = data.data?.count || 0;
+                const total = data.data?.total || 0;
+                showNotification('Đã duyệt ' + count + '/' + total + ' nội dung thành công!', 'success');
+                
+                // Update pending count in sidebar
+                const pendingCountElement = document.getElementById('totalPendingCount');
+                if (pendingCountElement) {
+                    const remaining = total - count;
+                    pendingCountElement.textContent = remaining;
+                }
+                
+                // Refresh the page if we're on content approval page
+                if (window.location.pathname.includes('/admin/content/approval')) {
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            } else {
+                showNotification('Duyệt thất bại: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Approve all error:', error);
+            showNotification('Lỗi kết nối: ' + error.message, 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+}
 
 // Quick action functions
 function quickBackup() {
@@ -582,6 +670,46 @@ function updateSystemInfo() {
         const hours = now.getHours();
         uptimeElement.textContent = hours + 'h';
     }
+    
+    // Update pending count from server (optional - can be implemented with AJAX)
+    updatePendingCount();
+}
+
+// Function to update pending content count
+function updatePendingCount() {
+    // This can be implemented to fetch real-time pending count
+    fetch(contextPath + '/admin/api/pending-count', {
+        method: 'GET',
+        headers: { 
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data && data.totalPending !== undefined) {
+            const pendingCountElement = document.getElementById('totalPendingCount');
+            if (pendingCountElement) {
+                pendingCountElement.textContent = data.totalPending;
+            }
+            
+            // Update badges in sidebar
+            const combinedBadge = document.querySelector('a[href*="/admin/content/approval"] .badge-combined');
+            if (combinedBadge && data.totalPending > 0) {
+                combinedBadge.textContent = data.totalPending;
+                combinedBadge.style.display = 'inline-block';
+            } else if (combinedBadge && data.totalPending === 0) {
+                combinedBadge.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => {
+        // Silently handle error - don't show notification for background updates
+        console.debug('Pending count update failed:', error);
+    });
 }
 
 // Update every minute
@@ -631,5 +759,59 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Add keyboard shortcuts for admin
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+Shift+A for quick approve all
+        if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+            e.preventDefault();
+            quickApproveAll();
+        }
+        
+        // Ctrl+Shift+C for content approval page
+        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+            e.preventDefault();
+            window.location.href = contextPath + '/admin/content/approval';
+        }
+        
+        // Ctrl+Shift+D for dashboard
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+            e.preventDefault();
+            window.location.href = contextPath + '/admin/dashboard';
+        }
+    });
+    
+    // Add tooltip information for keyboard shortcuts
+    const approveAllBtn = document.querySelector('button[onclick*="quickApproveAll"]');
+    if (approveAllBtn) {
+        approveAllBtn.title += ' (Ctrl+Shift+A)';
+    }
+    
+    // Auto-refresh pending count every 2 minutes if user is active
+    let lastActivity = Date.now();
+    document.addEventListener('mousemove', () => lastActivity = Date.now());
+    document.addEventListener('keypress', () => lastActivity = Date.now());
+    
+    setInterval(() => {
+        // Only update if user was active in the last 5 minutes
+        if (Date.now() - lastActivity < 5 * 60 * 1000) {
+            updatePendingCount();
+        }
+    }, 2 * 60 * 1000); // Every 2 minutes
+    
+    // Show welcome message for new admin sessions
+    const isNewSession = sessionStorage.getItem('adminSessionWelcome') !== 'shown';
+    if (isNewSession && window.location.pathname.includes('/admin/')) {
+        sessionStorage.setItem('adminSessionWelcome', 'shown');
+        setTimeout(() => {
+            showNotification('Chào mừng đến Admin Panel! Sử dụng Ctrl+Shift+C để mở trang duyệt nội dung nhanh.', 'info');
+        }, 1000);
+    }
 });
+
+// Expose functions globally for onclick handlers
+window.quickApproveAll = quickApproveAll;
+window.quickBackup = quickBackup;
+window.clearCache = clearCache;
+window.viewLogs = viewLogs;
 </script>

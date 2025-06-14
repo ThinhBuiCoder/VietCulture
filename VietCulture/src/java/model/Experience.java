@@ -381,5 +381,9 @@ public void setCategoryName(String categoryName) {
         this.cityName = city.getVietnameseName();
     }
 
+    public void setCategoryId(int parseInt) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 
 }
