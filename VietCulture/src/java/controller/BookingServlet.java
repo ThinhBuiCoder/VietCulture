@@ -6,9 +6,7 @@ import dao.AccommodationDAO;
 import model.Booking;
 import model.Experience;
 import model.User;
-import utils.PayOSUtils;
-import utils.PayOSRequest;
-import utils.PayOSResponse;
+import utils.EmailUtils;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -28,20 +26,16 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 /**
- * BookingServlet - Xử lý các yêu cầu đặt chỗ và thanh toán
  * 
  * Supported URLs:
  * - GET /booking: Hiển thị form đặt chỗ
  * - GET /booking/confirm: Hiển thị trang xác nhận
+ * - GET /booking/momo-payment: Hiển thị trang thanh toán MoMo QR
  * - GET /booking/success: Hiển thị trang thành công
- * - GET /booking/payment/success: Callback thanh toán thành công
- * - GET /booking/payment/cancel: Callback hủy thanh toán
  * - POST /booking: Tạo booking mới
- * - POST /booking (action=confirm): Xác nhận booking
- * - POST /booking (action=payment): Tạo link thanh toán
- * - POST /booking/webhook: PayOS webhook
+ * - POST /booking (action=confirm): Xác nhận booking tiền mặt
  */
-@WebServlet({"/booking", "/booking/*", "/payment/*"})
+@WebServlet({"/booking", "/booking/*"})
 public class BookingServlet extends HttpServlet {
     
     // ==================== CONSTANTS & FIELDS ====================
@@ -86,10 +80,10 @@ public class BookingServlet extends HttpServlet {
                 handleBookingForm(request, response);
             } else if (pathInfo.equals("/confirm")) {
                 handleBookingConfirmation(request, response);
+            } else if (pathInfo.equals("/momo-payment")) {
+                handleMoMoPaymentPage(request, response);
             } else if (pathInfo.equals("/success")) {
                 handleBookingSuccess(request, response);
-            } else if (pathInfo.startsWith("/payment")) {
-                handlePaymentCallback(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -114,15 +108,14 @@ public class BookingServlet extends HttpServlet {
         }
         
         String action = request.getParameter("action");
-        String pathInfo = request.getPathInfo();
         
         try {
-            if (pathInfo != null && pathInfo.equals("/webhook")) {
-                handlePayOSWebhook(request, response);
-            } else if ("confirm".equals(action)) {
+            if ("confirm".equals(action)) {
                 handleConfirmBooking(request, response, user);
-            } else if ("payment".equals(action)) {
-                handlePaymentRequest(request, response, user);
+            } else if ("momo-payment".equals(action)) {
+                handleMoMoPaymentRequest(request, response, user);
+            } else if ("complete-payment".equals(action)) {
+                handleCompletePayment(request, response, user);
             } else {
                 handleCreateBooking(request, response, user);
             }
@@ -247,7 +240,7 @@ public class BookingServlet extends HttpServlet {
      * Hiển thị trang xác nhận đặt chỗ
      */
     private void handleBookingConfirmation(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
+            throws ServletException, IOException, SQLException {
         
         HttpSession session = request.getSession();
         BookingFormData formData = (BookingFormData) session.getAttribute("bookingFormData");
@@ -257,12 +250,19 @@ public class BookingServlet extends HttpServlet {
             return;
         }
         
+        // Load experience data for display
+        if (formData.getExperienceId() != null) {
+            Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
+            request.setAttribute("experience", experience);
+            request.setAttribute("bookingType", "experience");
+        }
+        
         request.setAttribute("formData", formData);
         request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
     }
     
     /**
-     * Xác nhận đặt chỗ (lưu vào database)
+     * Xác nhận đặt chỗ tiền mặt (lưu vào database)
      */
     private void handleConfirmBooking(HttpServletRequest request, HttpServletResponse response, User user) 
             throws ServletException, IOException, SQLException {
@@ -277,19 +277,23 @@ public class BookingServlet extends HttpServlet {
         
         try {
             Booking booking = createBookingFromFormData(formData, user.getUserId());
+            booking.setStatus("CONFIRMED"); // Tiền mặt -> xác nhận luôn
             int bookingId = bookingDAO.createBooking(booking);
             
             if (bookingId > 0) {
                 booking.setBookingId(bookingId);
+                
+                // Gửi email xác nhận
+                sendBookingConfirmationEmail(booking, formData, user);
                 
                 // Clear form data và set success data
                 session.removeAttribute("bookingFormData");
                 session.setAttribute("successBooking", booking);
                 
                 // Log activity
-                logBookingActivity(bookingId, "BOOKING_CONFIRMED", "Booking created without payment");
+                logBookingActivity(bookingId, "CASH_PAYMENT_CONFIRMED", "Booking confirmed with cash payment");
                 
-                LOGGER.info("Booking created successfully - ID: " + bookingId + 
+                LOGGER.info("Cash booking created successfully - ID: " + bookingId + 
                            ", User: " + user.getUserId());
                 
                 response.sendRedirect(request.getContextPath() + "/booking/success");
@@ -298,12 +302,14 @@ public class BookingServlet extends HttpServlet {
             }
             
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating booking", e);
+            LOGGER.log(Level.SEVERE, "Error creating cash booking", e);
             request.setAttribute("errorMessage", "Không thể tạo đặt chỗ. Vui lòng thử lại.");
             request.setAttribute("formData", formData);
             request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
         }
     }
+    
+    
     
     /**
      * Hiển thị trang đặt chỗ thành công
@@ -325,273 +331,7 @@ public class BookingServlet extends HttpServlet {
         request.getRequestDispatcher(BOOKING_SUCCESS_PAGE).forward(request, response);
     }
     
-    // ==================== PAYMENT HANDLERS ====================
-    
-    /**
-     * Xử lý yêu cầu thanh toán PayOS
-     */
-    private void handlePaymentRequest(HttpServletRequest request, HttpServletResponse response, User user) 
-            throws ServletException, IOException, SQLException {
-        HttpSession session = request.getSession();
-        BookingFormData formData = (BookingFormData) session.getAttribute("bookingFormData");
-        
-        if (formData == null) {
-            response.sendRedirect(request.getContextPath() + "/booking");
-            return;
-        }
-        
-        try {
-            // Validate payment amount
-            if (!validatePaymentAmount(formData)) {
-                request.setAttribute("errorMessage", "Số tiền thanh toán không hợp lệ.");
-                request.setAttribute("formData", formData);
-                request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
-                return;
-            }
-            
-            // Tạo booking với status PENDING_PAYMENT
-            Booking booking = createBookingFromFormData(formData, user.getUserId());
-            booking.setStatus("PENDING_PAYMENT");
-            
-            // Tạo PayOS payment link
-            PayOSResponse payosResponse = createPayOSPayment(request, formData, booking);
-            
-            if (payosResponse.isSuccess()) {
-                // Lưu booking vào DB
-                int bookingId = bookingDAO.createBooking(booking);
-                
-                if (bookingId > 0) {
-                    booking.setBookingId(bookingId);
-                    
-                    // Store payment info trong session
-                    session.setAttribute("pendingPaymentBooking", booking);
-                    session.setAttribute("paymentOrderCode", payosResponse.getOrderCode());
-                    
-                    // Log activity
-                    logBookingActivity(bookingId, "PAYMENT_INITIATED", 
-                        "Payment link created, order code: " + payosResponse.getOrderCode());
-                    
-                    // Redirect đến PayOS checkout
-                    response.sendRedirect(payosResponse.getCheckoutUrl());
-                    
-                    LOGGER.info("Payment link created - Order: " + payosResponse.getOrderCode() + 
-                               ", Booking: " + bookingId);
-                } else {
-                    throw new SQLException("Failed to create booking");
-                }
-            } else {
-                request.setAttribute("errorMessage", "Không thể tạo link thanh toán: " + payosResponse.getMessage());
-                request.setAttribute("formData", formData);
-                request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
-            }
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error creating PayOS payment", e);
-            request.setAttribute("errorMessage", "Lỗi hệ thống thanh toán. Vui lòng thử lại.");
-            request.setAttribute("formData", formData);
-            request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
-        }
-    }
-    
-    /**
-     * Xử lý callback từ PayOS
-     */
-    private void handlePaymentCallback(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        String pathInfo = request.getPathInfo();
-        String orderCodeParam = request.getParameter("orderCode");
-        
-        try {
-            if (pathInfo.equals("/payment/success")) {
-                handlePaymentSuccess(request, response, orderCodeParam);
-            } else if (pathInfo.equals("/payment/cancel")) {
-                handlePaymentCancel(request, response, orderCodeParam);
-            } else {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error handling payment callback", e);
-            response.sendRedirect(request.getContextPath() + "/booking?error=payment_callback_error");
-        }
-    }
-    
-    /**
-     * Xử lý thanh toán thành công
-     */
-    private void handlePaymentSuccess(HttpServletRequest request, HttpServletResponse response, String orderCode) 
-            throws ServletException, IOException, SQLException {
-        HttpSession session = request.getSession();
-        Booking pendingBooking = (Booking) session.getAttribute("pendingPaymentBooking");
-        Long sessionOrderCode = (Long) session.getAttribute("paymentOrderCode");
-        
-        if (pendingBooking == null || sessionOrderCode == null || 
-            !sessionOrderCode.toString().equals(orderCode)) {
-            response.sendRedirect(request.getContextPath() + "/booking?error=invalid_payment");
-            return;
-        }
-        
-        try {
-            // Xác minh thanh toán với PayOS
-            boolean paymentVerified = PayOSUtils.verifyPaymentStatus(sessionOrderCode);
-            
-            if (paymentVerified) {
-                // Cập nhật trạng thái booking
-                pendingBooking.setStatus("CONFIRMED");
-                bookingDAO.updateBookingStatus(pendingBooking.getBookingId(), "CONFIRMED");
-                
-                // Gửi email xác nhận
-                BookingFormData formData = (BookingFormData) session.getAttribute("bookingFormData");
-                if (formData != null) {
-                    sendBookingConfirmationEmail(pendingBooking, formData);
-                }
-                
-                // Log activity
-                logBookingActivity(pendingBooking.getBookingId(), "PAYMENT_CONFIRMED", 
-                    "Payment verified, order code: " + orderCode);
-                
-                // Clear session
-                session.removeAttribute("pendingPaymentBooking");
-                session.removeAttribute("paymentOrderCode");
-                session.removeAttribute("bookingFormData");
-                
-                // Set success booking
-                session.setAttribute("successBooking", pendingBooking);
-                
-                LOGGER.info("Payment successful - Order: " + orderCode + 
-                           ", Booking: " + pendingBooking.getBookingId());
-                
-                response.sendRedirect(request.getContextPath() + "/booking/success");
-            } else {
-                LOGGER.warning("Payment verification failed for order: " + orderCode);
-                response.sendRedirect(request.getContextPath() + "/booking?error=payment_verification_failed");
-            }
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating booking status after payment", e);
-            response.sendRedirect(request.getContextPath() + "/booking?error=payment_processing_error");
-        }
-    }
-    
-    /**
-     * Xử lý hủy thanh toán
-     */
-    private void handlePaymentCancel(HttpServletRequest request, HttpServletResponse response, String orderCode) 
-            throws ServletException, IOException, SQLException {
-        HttpSession session = request.getSession();
-        Booking pendingBooking = (Booking) session.getAttribute("pendingPaymentBooking");
-        
-        if (pendingBooking != null && orderCode != null) {
-            try {
-                // Hủy payment link
-                PayOSUtils.cancelPaymentLink(Long.parseLong(orderCode), "User cancelled payment");
-                
-                // Xóa booking
-                bookingDAO.deleteBooking(pendingBooking.getBookingId());
-                
-                // Log activity
-                logBookingActivity(pendingBooking.getBookingId(), "PAYMENT_CANCELLED", 
-                    "Payment cancelled, order code: " + orderCode);
-                
-                LOGGER.info("Payment cancelled and booking removed - Order: " + orderCode + 
-                           ", Booking: " + pendingBooking.getBookingId());
-            } catch (NumberFormatException e) {
-                LOGGER.log(Level.WARNING, "Invalid order code format: " + orderCode, e);
-            }
-        }
-        
-        // Clear session
-        session.removeAttribute("pendingPaymentBooking");
-        session.removeAttribute("paymentOrderCode");
-        
-        response.sendRedirect(request.getContextPath() + "/booking?error=payment_cancelled");
-    }
-    
-    /**
-     * Xử lý PayOS webhook
-     */
-    private void handlePayOSWebhook(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        try {
-            // Đọc webhook body
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = request.getReader().readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            String webhookBody = stringBuilder.toString();
-            
-            // Get signature
-            String signature = request.getHeader("x-payos-signature");
-            
-            // Xử lý webhook
-            PayOSUtils.PayOSWebhookData webhookData = PayOSUtils.processWebhook(webhookBody, signature);
-            
-            if (webhookData != null) {
-                // Cập nhật trạng thái booking
-                if (webhookData.isPaid()) {
-                    bookingDAO.updateBookingStatus((int) webhookData.getOrderCode(), "CONFIRMED");
-                    logBookingActivity((int) webhookData.getOrderCode(), "WEBHOOK_PAYMENT_CONFIRMED", 
-                        "Webhook confirmed payment");
-                    LOGGER.info("Booking confirmed via webhook - OrderCode: " + webhookData.getOrderCode());
-                } else if (webhookData.isCancelled()) {
-                    bookingDAO.updateBookingStatus((int) webhookData.getOrderCode(), "CANCELLED");
-                    logBookingActivity((int) webhookData.getOrderCode(), "WEBHOOK_PAYMENT_CANCELLED", 
-                        "Webhook confirmed cancellation");
-                    LOGGER.info("Booking cancelled via webhook - OrderCode: " + webhookData.getOrderCode());
-                }
-                
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.getWriter().write("OK");
-            } else {
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                response.getWriter().write("Invalid webhook data");
-            }
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error processing PayOS webhook", e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Webhook processing failed");
-        }
-    }
-    
     // ==================== UTILITY METHODS ====================
-    
-    /**
-     * Tạo PayOS payment request
-     */
-    private PayOSResponse createPayOSPayment(HttpServletRequest request, BookingFormData formData, 
-                                           Booking booking) throws Exception {
-        long orderCode = PayOSUtils.generateOrderCode();
-        String baseUrl = getBaseUrl(request);
-        
-        PayOSRequest paymentRequest = new PayOSRequest(
-            orderCode,
-            (long) formData.getTotalPrice(),
-            "Thanh toán đặt chỗ VietCulture #" + orderCode,
-            baseUrl + "/booking/payment/cancel?orderCode=" + orderCode,
-            baseUrl + "/booking/payment/success?orderCode=" + orderCode
-        );
-        
-        // Set buyer info
-        paymentRequest.setBuyerName(formData.getContactName());
-        paymentRequest.setBuyerEmail(formData.getContactEmail());
-        paymentRequest.setBuyerPhone(formData.getContactPhone());
-        
-        // Add items
-        if (formData.getExperienceId() != null) {
-            Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
-            paymentRequest.addItem(
-                experience.getTitle(), 
-                formData.getNumberOfPeople(), 
-                (long) experience.getPrice()
-            );
-        }
-        
-        // Use simulated version for testing, switch to real API when ready
-        return PayOSUtils.createPaymentLinkSimulated(paymentRequest);
-        // return PayOSUtils.createPaymentLink(paymentRequest); // For production
-    }
     
     /**
      * Parse booking form data
@@ -821,47 +561,52 @@ public class BookingServlet extends HttpServlet {
         return data;
     }
     
-    // ==================== ADDITIONAL UTILITY METHODS ====================
-    
-    /**
-     * Verify payment với PayOS trước khi confirm booking
-     */
-    private boolean verifyPaymentWithPayOS(long orderCode) {
-        try {
-            return PayOSUtils.verifyPaymentStatus(orderCode);
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to verify payment with PayOS for order: " + orderCode, e);
-            return false;
-        }
-    }
-    
-    /**
-     * Cancel PayOS payment link nếu user hủy booking
-     */
-    private void cancelPayOSPayment(long orderCode, String reason) {
-        try {
-            boolean cancelled = PayOSUtils.cancelPaymentLink(orderCode, reason);
-            if (cancelled) {
-                LOGGER.info("PayOS payment link cancelled for order: " + orderCode);
-            } else {
-                LOGGER.warning("Failed to cancel PayOS payment link for order: " + orderCode);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Error cancelling PayOS payment for order: " + orderCode, e);
-        }
-    }
+    // ==================== EMAIL & NOTIFICATION METHODS ====================
     
     /**
      * Send booking confirmation email
      */
-    private void sendBookingConfirmationEmail(Booking booking, BookingFormData formData) {
+    private void sendBookingConfirmationEmail(Booking booking, BookingFormData formData, User user) {
         try {
-            // TODO: Implement email service
-            LOGGER.info("Booking confirmation email should be sent to: " + formData.getContactEmail() +
-                       " for booking ID: " + booking.getBookingId());
+            String serviceName = "Dịch vụ VietCulture";
+            if (formData.getExperienceId() != null) {
+                Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
+                serviceName = experience.getTitle();
+            }
+            
+            // TODO: Implement email service với template cho booking confirmation
+            boolean emailSent = EmailUtils.sendBookingConfirmationEmail(
+                formData.getContactEmail(), 
+                formData.getContactName(),
+                booking.getBookingId(),
+                serviceName,
+                formData.getFormattedBookingDate(),
+                formData.getTimeSlotDisplayName(),
+                formData.getNumberOfPeople(),
+                formData.getFormattedTotalPrice()
+            );
+            
+            if (emailSent) {
+                LOGGER.info("Booking confirmation email sent to: " + formData.getContactEmail() +
+                           " for booking ID: " + booking.getBookingId());
+            }
             
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to send booking confirmation email", e);
+        }
+    }
+    
+    /**
+     * Notify admin about new booking
+     */
+    private void notifyAdminNewBooking(Booking booking, BookingFormData formData) {
+        try {
+            // TODO: Implement admin notification system
+            LOGGER.info("Admin notification: New booking created - ID: " + booking.getBookingId() +
+                       ", Total: " + formData.getFormattedTotalPrice());
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to notify admin about new booking", e);
         }
     }
     
@@ -876,34 +621,6 @@ public class BookingServlet extends HttpServlet {
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to log booking activity", e);
         }
-    }
-    
-    /**
-     * Check if user có thể book service này
-     */
-    private boolean canUserBookService(User user, BookingFormData formData) {
-        try {
-            return true; // TODO: Implement rate limiting and duplicate booking checks
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Error checking user booking eligibility", e);
-            return false;
-        }
-    }
-    
-    /**
-     * Validate payment amount trước khi tạo PayOS link
-     */
-    private boolean validatePaymentAmount(BookingFormData formData) throws SQLException {
-        double calculatedTotal = calculateTotalPrice(formData);
-        double tolerance = 0.01;
-        boolean amountMatches = Math.abs(calculatedTotal - formData.getTotalPrice()) < tolerance;
-        
-        if (!amountMatches) {
-            LOGGER.warning("Payment amount mismatch - Calculated: " + calculatedTotal + 
-                          ", Form: " + formData.getTotalPrice());
-        }
-        
-        return amountMatches && calculatedTotal > 0;
     }
     
     // ==================== HELPER METHODS ====================
@@ -933,16 +650,6 @@ public class BookingServlet extends HttpServlet {
             throws IOException {
         response.sendRedirect(request.getContextPath() + "/login?redirect=" + 
                             request.getRequestURI());
-    }
-    
-    /**
-     * Get base URL từ request
-     */
-    private String getBaseUrl(HttpServletRequest request) {
-        return request.getScheme() + "://" + request.getServerName() + 
-               (request.getServerPort() != 80 && request.getServerPort() != 443 ? 
-                ":" + request.getServerPort() : "") +
-               request.getContextPath();
     }
     
     /**

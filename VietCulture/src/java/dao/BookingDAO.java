@@ -524,4 +524,31 @@ public class BookingDAO {
     public void deleteBooking(int bookingId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+
+    /**
+     * Check if a user has a COMPLETED booking for a specific experience.
+     */
+    public boolean hasUserCompletedExperienceBooking(int userId, int experienceId) throws SQLException {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM Bookings 
+            WHERE travelerId = ? 
+            AND experienceId = ? 
+            AND status = 'COMPLETED'
+        """;
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
 }

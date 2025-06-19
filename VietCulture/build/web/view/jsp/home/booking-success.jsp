@@ -434,6 +434,19 @@
             color: white;
         }
 
+        /* Success Alert */
+        .success-alert {
+            background: rgba(75, 181, 67, 0.1);
+            border: 1px solid rgba(75, 181, 67, 0.3);
+            color: #155724;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         /* Responsive */
         @media (max-width: 992px) {
             .content-grid {
@@ -468,25 +481,6 @@
         }
 
         /* Animations */
-        .animate-bounce {
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20% , 53% , 80% , 100% {
-                transform: translate3d(0,0,0);
-            }
-            40% , 43% {
-                transform: translate3d(0,-10px,0);
-            }
-            70% {
-                transform: translate3d(0,-5px,0);
-            }
-            90% {
-                transform: translate3d(0,-2px,0);
-            }
-        }
-
         .fade-in {
             animation: fadeIn 1s ease-in;
         }
@@ -494,6 +488,17 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pulse animation for important elements */
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -523,9 +528,27 @@
                 Cảm ơn bạn đã tin tưởng VietCulture. Chúng tôi đã gửi email xác nhận đến địa chỉ của bạn.
             </p>
             
-            <div class="booking-number animate__animated animate__fadeInUp animate__delay-2s">
+            <div class="booking-number animate__animated animate__fadeInUp animate__delay-2s pulse">
                 <i class="ri-bookmark-line me-2"></i>
                 Mã đặt chỗ: #${booking.bookingId}
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Alert -->
+    <div class="container">
+        <div class="success-alert animate__animated animate__fadeInDown">
+            <i class="ri-check-double-line"></i>
+            <div>
+                <strong>Đặt chỗ đã được xác nhận!</strong> 
+                <c:choose>
+                    <c:when test="${booking.status == 'CONFIRMED'}">
+                        Bạn đã thanh toán thành công và booking của bạn đã được xác nhận.
+                    </c:when>
+                    <c:otherwise>
+                        Booking của bạn đang chờ xử lý và sẽ sớm được xác nhận.
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
     </div>
@@ -582,7 +605,7 @@
                         <span class="detail-label">Trạng thái:</span>
                         <span class="detail-value">
                             <span class="status-badge">
-                                <i class="ri-time-line"></i>
+                                <i class="ri-check-line"></i>
                                 ${booking.statusText}
                             </span>
                         </span>
@@ -805,7 +828,51 @@
                 element.style.transform = 'translateY(20px)';
                 element.style.transition = 'all 0.6s ease-out';
             });
+
+            // Celebration effect
+            setTimeout(() => {
+                createCelebrationEffect();
+            }, 2000);
         });
+
+        // Create celebration effect
+        function createCelebrationEffect() {
+            // Create confetti-like particles
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createParticle();
+                }, i * 100);
+            }
+        }
+
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.style.position = 'fixed';
+            particle.style.width = '10px';
+            particle.style.height = '10px';
+            particle.style.background = ['#FF385C', '#4BB543', '#83C5BE', '#FFD700'][Math.floor(Math.random() * 4)];
+            particle.style.borderRadius = '50%';
+            particle.style.pointerEvents = 'none';
+            particle.style.zIndex = '9999';
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.top = '-10px';
+            particle.style.opacity = '0.8';
+
+            document.body.appendChild(particle);
+
+            // Animate particle falling
+            const animation = particle.animate([
+                { transform: 'translateY(0) rotate(0deg)', opacity: 0.8 },
+                { transform: 'translateY(100vh) rotate(360deg)', opacity: 0 }
+            ], {
+                duration: 3000 + Math.random() * 2000,
+                easing: 'ease-out'
+            });
+
+            animation.onfinish = () => {
+                particle.remove();
+            };
+        }
     </script>
 </body>
 </html>

@@ -8,8 +8,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * EmailUtils for OTP-based registration system
- * Simple and efficient email sending with OTP codes
+ * EmailUtils for OTP-based registration system and booking confirmations
+ * Simple and efficient email sending with OTP codes and booking notifications
  */
 public class EmailUtils {
     private static final Logger LOGGER = Logger.getLogger(EmailUtils.class.getName());
@@ -166,6 +166,69 @@ public class EmailUtils {
             
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "❌ Failed to send password reset OTP to: " + toEmail, e);
+            return false;
+        }
+    }
+
+    /**
+     * Send booking confirmation email
+     */
+    public static boolean sendBookingConfirmationEmail(String toEmail, String userName, 
+                                                     int bookingId, String serviceName, 
+                                                     String bookingDate, String bookingTime, 
+                                                     int numberOfPeople, String totalPrice) {
+        LOGGER.info("📅 Sending booking confirmation email to: " + toEmail);
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Xác nhận đặt chỗ thành công - VietCulture", "UTF-8");
+            
+            String htmlContent = createBookingConfirmationTemplate(
+                userName, bookingId, serviceName, bookingDate, bookingTime, numberOfPeople, totalPrice
+            );
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Booking confirmation email sent successfully to: " + toEmail);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send booking confirmation email to: " + toEmail, e);
+            return false;
+        }
+    }
+
+    /**
+     * Send admin notification email about new booking
+     */
+    public static boolean sendAdminBookingNotification(int bookingId, String serviceName, 
+                                                     String customerName, String customerEmail, 
+                                                     String totalPrice) {
+        LOGGER.info("👨‍💼 Sending admin booking notification for booking: " + bookingId);
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(FROM_EMAIL)); // Send to admin email
+            message.setSubject("Đặt chỗ mới - VietCulture Admin", "UTF-8");
+            
+            String htmlContent = createAdminNotificationTemplate(
+                bookingId, serviceName, customerName, customerEmail, totalPrice
+            );
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Admin booking notification sent successfully");
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send admin booking notification", e);
             return false;
         }
     }
@@ -385,149 +448,451 @@ public class EmailUtils {
             </html>
             """.formatted(userName);
     }
-    // Add this method to your EmailUtils class
 
-/**
- * Send password reset confirmation email
- */
-public static boolean sendPasswordResetConfirmation(String toEmail, String userName) {
-    LOGGER.info("🔐 Sending password reset confirmation to: " + toEmail);
-    
-    try {
-        Session session = getEmailSession();
-        MimeMessage message = new MimeMessage(session);
-        
-        message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
-        message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
-        message.setSubject("Mật khẩu đã được đặt lại thành công - VietCulture", "UTF-8");
-        
-        String htmlContent = createPasswordResetConfirmationTemplate(userName);
-        message.setContent(htmlContent, "text/html; charset=UTF-8");
-        
-        Transport.send(message);
-        LOGGER.info("✅ Password reset confirmation sent successfully to: " + toEmail);
-        return true;
-        
-    } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "❌ Failed to send password reset confirmation to: " + toEmail, e);
-        return false;
+    /**
+     * Create booking confirmation email template
+     */
+    private static String createBookingConfirmationTemplate(String userName, int bookingId, 
+                                                          String serviceName, String bookingDate, 
+                                                          String bookingTime, int numberOfPeople, 
+                                                          String totalPrice) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Xác nhận đặt chỗ thành công - VietCulture</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #4BB543, #28a745); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; }
+                    .booking-card { 
+                        background: white; 
+                        border: 2px solid #4BB543; 
+                        border-radius: 10px; 
+                        padding: 25px; 
+                        margin: 20px 0; 
+                    }
+                    .booking-id { 
+                        background: #4BB543; 
+                        color: white; 
+                        padding: 10px 20px; 
+                        border-radius: 25px; 
+                        font-weight: bold; 
+                        display: inline-block; 
+                        margin: 15px 0; 
+                    }
+                    .detail-row { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        padding: 10px 0; 
+                        border-bottom: 1px solid #eee; 
+                    }
+                    .detail-row:last-child { border-bottom: none; }
+                    .detail-label { font-weight: 500; color: #666; }
+                    .detail-value { font-weight: bold; color: #333; }
+                    .next-steps { 
+                        background: #e8f5e8; 
+                        border-left: 4px solid #4BB543; 
+                        padding: 20px; 
+                        margin: 20px 0; 
+                        border-radius: 5px; 
+                    }
+                    .step { 
+                        display: flex; 
+                        align-items: flex-start; 
+                        margin-bottom: 15px; 
+                        gap: 10px; 
+                    }
+                    .step-number { 
+                        background: #4BB543; 
+                        color: white; 
+                        width: 25px; 
+                        height: 25px; 
+                        border-radius: 50%; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        font-weight: bold; 
+                        font-size: 12px; 
+                        flex-shrink: 0; 
+                    }
+                    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                    .highlight { color: #4BB543; font-weight: bold; }
+                    .contact-info { 
+                        background: #f0f8ff; 
+                        border: 1px solid #d0e8ff; 
+                        padding: 15px; 
+                        border-radius: 8px; 
+                        margin: 20px 0; 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Đặt Chỗ Thành Công!</h1>
+                        <p>VietCulture - Nền tảng trải nghiệm du lịch</p>
+                    </div>
+                    <div class="content">
+                        <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                        <p>Cảm ơn bạn đã tin tưởng VietCulture. Đặt chỗ của bạn đã được xác nhận thành công!</p>
+                        
+                        <div class="booking-id">
+                            🎫 Mã đặt chỗ: #%d
+                        </div>
+                        
+                        <div class="booking-card">
+                            <h3>📋 Chi tiết đặt chỗ</h3>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">🎯 Dịch vụ:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">📅 Ngày tham gia:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">⏰ Thời gian:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">👥 Số người:</span>
+                                <span class="detail-value">%d người</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">💰 Tổng tiền:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h3>🗺️ Những bước tiếp theo:</h3>
+                            
+                            <div class="step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <strong>Chờ xác nhận từ host</strong><br>
+                                    Host sẽ liên hệ với bạn trong vòng 24 giờ để xác nhận chi tiết.
+                                </div>
+                            </div>
+                            
+                            <div class="step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <strong>Chuẩn bị cho chuyến đi</strong><br>
+                                    Kiểm tra thông tin địa điểm và những gì cần mang theo.
+                                </div>
+                            </div>
+                            
+                            <div class="step">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <strong>Tận hưởng trải nghiệm</strong><br>
+                                    Đến đúng giờ và tận hưởng những khoảnh khắc tuyệt vời!
+                                </div>
+                            </div>
+                            
+                            <div class="step">
+                                <div class="step-number">4</div>
+                                <div>
+                                    <strong>Chia sẻ đánh giá</strong><br>
+                                    Đừng quên để lại đánh giá sau khi hoàn thành trải nghiệm.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info">
+                            <h4>📞 Cần hỗ trợ?</h4>
+                            <p><strong>Hotline:</strong> 1900 1234<br>
+                            <strong>Email:</strong> support@vietculture.vn<br>
+                            <strong>Thời gian hỗ trợ:</strong> 24/7</p>
+                        </div>
+                        
+                        <p style="text-align: center; color: #666; font-style: italic;">
+                            Chúc bạn có những trải nghiệm tuyệt vời cùng VietCulture! 🌟
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 VietCulture - Nền tảng trải nghiệm du lịch cộng đồng</p>
+                        <p>Email tự động - vui lòng không trả lời trực tiếp email này</p>
+                        <p>Hỗ trợ: kienltde180359@gmail.com | 1900 1234</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(userName, bookingId, serviceName, bookingDate, bookingTime, numberOfPeople, totalPrice);
     }
-}
 
-/**
- * Create password reset confirmation email template
- */
-private static String createPasswordResetConfirmationTemplate(String userName) {
-    return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Mật khẩu đã được đặt lại thành công</title>
-            <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f9f9f9; padding: 40px 30px; text-align: center; }
-                .success-icon { 
-                    background: #fff; 
-                    border: 3px solid #10B981; 
-                    font-size: 48px; 
-                    color: #10B981; 
-                    padding: 20px; 
-                    margin: 30px auto; 
-                    border-radius: 50%;
-                    width: 80px;
-                    height: 80px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .info-box { 
-                    background: #e6f7ff; 
-                    border-left: 4px solid #1890ff; 
-                    color: #0050b3; 
-                    padding: 15px; 
-                    margin: 20px 0; 
-                    border-radius: 5px; 
-                }
-                .security-tips {
-                    background: #fff;
-                    border: 1px solid #d9d9d9;
-                    border-radius: 8px;
-                    padding: 20px;
-                    margin: 20px 0;
-                    text-align: left;
-                }
-                .tip {
-                    display: flex;
-                    align-items: flex-start;
-                    margin-bottom: 10px;
-                    gap: 10px;
-                }
-                .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
-                .highlight { color: #10B981; font-weight: bold; }
-                .cta-button { 
-                    display: inline-block; 
-                    background: #10B981; 
-                    color: white; 
-                    padding: 12px 24px; 
-                    text-decoration: none; 
-                    border-radius: 6px; 
-                    margin: 20px 0; 
-                    font-weight: bold;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>✅ Mật Khẩu Đã Được Đặt Lại</h1>
-                    <p>VietCulture</p>
-                </div>
-                <div class="content">
-                    <div class="success-icon">✓</div>
-                    
-                    <h2>Xin chào <span class="highlight">%s</span>!</h2>
-                    <p>Mật khẩu cho tài khoản VietCulture của bạn đã được đặt lại thành công.</p>
-                    
-                    <div class="info-box">
-                        <strong>🕐 Thời gian:</strong> %s<br>
-                        <strong>🔐 Trạng thái:</strong> Đặt lại thành công
+    /**
+     * Create admin notification email template
+     */
+    private static String createAdminNotificationTemplate(int bookingId, String serviceName, 
+                                                        String customerName, String customerEmail, 
+                                                        String totalPrice) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Đặt chỗ mới - VietCulture Admin</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #FF385C, #FF6B6B); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; }
+                    .admin-card { 
+                        background: white; 
+                        border: 2px solid #FF385C; 
+                        border-radius: 10px; 
+                        padding: 25px; 
+                        margin: 20px 0; 
+                    }
+                    .booking-id { 
+                        background: #FF385C; 
+                        color: white; 
+                        padding: 10px 20px; 
+                        border-radius: 25px; 
+                        font-weight: bold; 
+                        display: inline-block; 
+                        margin: 15px 0; 
+                    }
+                    .detail-row { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        padding: 10px 0; 
+                        border-bottom: 1px solid #eee; 
+                    }
+                    .detail-row:last-child { border-bottom: none; }
+                    .detail-label { font-weight: 500; color: #666; }
+                    .detail-value { font-weight: bold; color: #333; }
+                    .action-needed { 
+                        background: #fff3cd; 
+                        border: 1px solid #ffc107; 
+                        padding: 15px; 
+                        border-radius: 8px; 
+                        margin: 20px 0; 
+                    }
+                    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                    .highlight { color: #FF385C; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🚨 Đặt Chỗ Mới</h1>
+                        <p>VietCulture - Thông báo Admin</p>
                     </div>
-                    
-                    <div class="security-tips">
-                        <h3>💡 Lời khuyên bảo mật:</h3>
-                        <div class="tip">
-                            <span>🔒</span>
-                            <span>Sử dụng mật khẩu mạnh và độc nhất cho mỗi tài khoản</span>
+                    <div class="content">
+                        <h2>Có đặt chỗ mới cần xử lý!</h2>
+                        <p>Một khách hàng vừa hoàn tất đặt chỗ trên hệ thống VietCulture.</p>
+                        
+                        <div class="booking-id">
+                            📋 Mã đặt chỗ: #%d
                         </div>
-                        <div class="tip">
-                            <span>🚫</span>
-                            <span>Không chia sẻ mật khẩu với bất kỳ ai</span>
+                        
+                        <div class="admin-card">
+                            <h3>📊 Thông tin đặt chỗ</h3>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">🎯 Dịch vụ:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">👤 Khách hàng:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">📧 Email:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">💰 Tổng tiền:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
+                            
+                            <div class="detail-row">
+                                <span class="detail-label">⏰ Thời gian đặt:</span>
+                                <span class="detail-value">%s</span>
+                            </div>
                         </div>
-                        <div class="tip">
-                            <span>🔍</span>
-                            <span>Kiểm tra thường xuyên hoạt động tài khoản</span>
+                        
+                        <div class="action-needed">
+                            <h4>⚡ Hành động cần thiết:</h4>
+                            <ul>
+                                <li>Xem xét và phê duyệt đặt chỗ</li>
+                                <li>Liên hệ với host để xác nhận</li>
+                                <li>Theo dõi trạng thái thanh toán</li>
+                                <li>Hỗ trợ khách hàng nếu cần</li>
+                            </ul>
                         </div>
-                        <div class="tip">
-                            <span>📱</span>
-                            <span>Bật xác thực 2 yếu tố khi có thể</span>
-                        </div>
+                        
+                        <p style="text-align: center;">
+                            <strong>Vui lòng kiểm tra admin panel để xử lý đặt chỗ này.</strong>
+                        </p>
                     </div>
-                    
-                    <p>Nếu bạn không thực hiện thao tác này, vui lòng liên hệ với chúng tôi ngay lập tức.</p>
-                    
-                    <a href="#" class="cta-button">🏠 Về Trang Chủ</a>
+                    <div class="footer">
+                        <p>© 2025 VietCulture - Hệ thống quản trị</p>
+                        <p>Email tự động từ hệ thống booking</p>
+                    </div>
                 </div>
-                <div class="footer">
-                    <p>© 2025 VietCulture. Email tự động - vui lòng không trả lời.</p>
-                    <p>Hỗ trợ khẩn cấp: kienltde180359@gmail.com | 1900 1234</p>
+            </body>
+            </html>
+            """.formatted(bookingId, serviceName, customerName, customerEmail, totalPrice, 
+                         java.time.LocalDateTime.now().format(
+                             java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+    }
+
+    /**
+     * Send password reset confirmation email
+     */
+    public static boolean sendPasswordResetConfirmation(String toEmail, String userName) {
+        LOGGER.info("🔐 Sending password reset confirmation to: " + toEmail);
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Mật khẩu đã được đặt lại thành công - VietCulture", "UTF-8");
+            
+            String htmlContent = createPasswordResetConfirmationTemplate(userName);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Password reset confirmation sent successfully to: " + toEmail);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send password reset confirmation to: " + toEmail, e);
+            return false;
+        }
+    }
+
+    /**
+     * Create password reset confirmation email template
+     */
+    private static String createPasswordResetConfirmationTemplate(String userName) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Mật khẩu đã được đặt lại thành công</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 40px 30px; text-align: center; }
+                    .success-icon { 
+                        background: #fff; 
+                        border: 3px solid #10B981; 
+                        font-size: 48px; 
+                        color: #10B981; 
+                        padding: 20px; 
+                        margin: 30px auto; 
+                        border-radius: 50%;
+                        width: 80px;
+                        height: 80px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .info-box { 
+                        background: #e6f7ff; 
+                        border-left: 4px solid #1890ff; 
+                        color: #0050b3; 
+                        padding: 15px; 
+                        margin: 20px 0; 
+                        border-radius: 5px; 
+                    }
+                    .security-tips {
+                        background: #fff;
+                        border: 1px solid #d9d9d9;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        text-align: left;
+                    }
+                    .tip {
+                        display: flex;
+                        align-items: flex-start;
+                        margin-bottom: 10px;
+                        gap: 10px;
+                    }
+                    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                    .highlight { color: #10B981; font-weight: bold; }
+                    .cta-button { 
+                        display: inline-block; 
+                        background: #10B981; 
+                        color: white; 
+                        padding: 12px 24px; 
+                        text-decoration: none; 
+                        border-radius: 6px; 
+                        margin: 20px 0; 
+                        font-weight: bold;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>✅ Mật Khẩu Đã Được Đặt Lại</h1>
+                        <p>VietCulture</p>
+                    </div>
+                    <div class="content">
+                        <div class="success-icon">✓</div>
+                        
+                        <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                        <p>Mật khẩu cho tài khoản VietCulture của bạn đã được đặt lại thành công.</p>
+                        
+                        <div class="info-box">
+                            <strong>🕐 Thời gian:</strong> %s<br>
+                            <strong>🔐 Trạng thái:</strong> Đặt lại thành công
+                        </div>
+                        
+                        <div class="security-tips">
+                            <h3>💡 Lời khuyên bảo mật:</h3>
+                            <div class="tip">
+                                <span>🔒</span>
+                                <span>Sử dụng mật khẩu mạnh và độc nhất cho mỗi tài khoản</span>
+                            </div>
+                            <div class="tip">
+                                <span>🚫</span>
+                                <span>Không chia sẻ mật khẩu với bất kỳ ai</span>
+                            </div>
+                            <div class="tip">
+                                <span>🔍</span>
+                                <span>Kiểm tra thường xuyên hoạt động tài khoản</span>
+                            </div>
+                            <div class="tip">
+                                <span>📱</span>
+                                <span>Bật xác thực 2 yếu tố khi có thể</span>
+                            </div>
+                        </div>
+                        
+                        <p>Nếu bạn không thực hiện thao tác này, vui lòng liên hệ với chúng tôi ngay lập tức.</p>
+                        
+                        <a href="#" class="cta-button">🏠 Về Trang Chủ</a>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 VietCulture. Email tự động - vui lòng không trả lời.</p>
+                        <p>Hỗ trợ khẩn cấp: kienltde180359@gmail.com | 1900 1234</p>
+                    </div>
                 </div>
-            </div>
-        </body>
-        </html>
-        """.formatted(userName, java.time.LocalDateTime.now().format(
-            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-}
+            </body>
+            </html>
+            """.formatted(userName, java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+    }
 }

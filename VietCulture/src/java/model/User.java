@@ -404,6 +404,10 @@ public class User {
         return sb.toString();
     }
 
+    public boolean isAdmin() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
     // Inner class for admin actions
     public static class AdminAction {
         private String action;

@@ -1126,7 +1126,7 @@
                         <i class="ri-heart-line"></i>
                         <span>Lưu</span>
                     </a>
-                    <a href="#reviews" class="action-btn">
+                    <a href="#reviews" class="action-btn" onclick="openReviewModal()">
                         <i class="ri-chat-3-line"></i>
                         <span>Đánh giá</span>
                     </a>
@@ -1494,7 +1494,7 @@
             </div>
 
             <!-- Sidebar - Booking Card -->
-            <div class="sidebar">
+            <div class="sidebar" id="booking">
                 <div class="booking-card">
                     <div class="price-display">
                         <div class="price-amount">
@@ -1510,7 +1510,7 @@
                         <div class="price-unit">mỗi người</div>
                     </div>
 
-                    <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="get">
+                    <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="post">
                         <input type="hidden" name="experienceId" value="${experience.experienceId}">
                         
                         <div class="form-group">
@@ -1615,6 +1615,89 @@
                             Chính sách hủy linh hoạt
                         </li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal fade review-modal" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reviewModalLabel">Đánh giá trải nghiệm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user}">
+                            <c:choose>
+                                <c:when test="${hasBooked}">
+                                    <form class="review-form" action="${pageContext.request.contextPath}/submitReview" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="experienceId" value="${experience.experienceId}">
+                                        <input type="hidden" name="userId" value="${sessionScope.user.userId}">
+
+                                        <!-- Star Rating -->
+                                        <div class="form-group">
+                                            <label for="rating">Đánh giá của bạn</label>
+                                            <div class="star-rating">
+                                                <input type="radio" id="star5" name="rating" value="5" required>
+                                                <label for="star5" class="ri-star-fill"></label>
+                                                <input type="radio" id="star4" name="rating" value="4">
+                                                <label for="star4" class="ri-star-fill"></label>
+                                                <input type="radio" id="star3" name="rating" value="3">
+                                                <label for="star3" class="ri-star-fill"></label>
+                                                <input type="radio" id="star2" name="rating" value="2">
+                                                <label for="star2" class="ri-star-fill"></label>
+                                                <input type="radio" id="star1" name="rating" value="1">
+                                                <label for="star1" class="ri-star-fill"></label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Review Text -->
+                                        <div class="form-group">
+                                            <label for="reviewText">Nhận xét của bạn</label>
+                                            <textarea class="form-control" id="reviewText" name="reviewText" rows="5" maxlength="500" placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
+                                            <small class="text-muted">Tối đa 500 ký tự</small>
+                                        </div>
+
+                                        <!-- Image Upload -->
+                                        <div class="form-group">
+                                            <label for="reviewImages">Tải lên hình ảnh (tối đa 3 ảnh)</label>
+                                            <input type="file" class="form-control" id="reviewImages" name="reviewImages" accept="image/*" multiple>
+                                            <div class="image-upload-preview" id="imagePreview"></div>
+                                            <small class="text-muted">Hỗ trợ JPG, PNG. Tối đa 5MB mỗi ảnh.</small>
+                                        </div>
+
+                                        <!-- Submit Button -->
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="ri-send-plane-line me-2"></i>Gửi đánh giá
+                                        </button>
+                                    </form>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="text-center">
+                                        <i class="ri-information-line" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
+                                        <h5>Chỉ khách đã đặt tour mới có thể đánh giá</h5>
+                                        <p class="text-muted">Vui lòng đặt và tham gia trải nghiệm để để lại đánh giá.</p>
+                                        <button type="button" class="btn btn-primary" onclick="goToBooking()">
+                                            <i class="ri-calendar-check-line me-2"></i>Đặt ngay
+                                        </button>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="text-center">
+                                <i class="ri-login-circle-line" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 20px;"></i>
+                                <h5>Vui lòng đăng nhập để đánh giá</h5>
+                                <p class="text-muted">Bạn cần đăng nhập để chia sẻ trải nghiệm của mình.</p>
+                                <a href="${pageContext.request.contextPath}/login" class="btn btn-primary">
+                                    <i class="ri-login-circle-line me-2"></i>Đăng nhập
+                                </a>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
         </div>
@@ -1884,37 +1967,34 @@
         });
 
         // Handle booking form submission
-       // Handle booking form submission
-document.querySelector('.booking-form').addEventListener('submit', function(e) {
-    // Bỏ e.preventDefault(); để cho phép form submit bình thường
-    
-    const bookingDate = bookingDateInput.value;
-    const participants = participantsSelect.value;
-    const timeSlot = timeSlotSelect.value;
-    
-    if (!bookingDate || !participants || !timeSlot) {
-        e.preventDefault(); // Chỉ preventDefault khi có lỗi
-        showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
-        return;
-    }
-    
-    const selectedDate = new Date(bookingDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate < today) {
-        e.preventDefault(); // Chỉ preventDefault khi có lỗi
-        showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
-        return;
-    }
-    
-    // Nếu không có lỗi, form sẽ submit bình thường và chuyển trang
-    // Show loading state
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
-    submitBtn.disabled = true;
-});
+        document.querySelector('.booking-form').addEventListener('submit', function(e) {
+            const bookingDate = bookingDateInput.value;
+            const participants = participantsSelect.value;
+            const timeSlot = timeSlotSelect.value;
+            let hasError = false;
+            if (!bookingDate || !participants || !timeSlot) {
+                e.preventDefault();
+                showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
+                hasError = true;
+            } else {
+                const selectedDate = new Date(bookingDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selectedDate < today) {
+                    e.preventDefault();
+                    showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
+                    hasError = true;
+                }
+            }
+            if (!hasError) {
+                // Hiệu ứng loading
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
+                submitBtn.disabled = true;
+                // Cho phép submit thực sự, không ngăn chặn nữa
+            }
+        });
 
         // Image lazy loading
         const images = document.querySelectorAll('img');
@@ -1932,6 +2012,257 @@ document.querySelector('.booking-form').addEventListener('submit', function(e) {
         });
 
         images.forEach(img => imageObserver.observe(img));
+
+        // Review form image preview & submit
+        function showToast(message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            let icon = '<i class="ri-check-line"></i>';
+            if (type === 'error') {
+                icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
+            } else if (type === 'info') {
+                icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
+            }
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toastContainer.contains(toast)) {
+                        toastContainer.removeChild(toast);
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... existing code ...
+            // Review form image preview
+            const reviewImagesInput = document.getElementById('reviewImages');
+            const imagePreviewContainer = document.getElementById('imagePreview');
+            if (reviewImagesInput) {
+                reviewImagesInput.addEventListener('change', function() {
+                    imagePreviewContainer.innerHTML = '';
+                    const files = this.files;
+                    if (files.length > 3) {
+                        showToast('Chỉ được tải lên tối đa 3 ảnh', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    Array.from(files).forEach((file, index) => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            showToast(`Ảnh "${file.name}" vượt quá 5MB`, 'error');
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const imgContainer = document.createElement('div');
+                            imgContainer.style.position = 'relative';
+                            imgContainer.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview">
+                                <span class="remove-image" data-index="${index}">&times;</span>
+                            `;
+                            imagePreviewContainer.appendChild(imgContainer);
+                            imgContainer.querySelector('.remove-image').addEventListener('click', function() {
+                                imgContainer.remove();
+                                const dt = new DataTransfer();
+                                Array.from(reviewImagesInput.files)
+                                    .filter((_, i) => i !== index)
+                                    .forEach(f => dt.items.add(f));
+                                reviewImagesInput.files = dt.files;
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+            // Review form submit
+                const reviewForm = document.querySelector('.review-form');
+                if (reviewForm) {
+                    reviewForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const rating = document.querySelector('input[name="rating"]:checked');
+                        const reviewText = document.getElementById('reviewText').value.trim();
+                        const submitBtn = this.querySelector('button[type="submit"]');
+                        const originalBtnText = submitBtn.innerHTML;
+                        if (!rating) {
+                            showToast('Vui lòng chọn số sao đánh giá', 'error');
+                            return;
+                        }
+                        if (reviewText.length < 10) {
+                            showToast('Nhận xét phải có ít nhất 10 ký tự', 'error');
+                            return;
+                        }
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang gửi...';
+                        setTimeout(() => {
+                            // Example AJAX call to submit review
+                            const formData = new FormData(this);
+                            fetch(this.action, {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    showToast('Đánh giá của bạn đã được gửi thành công!', 'success');
+                                    bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                                    reviewForm.reset();
+                                if (imagePreviewContainer) imagePreviewContainer.innerHTML = '';
+                                    location.reload();
+                                } else {
+                                    showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
+                                }
+                            })
+                            .catch(error => {
+                                showToast('Lỗi kết nối: ' + error.message, 'error');
+                            })
+                            .finally(() => {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnText;
+                            });
+                    }, 1000);
+                });
+            }
+        });
+
+        // Mở modal đánh giá khi click vào nút Đánh giá
+        function openReviewModal() {
+            const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'), {
+                keyboard: false
+            });
+            reviewModal.show();
+        }
+        // Gán sự kiện cho nút Đánh giá (nếu dùng thẻ a hoặc button)
+        document.addEventListener('DOMContentLoaded', function() {
+            var reviewBtn = document.querySelector('.action-btn[onclick*="openReviewModal"]');
+            if (reviewBtn) {
+                reviewBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openReviewModal();
+                    });
+                }
+        });
+
+        // --- ĐÁNH GIÁ: Modal, preview ảnh, kiểm tra hợp lệ, gửi AJAX, toast, reload ---
+        function openReviewModal() {
+            const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'), {keyboard: false});
+            reviewModal.show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gán sự kiện cho nút Đánh giá (nếu dùng thẻ a hoặc button)
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                if (btn.textContent.includes('Đánh giá')) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openReviewModal();
+                    });
+                }
+            });
+
+            // Preview ảnh upload
+            const reviewImagesInput = document.getElementById('reviewImages');
+            const imagePreviewContainer = document.getElementById('imagePreview');
+            if (reviewImagesInput) {
+                reviewImagesInput.addEventListener('change', function() {
+                    imagePreviewContainer.innerHTML = '';
+                    const files = this.files;
+                    if (files.length > 3) {
+                        showToast('Chỉ được tải lên tối đa 3 ảnh', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    Array.from(files).forEach((file, idx) => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            showToast(`Ảnh "${file.name}" vượt quá 5MB`, 'error');
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const imgContainer = document.createElement('div');
+                            imgContainer.style.position = 'relative';
+                            imgContainer.innerHTML = `
+                                <img src="${e.target.result}" alt="Preview">
+                                <span class="remove-image" data-index="${idx}">&times;</span>
+                            `;
+                            imagePreviewContainer.appendChild(imgContainer);
+                            imgContainer.querySelector('.remove-image').addEventListener('click', function() {
+                                imgContainer.remove();
+                                const dt = new DataTransfer();
+                                Array.from(reviewImagesInput.files).filter((_, i) => i !== idx).forEach(f => dt.items.add(f));
+                                reviewImagesInput.files = dt.files;
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+
+            // Gửi đánh giá AJAX
+            const reviewForm = document.querySelector('.review-form');
+            if (reviewForm) {
+                reviewForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const rating = document.querySelector('input[name="rating"]:checked');
+                    const reviewText = document.getElementById('reviewText').value.trim();
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    if (!rating) {
+                        showToast('Vui lòng chọn số sao đánh giá', 'error');
+                        return;
+                    }
+                    if (reviewText.length < 10) {
+                        showToast('Nhận xét phải có ít nhất 10 ký tự', 'error');
+                        return;
+                    }
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang gửi...';
+                    const formData = new FormData(this);
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Đánh giá của bạn đã được gửi thành công!', 'success');
+                            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
+                            reviewForm.reset();
+                            imagePreviewContainer.innerHTML = '';
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showToast('Lỗi kết nối: ' + error.message, 'error');
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnText;
+                    });
+                });
+            }
+        });
+
+        function goToBooking() {
+            // Đóng modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+            if (modal) modal.hide();
+            // Đợi modal đóng hoàn toàn rồi mới cuộn và xóa backdrop
+            setTimeout(() => {
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style = '';
+                const bookingSection = document.getElementById('booking');
+                if (bookingSection) {
+                    bookingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 350);
+        }
     </script>
 </body>
-</html>
+</html> 
