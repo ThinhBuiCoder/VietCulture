@@ -13,6 +13,58 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
         <style>
+            .nav-chat-link {
+    position: relative;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.nav-chat-link:hover {
+    color: var(--primary-color) !important;
+    background-color: rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+}
+
+.message-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #FF385C;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    border: 2px solid #10466C;
+    animation: pulse 2s infinite;
+}
+
+.message-badge.show {
+    display: flex;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+    }
+}
             .success-card {
                 border-left: 4px solid #28a745;
                 animation: fadeInUp 0.6s ease-out;
@@ -1011,107 +1063,111 @@
 
         <!-- Navigation -->
         <%-- Navigation (modified to work with servlet-based authentication) --%>
-        <nav class="custom-navbar">
-            <div class="container">
-                <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
-                    <span>VIETCULTURE</span>
-                </a>
+   <nav class="custom-navbar">
+    <div class="container">
+        <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+            <span>VIETCULTURE</span>
+        </a>
 
-                <div class="nav-center">
-                    <a href="#home" class="nav-center-item">
-                        Trang Chủ
-                    </a>
-                    <a href="/Travel/experiences" class="nav-center-item">
-                        Trải Nghiệm
-                    </a>
-                    <a href="/Travel/accommodations" class="nav-center-item">
-                        Lưu Trú
-                    </a>
-                </div>
+        <div class="nav-center">
+            <a href="#home" class="nav-center-item">
+                Trang Chủ
+            </a>
+            <a href="/Travel/experiences" class="nav-center-item">
+                Trải Nghiệm
+            </a>
+            <a href="/Travel/accommodations" class="nav-center-item">
+                Lưu Trú
+            </a>
+        </div>
 
-                <div class="nav-right">
-                    <%-- Conditional rendering based on user authentication --%>
-                    <c:choose>
-                        <c:when test="${not empty sessionScope.user}">
-                            <div class="dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
-                                    <i class="ri-user-line" style="color: white;"></i> 
-                                    ${sessionScope.user.fullName}
+        <div class="nav-right">
+            <%-- Conditional rendering based on user authentication --%>
+            <c:choose>
+                <c:when test="${not empty sessionScope.user}">
+                    <!-- Icon tin nhắn cố định cho HOST và TRAVELER -->
+                    <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
+                        <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
+                            <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
+                            <!-- Badge đỏ sẽ được thêm bằng JavaScript -->
+                        </a>
+                    </c:if>
+                    
+                    <div class="dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
+                            <i class="ri-user-line" style="color: white;"></i> 
+                            ${sessionScope.user.fullName}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <%-- Role-based dashboard access --%>
+                            <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-dashboard-line"></i> Quản Trị
+                                    </a>
+                                </li>
+                            </c:if>
+                            <c:if test="${sessionScope.user.role == 'HOST'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+                                    </a>
+                                </li>
+                            </c:if>
+                            <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-vip-crown-line"></i> Nâng Lên Host
+                                    </a>
+                                </li>
+                            </c:if>
+                            
+                            <%-- Common profile options --%>
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-user-settings-line"></i> Hồ Sơ
                                 </a>
-<ul class="dropdown-menu">
-    <%-- Role-based dashboard access --%>
-    <c:if test="${sessionScope.user.role == 'ADMIN'}">
-        <li>
-            <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard">
-                <i class="ri-dashboard-line"></i> Quản Trị
-            </a>
-        </li>
-    </c:if>
-    <c:if test="${sessionScope.user.role == 'HOST'}">
-        <li>
-            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard" style="color: #10466C; font-weight: 600;">
-                <i class="ri-dashboard-line"></i> Quản Lý Host
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
-                <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
-            </a>
-        </li>
-        <li>
-            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
-                <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
-            </a>
-        </li>
-    </c:if>
-    <c:if test="${sessionScope.user.role == 'TRAVELER'}">
-        <li>
-            <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
-                <i class="ri-vip-crown-line"></i> Nâng Lên Host
-            </a>
-        </li>
-    </c:if>
-    <%-- Common profile options --%>
-    <li>
-        <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C;">
-            <i class="ri-user-settings-line" style="color: #10466C;"></i> Hồ Sơ
-        </a>
-    </li>
-    <li><hr class="dropdown-divider"></li>
-    <li>
-        <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C;">
-            <i class="ri-logout-circle-r-line" style="color: #10466C;"></i> Đăng Xuất
-        </a>
-    </li>
-</ul>                            </div>
-                        </c:when>
-                        <c:otherwise>
-                            <%-- Not logged in state --%>
-                            <a href="#become-host" class="me-3">Trở thành host</a>
-                            <i class="ri-global-line globe-icon me-3"></i>
-                            <div class="menu-icon">
-                                <i class="ri-menu-line"></i>
-                                <div class="dropdown-menu-custom">
-                                    <a href="#help-center">
-                                        <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/contact">
-                                        <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/login" class="nav-link">
-                                        <i class="ri-login-circle-line" style="color: #10466C;"></i> Đăng Nhập
-                                    </a>
-                                    <a href="${pageContext.request.contextPath}/register">
-                                        <i class="ri-user-add-line" style="color: #10466C;" ></i>Đăng Ký
-                                    </a>
-                                </div>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-        </nav>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-logout-circle-r-line"></i> Đăng Xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <%-- Not logged in state --%>
+                    <i class="ri-global-line globe-icon me-3"></i>
+                    <div class="menu-icon">
+                        <i class="ri-menu-line"></i>
+                        <div class="dropdown-menu-custom">
+                            <a href="#help-center">
+                                <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
+                            </a>
+                            <a href="${pageContext.request.contextPath}/contact">
+                                <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
+                            </a>
+                            <a href="${pageContext.request.contextPath}/login" class="nav-link">
+                                <i class="ri-login-circle-line" style="color: #10466C;"></i> Đăng Nhập
+                            </a>
+                            <a href="${pageContext.request.contextPath}/register">
+                                <i class="ri-user-add-line" style="color: #10466C;"></i>Đăng Ký
+                            </a>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</nav>
 
         <!-- Hero Section -->
         <section class="hero-section" id="home">
@@ -1813,9 +1869,62 @@
                                     });
                                 });
                             });
+                            
+function updateMessageBadge() {
+    <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
+        fetch('${pageContext.request.contextPath}/chat/api/unread-count')
+            .then(response => response.json())
+            .then(data => {
+                const unreadCount = data.unreadCount || 0;
+                const chatLink = document.querySelector('.nav-chat-link');
+                
+                if (chatLink) {
+                    // Tìm hoặc tạo badge
+                    let badge = chatLink.querySelector('.message-badge');
+                    
+                    if (unreadCount > 0) {
+                        if (!badge) {
+                            // Tạo badge mới
+                            badge = document.createElement('span');
+                            badge.className = 'message-badge';
+                            chatLink.appendChild(badge);
+                        }
+                        
+                        // Cập nhật số lượng và hiển thị
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        badge.classList.add('show');
+                    } else {
+                        // Ẩn badge nếu không có tin nhắn
+                        if (badge) {
+                            badge.classList.remove('show');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting unread count:', error);
+            });
+    </c:if>
+}
 
+// Cập nhật DOMContentLoaded hiện có
+document.addEventListener('DOMContentLoaded', function () {
+    // ... các code hiện có ...
+    
+    // Thêm vào cuối function DOMContentLoaded
+    updateMessageBadge();
+    
+    // Cập nhật badge mỗi 30 giây
+    setInterval(updateMessageBadge, 30000);
+    
+    // Cập nhật badge khi focus vào trang
+    window.addEventListener('focus', updateMessageBadge);
+    
+    // ... phần còn lại của code hiện có ...
+});
                             // Add JSTL functions
             <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
         </script>
+        
     </body>
 </html>

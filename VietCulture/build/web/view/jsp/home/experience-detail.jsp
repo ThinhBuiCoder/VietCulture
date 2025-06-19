@@ -15,6 +15,87 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
     <style>
+        /* CSS cho message icon */
+.nav-chat-link {
+    position: relative;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.nav-chat-link:hover {
+    color: var(--primary-color) !important;
+    background-color: rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+}
+
+.message-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #FF385C;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    border: 2px solid #10466C;
+    animation: pulse 2s infinite;
+}
+
+.message-badge.show {
+    display: flex;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+    }
+}
+        .btn-chat.chat-pulse {
+            animation: chatPulse 2s infinite;
+            box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+        }
+        
+        @keyframes chatPulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+            }
+        }
+        
+        .nav-chat-link:hover {
+            color: var(--primary-color) !important;
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -1579,18 +1660,47 @@
                     </div>
                 </div>
 
-                <!-- Contact Host -->
-                <div class="mt-4 p-3 bg-light rounded">
-                    <h6 class="mb-3">Liên hệ hướng dẫn viên</h6>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="ri-message-3-line me-2"></i>Gửi tin nhắn
+             <!-- Sửa lại phần contact host trong sidebar -->
+<div class="mt-4 p-3 bg-light rounded">
+    <h6 class="mb-3">Liên hệ hướng dẫn viên</h6>
+    <div class="d-grid gap-2">
+        <c:choose>
+            <c:when test="${not empty sessionScope.user}">
+                <c:choose>
+                    <c:when test="${sessionScope.user.userId == experience.hostId}">
+                        <!-- Nếu user chính là host của experience này -->
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="ri-user-line me-2"></i>Đây là trải nghiệm của bạn
                         </button>
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="ri-phone-line me-2"></i>Gọi điện thoại
+                    </c:when>
+                    <c:otherwise>
+                        <!-- User khác có thể chat với host - THÊM DATA ATTRIBUTES -->
+                        <button class="btn btn-primary btn-sm btn-chat chat-pulse" 
+                                onclick="chatWithHost()"
+                                data-host-id="${experience.hostId}"
+                                data-experience-id="${experience.experienceId}"
+                                data-current-user-id="${sessionScope.user.userId}">
+                            <i class="ri-message-3-line me-2"></i>Chat với Host
                         </button>
-                    </div>
-                </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="showContactInfo()">
+                            <i class="ri-phone-line me-2"></i>Thông tin liên hệ
+                        </button>
+                    </c:otherwise>
+                </c:choose>
+            </c:when>
+            <c:otherwise>
+                <!-- User chưa đăng nhập -->
+                <a href="${pageContext.request.contextPath}/login?redirect=chat&experienceId=${experience.experienceId}" 
+                   class="btn btn-primary btn-sm">
+                    <i class="ri-message-3-line me-2"></i>Đăng nhập để Chat
+                </a>
+                <button class="btn btn-outline-primary btn-sm" onclick="showLoginRequired()">
+                    <i class="ri-phone-line me-2"></i>Thông tin liên hệ
+                </button>
+            </c:otherwise>
+        </c:choose>
+    </div>
+</div>
 
                 <!-- Safety Info -->
                 <div class="mt-4 p-3 bg-light rounded">
@@ -1884,37 +1994,35 @@
         });
 
         // Handle booking form submission
-       // Handle booking form submission
-document.querySelector('.booking-form').addEventListener('submit', function(e) {
-    // Bỏ e.preventDefault(); để cho phép form submit bình thường
-    
-    const bookingDate = bookingDateInput.value;
-    const participants = participantsSelect.value;
-    const timeSlot = timeSlotSelect.value;
-    
-    if (!bookingDate || !participants || !timeSlot) {
-        e.preventDefault(); // Chỉ preventDefault khi có lỗi
-        showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
-        return;
-    }
-    
-    const selectedDate = new Date(bookingDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (selectedDate < today) {
-        e.preventDefault(); // Chỉ preventDefault khi có lỗi
-        showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
-        return;
-    }
-    
-    // Nếu không có lỗi, form sẽ submit bình thường và chuyển trang
-    // Show loading state
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
-    submitBtn.disabled = true;
-});
+        document.querySelector('.booking-form').addEventListener('submit', function(e) {
+            const bookingDate = bookingDateInput.value;
+            const participants = participantsSelect.value;
+            const timeSlot = timeSlotSelect.value;
+            
+            if (!bookingDate || !participants || !timeSlot) {
+                e.preventDefault();
+                showToast('Vui lòng điền đầy đủ thông tin đặt chỗ', 'error');
+                return;
+            }
+            
+            const selectedDate = new Date(bookingDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (selectedDate < today) {
+                e.preventDefault();
+                showToast('Ngày tham gia không thể là ngày trong quá khứ', 'error');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
+                submitBtn.disabled = true;
+            }
+        });
 
         // Image lazy loading
         const images = document.querySelectorAll('img');
@@ -1932,6 +2040,370 @@ document.querySelector('.booking-form').addEventListener('submit', function(e) {
         });
 
         images.forEach(img => imageObserver.observe(img));
+
+        // Chat with host function
+// SỬA LẠI function chatWithHost() trong experience detail JSP
+function chatWithHostAlternative() {
+    // Lấy data từ HTML attributes thay vì JSP variables
+    const chatBtn = document.querySelector('.btn-chat');
+    if (!chatBtn) {
+        console.error('Chat button not found');
+        return;
+    }
+    
+    const hostId = chatBtn.getAttribute('data-host-id');
+    const experienceId = chatBtn.getAttribute('data-experience-id');
+    const currentUserId = chatBtn.getAttribute('data-current-user-id');
+    
+    console.log('Alternative method - IDs from attributes:', { hostId, experienceId, currentUserId });
+    
+    if (!hostId) {
+        showToast('Không tìm thấy thông tin host', 'error');
+        return;
+    }
+    
+    if (!currentUserId) {
+        window.location.href = '${pageContext.request.contextPath}/login';
+        return;
+    }
+    
+    if (hostId === currentUserId) {
+        showToast('Bạn không thể chat với chính mình', 'info');
+        return;
+    }
+    
+    const originalText = chatBtn.innerHTML;
+    chatBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang tạo chat...';
+    chatBtn.disabled = true;
+    
+    const formData = new FormData();
+    formData.append('hostId', hostId);
+    if (experienceId) {
+        formData.append('experienceId', experienceId);
+    }
+    
+    fetch('${pageContext.request.contextPath}/chat/api/create-room', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(text => {
+        console.log('Alternative method response:', text);
+        const data = JSON.parse(text);
+        if (data.success) {
+            window.location.href = `${pageContext.request.contextPath}/chat/room/${data.chatRoomId}`;
+        } else {
+            showToast('Lỗi: ' + (data.message || 'Không thể tạo chat'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Alternative method error:', error);
+        showToast('Có lỗi xảy ra: ' + error.message, 'error');
+    })
+    .finally(() => {
+        chatBtn.innerHTML = originalText;
+        chatBtn.disabled = false;
+    });
+}
+function chatWithHost() {
+    var contextPath = '${pageContext.request.contextPath}';
+    var hostId = '${experience.hostId}';
+    var experienceId = '${experience.experienceId}';
+    
+    console.log('Testing with values:', { hostId, experienceId, contextPath });
+    
+    // Method 1: URL parameters (GET style)
+    var url = contextPath + '/chat/api/create-room?hostId=' + hostId + '&experienceId=' + experienceId;
+    console.log('Test URL:', url);
+    
+    fetch(url, {
+        method: 'POST'
+    })
+    .then(function(response) {
+        return response.text();
+    })
+    .then(function(text) {
+        console.log('Method 1 Response:', text);
+        
+        // Method 2: FormData nếu method 1 không work
+        if (text.includes('Host ID is required')) {
+            console.log('Method 1 failed, trying Method 2...');
+            
+            var formData = new FormData();
+            formData.append('hostId', hostId);
+            formData.append('experienceId', experienceId);
+            
+            return fetch(contextPath + '/chat/api/create-room', {
+                method: 'POST',
+                body: formData
+            });
+        } else {
+            var data = JSON.parse(text);
+            if (data.success) {
+                window.location.href = contextPath + '/chat/room/' + data.chatRoomId;
+            }
+        }
+    })
+    .then(function(response) {
+        if (response) {
+            return response.text();
+        }
+    })
+    .then(function(text) {
+        if (text) {
+            console.log('Method 2 Response:', text);
+            var data = JSON.parse(text);
+            if (data.success) {
+                window.location.href = contextPath + '/chat/room/' + data.chatRoomId;
+            }
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+    });
+}function showContactInfo() {
+    // Tạo modal hiển thị thông tin liên hệ
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="ri-phone-line me-2"></i>Thông Tin Liên Hệ
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
+                             alt="Host Avatar" 
+                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--secondary-color);">
+                        <h4 class="mt-3 mb-1">${experience.hostName}</h4>
+                        <p class="text-muted">Hướng dẫn viên địa phương</p>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <div class="contact-item d-flex align-items-center mb-3">
+                            <div class="contact-icon me-3">
+                                <i class="ri-phone-line" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                            </div>
+                            <div>
+                                <strong>Điện thoại:</strong><br>
+                                <span class="text-muted">Đăng nhập để xem số điện thoại</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item d-flex align-items-center mb-3">
+                            <div class="contact-icon me-3">
+                                <i class="ri-mail-line" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                            </div>
+                            <div>
+                                <strong>Email:</strong><br>
+                                <span class="text-muted">Đăng nhập để xem email</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item d-flex align-items-center mb-3">
+                            <div class="contact-icon me-3">
+                                <i class="ri-time-line" style="font-size: 1.2rem; color: var(--primary-color);"></i>
+                            </div>
+                            <div>
+                                <strong>Thời gian phản hồi:</strong><br>
+                                <span class="text-success">Trong vòng 1 giờ</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-item d-flex align-items-center">
+                            <div class="contact-icon me-3">
+                                <i class="ri-star-fill" style="font-size: 1.2rem; color: #FFD700;"></i>
+                            </div>
+                            <div>
+                                <strong>Đánh giá:</strong><br>
+                                <span>4.9/5 (156 đánh giá)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary" onclick="chatWithHost()">
+                        <i class="ri-message-3-line me-1"></i>Bắt Đầu Chat
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Remove modal from DOM when closed
+    modal.addEventListener('hidden.bs.modal', function() {
+        document.body.removeChild(modal);
+    });
+}
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const messageContent = messageInput.value.trim();
+    
+    if (messageContent === '') return;
+    
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    
+    // Add message to UI immediately (optimistic UI)
+    addMessageToUI(messageContent, true);
+    
+    // Send to server - SỬA ENDPOINT
+    const formData = new FormData();
+    formData.append('roomId', chatRoomId);
+    formData.append('receiverId', receiverId);
+    formData.append('messageContent', messageContent);
+    formData.append('messageType', 'TEXT');
+    
+    fetch('${pageContext.request.contextPath}/chat/api/send-message', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            // Remove optimistic message and show error
+            removeLastOptimisticMessage();
+            showToast('Có lỗi xảy ra khi gửi tin nhắn: ' + (data.message || ''), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending message:', error);
+        removeLastOptimisticMessage();
+        showToast('Có lỗi xảy ra khi gửi tin nhắn', 'error');
+    });
+    
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+    sendBtn.disabled = false;
+    messageInput.focus();
+}
+function markMessagesAsRead() {
+    fetch(`${pageContext.request.contextPath}/chat/api/mark-read/${chatRoomId}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Messages marked as read');
+        }
+    })
+    .catch(error => {
+        console.error('Error marking messages as read:', error);
+    });
+}
+        // Show login required function
+        function showLoginRequired() {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="ri-lock-line me-2"></i>Yêu Cầu Đăng Nhập
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div class="mb-4">
+                                <i class="ri-user-add-line" style="font-size: 4rem; color: var(--primary-color);"></i>
+                            </div>
+                            <h5 class="mb-3">Cần đăng nhập để xem thông tin liên hệ</h5>
+                            <p class="text-muted mb-4">
+                                Đăng nhập để có thể xem thông tin liên hệ của host và bắt đầu trò chuyện để được tư vấn chi tiết.
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a href="${pageContext.request.contextPath}/login?redirect=chat&experienceId=${experience.experienceId}" 
+                                   class="btn btn-primary">
+                                    <i class="ri-login-circle-line me-2"></i>Đăng Nhập
+                                </a>
+                                <a href="${pageContext.request.contextPath}/register" class="btn btn-outline-primary">
+                                    <i class="ri-user-add-line me-2"></i>Tạo Tài Khoản Mới
+                                </a>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Remove modal from DOM when closed
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.removeChild(modal);
+            });
+        }
+
+        // Update navbar để hiển thị unread message count
+        function updateMessageBadge() {
+    <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
+        fetch('${pageContext.request.contextPath}/chat/api/unread-count')
+            .then(response => response.json())
+            .then(data => {
+                const unreadCount = data.unreadCount || 0;
+                const chatLink = document.querySelector('.nav-chat-link');
+                
+                if (chatLink) {
+                    // Tìm hoặc tạo badge
+                    let badge = chatLink.querySelector('.message-badge');
+                    
+                    if (unreadCount > 0) {
+                        if (!badge) {
+                            // Tạo badge mới
+                            badge = document.createElement('span');
+                            badge.className = 'message-badge';
+                            chatLink.appendChild(badge);
+                        }
+                        
+                        // Cập nhật số lượng và hiển thị
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        badge.classList.add('show');
+                    } else {
+                        // Ẩn badge nếu không có tin nhắn
+                        if (badge) {
+                            badge.classList.remove('show');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting unread count:', error);
+            });
+    </c:if>
+}
+
+// Cập nhật DOMContentLoaded hiện có
+document.addEventListener('DOMContentLoaded', function () {
+    // ... các code hiện có ...
+    
+    // Thêm vào cuối function DOMContentLoaded
+    updateMessageBadge();
+    
+    // Cập nhật badge mỗi 30 giây
+    setInterval(updateMessageBadge, 30000);
+    
+    // Cập nhật badge khi focus vào trang
+    window.addEventListener('focus', updateMessageBadge);
+    
+    // ... phần còn lại của code hiện có ...
+});
+
+        // Call updateUnreadMessageCount on page load
+        
     </script>
 </body>
 </html>

@@ -14,6 +14,115 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
+        /* Heart/Favorite Button Styles */
+        .favorite-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        .favorite-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .favorite-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .favorite-btn i {
+            font-size: 1.2rem;
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-btn.active i {
+            color: #FF385C;
+            animation: heartBeat 0.6s ease-in-out;
+        }
+
+        .favorite-btn.adding i {
+            animation: heartPulse 0.4s ease-in-out;
+        }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.3); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes heartPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Navigation Chat Link */
+        .nav-chat-link {
+            position: relative;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .nav-chat-link:hover {
+            color: var(--primary-color) !important;
+            background-color: rgba(255, 56, 92, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .message-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #FF385C;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+            border: 2px solid #10466C;
+            animation: pulse 2s infinite;
+        }
+
+        .message-badge.show {
+            display: flex;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 56, 92, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 56, 92, 0); }
+        }
+
+        /* Toast Container */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -46,6 +155,43 @@
             color: #4BB543;
         }
 
+        /* Image Placeholder Styles */
+        .no-image-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .no-image-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .image-error {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            font-size: 0.85rem;
+        }
+
+        .image-error i {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        /* Copy Button */
         .btn-copy {
             background-color: transparent;
             border: none;
@@ -69,6 +215,7 @@
             font-size: 1rem;
         }
 
+        /* Root Variables */
         :root {
             --primary-color: #FF385C;
             --secondary-color: #83C5BE;
@@ -269,7 +416,7 @@
         /* Hero Section */
         .hero-section {
             background: linear-gradient(rgba(0,109,119,0.8), rgba(131,197,190,0.8)), 
-                        url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2080&q=80') no-repeat center/cover;
+                        url('https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2080&q=80') no-repeat center/cover;
             color: var(--light-color);
             padding: 100px 0;
             text-align: center;
@@ -452,7 +599,7 @@
         .card-badge {
             position: absolute;
             top: 15px;
-            right: 15px;
+            left: 15px;
             background: var(--gradient-primary);
             color: white;
             padding: 5px 12px;
@@ -464,7 +611,7 @@
 
         .room-badge {
             position: absolute;
-            top: 15px;
+            bottom: 15px;
             left: 15px;
             background: var(--gradient-secondary);
             color: white;
@@ -681,6 +828,30 @@
             transform: translateX(3px);
         }
 
+        /* No results */
+        .no-results {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6c757d;
+        }
+
+        .no-results i {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+
+        .fade-up.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Responsive */
         @media (max-width: 992px) {
             .search-form {
@@ -721,51 +892,6 @@
                 padding: 10px 0;
             }
         }
-
-        /* Loading Animation */
-        .loading {
-            text-align: center;
-            padding: 50px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* No results */
-        .no-results {
-            text-align: center;
-            padding: 80px 20px;
-            color: #6c757d;
-        }
-
-        .no-results i {
-            font-size: 4rem;
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-        }
-
-        .fade-up {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease-out;
-        }
-
-        .fade-up.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
     </style>
 </head>
 <body>
@@ -778,57 +904,73 @@
             </a>
 
             <div class="nav-center">
-                <a href="${pageContext.request.contextPath}/" class="nav-center-item">
-                    Trang Chủ
-                </a>
-                <a href="${pageContext.request.contextPath}/experiences" class="nav-center-item">
-                    Trải Nghiệm
-                </a>
-                <a href="${pageContext.request.contextPath}/accommodations" class="nav-center-item active">
-                    Lưu Trú
-                </a>
+                <a href="${pageContext.request.contextPath}/" class="nav-center-item">Trang Chủ</a>
+                <a href="${pageContext.request.contextPath}/experiences" class="nav-center-item">Trải Nghiệm</a>
+                <a href="${pageContext.request.contextPath}/accommodations" class="nav-center-item active">Lưu Trú</a>
             </div>
 
             <div class="nav-right">
                 <c:choose>
                     <c:when test="${not empty sessionScope.user}">
+                        <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
+                            <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
+                                <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
+                            </a>
+                        </c:if>
+                        
                         <div class="dropdown">
                             <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
                                 <i class="ri-user-line" style="color: white;"></i> 
-                                ${sessionScope.user.fullName}
+                                ${fn:escapeXml(sessionScope.user.fullName)}
                             </a>
                             <ul class="dropdown-menu">
                                 <c:if test="${sessionScope.user.role == 'ADMIN'}">
                                     <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard">
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
                                             <i class="ri-dashboard-line"></i> Quản Trị
                                         </a>
                                     </li>
                                 </c:if>
                                 <c:if test="${sessionScope.user.role == 'HOST'}">
                                     <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard">
-                                            <i class="ri-dashboard-line"></i> Quản Lý Host
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+                                        </a>
+                                    </li>
+                                </c:if>
+                                <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-vip-crown-line"></i> Nâng Lên Host
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/favorites" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-heart-line"></i> Yêu Thích
                                         </a>
                                     </li>
                                 </c:if>
                                 
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C;">
-                                        <i class="ri-user-settings-line" style="color: #10466C;"></i> Hồ Sơ
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-user-settings-line"></i> Hồ Sơ
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C;">
-                                        <i class="ri-logout-circle-r-line" style="color: #10466C;"></i> Đăng Xuất
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-logout-circle-r-line"></i> Đăng Xuất
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <a href="#become-host" class="me-3">Trở thành host</a>
                         <i class="ri-global-line globe-icon me-3"></i>
                         <div class="menu-icon">
                             <i class="ri-menu-line"></i>
@@ -836,7 +978,7 @@
                                 <a href="#help-center">
                                     <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
                                 </a>
-                                <a href="#contact">
+                                <a href="${pageContext.request.contextPath}/contact">
                                     <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
                                 </a>
                                 <a href="${pageContext.request.contextPath}/login" class="nav-link">
@@ -973,18 +1115,35 @@
                         <c:forEach var="accommodation" items="${accommodations}">
                             <div class="card-item">
                                 <div class="card-image">
+                                    <!-- Favorite Button -->
+                                    <c:if test="${not empty sessionScope.user && sessionScope.user.role == 'TRAVELER'}">
+                                        <button class="favorite-btn" 
+                                                data-accommodation-id="${accommodation.accommodationId}" 
+                                                data-type="accommodation"
+                                                onclick="toggleFavorite(this)">
+                                            <i class="ri-heart-line"></i>
+                                        </button>
+                                    </c:if>
+                                    
                                     <c:choose>
                                         <c:when test="${not empty accommodation.firstImage}">
-                                            <img src="${pageContext.request.contextPath}/images/accommodations/${accommodation.firstImage}" alt="${accommodation.name}">
+                                            <img src="${pageContext.request.contextPath}/images/accommodations/${accommodation.firstImage}" 
+                                                 alt="${fn:escapeXml(accommodation.name)}"
+                                                 onerror="handleImageError(this);">
                                         </c:when>
                                         <c:when test="${not empty accommodation.images}">
                                             <c:set var="imageList" value="${fn:split(accommodation.images, ',')}" />
                                             <c:if test="${fn:length(imageList) > 0}">
-                                                <img src="${pageContext.request.contextPath}/images/accommodations/${fn:trim(imageList[0])}" alt="${accommodation.name}">
+                                                <img src="${pageContext.request.contextPath}/images/accommodations/${fn:trim(imageList[0])}" 
+                                                     alt="${fn:escapeXml(accommodation.name)}"
+                                                     onerror="handleImageError(this);">
                                             </c:if>
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=300&q=80" alt="${accommodation.name}">
+                                            <div class="no-image-placeholder">
+                                                <i class="ri-image-line"></i>
+                                                <span>Không có ảnh</span>
+                                            </div>
                                         </c:otherwise>
                                     </c:choose>
                                     
@@ -1008,17 +1167,23 @@
                                 </div>
                                 
                                 <div class="card-content">
-                                    <h5>${accommodation.name}</h5>
+                                    <h5>${fn:escapeXml(accommodation.name)}</h5>
                                     
                                     <div class="location">
                                         <i class="ri-map-pin-line"></i>
                                         <span>
                                             <c:choose>
+                                                <c:when test="${not empty accommodation.location}">
+                                                    ${fn:escapeXml(accommodation.location)}
+                                                </c:when>
                                                 <c:when test="${not empty accommodation.cityName}">
-                                                    ${accommodation.cityName}
+                                                    ${fn:escapeXml(accommodation.cityName)}
+                                                </c:when>
+                                                <c:when test="${not empty accommodation.address}">
+                                                    ${fn:escapeXml(accommodation.address)}
                                                 </c:when>
                                                 <c:otherwise>
-                                                    ${accommodation.address}
+                                                    Chưa có thông tin địa chỉ
                                                 </c:otherwise>
                                             </c:choose>
                                         </span>
@@ -1027,10 +1192,10 @@
                                     <p>
                                         <c:choose>
                                             <c:when test="${fn:length(accommodation.description) > 100}">
-                                                ${fn:substring(accommodation.description, 0, 100)}...
+                                                ${fn:escapeXml(fn:substring(accommodation.description, 0, 100))}...
                                             </c:when>
                                             <c:otherwise>
-                                                ${accommodation.description}
+                                                ${fn:escapeXml(accommodation.description)}
                                             </c:otherwise>
                                         </c:choose>
                                     </p>
@@ -1044,7 +1209,7 @@
                                         <div class="amenities-preview">
                                             <c:set var="amenityList" value="${fn:split(accommodation.amenities, ',')}" />
                                             <c:forEach var="amenity" items="${amenityList}" begin="0" end="2">
-                                                <span class="amenity-tag">${fn:trim(amenity)}</span>
+                                                <span class="amenity-tag">${fn:escapeXml(fn:trim(amenity))}</span>
                                             </c:forEach>
                                             <c:if test="${fn:length(amenityList) > 3}">
                                                 <span class="amenity-tag">+${fn:length(amenityList) - 3} tiện ích</span>
@@ -1070,7 +1235,7 @@
                                         <div class="host-info">
                                             <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" alt="Host" class="host-avatar">
                                             <div>
-                                                <div class="host-name">Host: ${accommodation.hostName}</div>
+                                                <div class="host-name">Host: ${fn:escapeXml(accommodation.hostName)}</div>
                                                 <small class="text-muted">Chủ nhà địa phương</small>
                                             </div>
                                         </div>
@@ -1080,7 +1245,7 @@
                                         <a href="${pageContext.request.contextPath}/accommodations/${accommodation.accommodationId}" class="btn btn-outline-primary">
                                             <i class="ri-eye-line me-2"></i>Xem Chi Tiết
                                         </a>
-                                        <button class="btn-copy" onclick="copyAccommodation('${accommodation.name}')">
+                                        <button class="btn-copy" onclick="copyAccommodation('${fn:escapeXml(accommodation.name)}')">
                                             <i class="ri-share-line"></i>
                                             <span>Chia sẻ</span>
                                         </button>
@@ -1187,6 +1352,233 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Handle image error function
+        function handleImageError(img) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'image-error';
+            errorDiv.innerHTML = `
+                <i class="ri-image-off-line"></i>
+                <span>Không tải được ảnh</span>
+            `;
+            img.parentNode.replaceChild(errorDiv, img);
+        }
+
+        // Improved favorite functionality for accommodations
+        function toggleFavorite(button) {
+            // Check if user is logged in and is TRAVELER
+            const isLoggedIn = ${not empty sessionScope.user};
+            const userRole = '${sessionScope.user.role}';
+            
+            if (!isLoggedIn) {
+                window.location.href = '${pageContext.request.contextPath}/login';
+                return;
+            }
+            
+            if (userRole !== 'TRAVELER') {
+                showToast('Chỉ có Traveler mới có thể lưu yêu thích', 'error');
+                return;
+            }
+            
+            const experienceId = button.getAttribute('data-experience-id');
+            const accommodationId = button.getAttribute('data-accommodation-id');
+            const itemType = button.getAttribute('data-type');
+            const icon = button.querySelector('i');
+            
+            // Debug logging
+            console.log('Toggle favorite called with:', {
+                experienceId: experienceId,
+                accommodationId: accommodationId,
+                itemType: itemType
+            });
+            
+            // Validate data
+            if (!itemType || (itemType !== 'experience' && itemType !== 'accommodation')) {
+                showToast('Loại dữ liệu không hợp lệ', 'error');
+                return;
+            }
+            
+            if ((itemType === 'experience' && !experienceId) || 
+                (itemType === 'accommodation' && !accommodationId)) {
+                showToast('Thiếu ID của mục yêu thích', 'error');
+                return;
+            }
+            
+            // Prevent multiple clicks
+            if (button.disabled) {
+                console.log('Button already disabled, ignoring click');
+                return;
+            }
+            
+            // Add loading animation and disable button
+            button.classList.add('adding');
+            button.disabled = true;
+            
+            // Prepare request data
+            const requestData = {
+                itemType: itemType
+            };
+            
+            // Add the appropriate ID based on type
+            if (itemType === 'experience' && experienceId) {
+                requestData.experienceId = parseInt(experienceId);
+            } else if (itemType === 'accommodation' && accommodationId) {
+                requestData.accommodationId = parseInt(accommodationId);
+            }
+            
+            console.log('Sending request data:', requestData);
+            
+            // Make AJAX request to toggle favorite
+            fetch('${pageContext.request.contextPath}/favorites/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                
+                // Always remove loading state
+                button.classList.remove('adding');
+                button.disabled = false;
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('Vui lòng đăng nhập lại', 'error');
+                        setTimeout(() => {
+                            window.location.href = '${pageContext.request.contextPath}/login';
+                        }, 2000);
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    if (data.isFavorited) {
+                        button.classList.add('active');
+                        icon.className = 'ri-heart-fill';
+                        showToast('Đã thêm vào danh sách yêu thích ❤️', 'success');
+                    } else {
+                        button.classList.remove('active');
+                        icon.className = 'ri-heart-line';
+                        showToast('Đã xóa khỏi danh sách yêu thích', 'info');
+                    }
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra khi xử lý yêu thích', 'error');
+                    console.error('Server error:', data);
+                }
+            })
+            .catch(error => {
+                // Ensure loading state is removed
+                button.classList.remove('adding');
+                button.disabled = false;
+                
+                console.error('Error:', error);
+                showToast('Không thể kết nối đến máy chủ. Vui lòng thử lại.', 'error');
+            });
+        }
+
+        // Load user favorites on page load
+        function loadUserFavorites() {
+            const isLoggedIn = ${not empty sessionScope.user};
+            const userRole = '${sessionScope.user.role}';
+            
+            if (!isLoggedIn || userRole !== 'TRAVELER') {
+                console.log('User not logged in or not TRAVELER, skipping favorites load');
+                return;
+            }
+            
+            console.log('Loading user favorites...');
+            
+            fetch('${pageContext.request.contextPath}/favorites/list', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Favorites loaded:', data);
+                
+                if (data.success && data.accommodationIds) {
+                    // Mark accommodation favorites
+                    data.accommodationIds.forEach(accommodationId => {
+                        const button = document.querySelector(`button[data-accommodation-id="${accommodationId}"][data-type="accommodation"]`);
+                        if (button) {
+                            button.classList.add('active');
+                            const icon = button.querySelector('i');
+                            if (icon) {
+                                icon.className = 'ri-heart-fill';
+                            }
+                            console.log('Marked accommodation as favorite:', accommodationId);
+                        }
+                    });
+                }
+                
+                if (data.success && data.experienceIds) {
+                    // Mark experience favorites (if any experiences on this page)
+                    data.experienceIds.forEach(experienceId => {
+                        const button = document.querySelector(`button[data-experience-id="${experienceId}"][data-type="experience"]`);
+                        if (button) {
+                            button.classList.add('active');
+                            const icon = button.querySelector('i');
+                            if (icon) {
+                                icon.className = 'ri-heart-fill';
+                            }
+                            console.log('Marked experience as favorite:', experienceId);
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading favorites:', error);
+                // Don't show error toast for this as it's not critical
+            });
+        }
+
+        // Update message badge
+        function updateMessageBadge() {
+            <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
+                fetch('${pageContext.request.contextPath}/chat/api/unread-count')
+                    .then(response => response.json())
+                    .then(data => {
+                        const unreadCount = data.unreadCount || 0;
+                        const chatLink = document.querySelector('.nav-chat-link');
+                        
+                        if (chatLink) {
+                            let badge = chatLink.querySelector('.message-badge');
+                            
+                            if (unreadCount > 0) {
+                                if (!badge) {
+                                    badge = document.createElement('span');
+                                    badge.className = 'message-badge';
+                                    chatLink.appendChild(badge);
+                                }
+                                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                                badge.classList.add('show');
+                            } else {
+                                if (badge) {
+                                    badge.classList.remove('show');
+                                }
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting unread count:', error);
+                    });
+            </c:if>
+        }
+
         // Dropdown menu functionality
         const menuIcon = document.querySelector('.menu-icon');
         const dropdownMenu = document.querySelector('.dropdown-menu-custom');
@@ -1274,18 +1666,18 @@
         // Copy accommodation function
         function copyAccommodation(accommodationName) {
             const url = window.location.href;
-            const shareText = `Khám phá "${accommodationName}" tại VietCulture: ${url}`;
+            const shareText = 'Khám phá "' + accommodationName + '" tại VietCulture: ' + url;
             
             if (navigator.share) {
                 navigator.share({
                     title: accommodationName,
-                    text: `Khám phá "${accommodationName}" tại VietCulture`,
+                    text: 'Khám phá "' + accommodationName + '" tại VietCulture',
                     url: url
                 }).catch(err => console.log('Error sharing:', err));
             } else if (navigator.clipboard) {
                 navigator.clipboard.writeText(shareText)
                     .then(() => {
-                        showToast(`Đã sao chép link "${accommodationName}"`, 'success');
+                        showToast('Đã sao chép link "' + accommodationName + '"', 'success');
                     })
                     .catch(err => {
                         showToast('Không thể sao chép: ' + err, 'error');
@@ -1300,17 +1692,33 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             
-            let icon = '<i class="ri-check-line"></i>';
+            // Create icon element
+            const iconElement = document.createElement('i');
             if (type === 'error') {
-                icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
+                iconElement.className = 'ri-error-warning-line';
+                iconElement.style.color = '#FF385C';
             } else if (type === 'info') {
-                icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
+                iconElement.className = 'ri-information-line';
+                iconElement.style.color = '#3498db';
+            } else if (type === 'warning') {
+                iconElement.className = 'ri-alert-line';
+                iconElement.style.color = '#f39c12';
+            } else {
+                iconElement.className = 'ri-check-line';
+                iconElement.style.color = '#4BB543';
             }
             
-            toast.innerHTML = `${icon}<span>${message}</span>`;
+            // Create message span
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            
+            // Append elements to toast
+            toast.appendChild(iconElement);
+            toast.appendChild(messageSpan);
+            
             toastContainer.appendChild(toast);
             
-            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.add('show'), 100);
             
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -1324,8 +1732,22 @@
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing accommodations page...');
+            
             // Initial animation check
             animateOnScroll();
+            
+            // Load user favorites
+            loadUserFavorites();
+            
+            // Update message badge
+            updateMessageBadge();
+            
+            // Update badge every 30 seconds
+            setInterval(updateMessageBadge, 30000);
+            
+            // Update badge when focus on page
+            window.addEventListener('focus', updateMessageBadge);
             
             // Smooth scroll for filter links
             document.querySelectorAll('.filter-item').forEach(filter => {
@@ -1345,6 +1767,21 @@
                 });
             }
         });
+
+        // Debug function for troubleshooting
+        function debugAccommodations() {
+            console.log('=== Accommodations Debug Info ===');
+            console.log('Total cards:', document.querySelectorAll('.card-item').length);
+            console.log('Favorite buttons:', document.querySelectorAll('.favorite-btn').length);
+            console.log('User logged in:', ${not empty sessionScope.user});
+            console.log('User role:', '${sessionScope.user.role}');
+            
+            // Test favorites load
+            loadUserFavorites();
+        }
+
+        // Make debug function available globally
+        window.debugAccommodations = debugAccommodations;
     </script>
 </body>
 </html>

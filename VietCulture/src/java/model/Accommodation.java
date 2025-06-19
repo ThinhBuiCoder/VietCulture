@@ -21,13 +21,14 @@ public class Accommodation {
     private boolean isActive;
     private double averageRating;
     private int totalBookings;
-private int reportCount = 0;
-private boolean isDeleted = false;
-private String deleteReason;
-private Timestamp deletedAt;
-private boolean isFlagged = false;
-private String flagReason;
-private String thumbnailImage;
+    private int reportCount = 0;
+    private boolean isDeleted = false;
+    private String deleteReason;
+    private Timestamp deletedAt;
+    private boolean isFlagged = false;
+    private String flagReason;
+    private String thumbnailImage;
+    
     // Related objects
     private User host; // Updated to User instead of Host
     private City city;
@@ -57,77 +58,7 @@ private String thumbnailImage;
         this.pricePerNight = pricePerNight;
         this.createdAt = new Date();
     }
-public int getReportCount() {
-    return reportCount;
-}
 
-public void setReportCount(int reportCount) {
-    this.reportCount = reportCount;
-}
-
-public boolean isDeleted() {
-    return isDeleted;
-}
-
-public void setDeleted(boolean deleted) {
-    isDeleted = deleted;
-}
-
-public String getDeleteReason() {
-    return deleteReason;
-}
-
-public void setDeleteReason(String deleteReason) {
-    this.deleteReason = deleteReason;
-}
-
-public Timestamp getDeletedAt() {
-    return deletedAt;
-}
-
-public void setDeletedAt(Timestamp deletedAt) {
-    this.deletedAt = deletedAt;
-}
-
-public boolean isFlagged() {
-    return isFlagged;
-}
-
-public void setFlagged(boolean flagged) {
-    isFlagged = flagged;
-}
-
-public String getFlagReason() {
-    return flagReason;
-}
-
-public void setFlagReason(String flagReason) {
-    this.flagReason = flagReason;
-}
-
-public String getThumbnailImage() {
-    if (thumbnailImage == null && hasImages()) {
-        return getFirstImage();
-    }
-    return thumbnailImage;
-}
-
-public void setThumbnailImage(String thumbnailImage) {
-    this.thumbnailImage = thumbnailImage;
-}
-
-// Helper methods
-public boolean isReported() {
-    return reportCount > 0;
-}
-
-public String getStatusForAdmin() {
-    if (isDeleted) return "Đã xóa";
-    if (isFlagged) return "Bị đánh dấu";
-    if (reportCount > 0) return "Bị báo cáo";
-    if (!isActive) return "Chờ duyệt";
-    return "Hoạt động";
-}
     // Getters and Setters
     public int getAccommodationId() {
         return accommodationId;
@@ -249,6 +180,65 @@ public String getStatusForAdmin() {
         this.totalBookings = totalBookings;
     }
 
+    public int getReportCount() {
+        return reportCount;
+    }
+
+    public void setReportCount(int reportCount) {
+        this.reportCount = reportCount;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public String getDeleteReason() {
+        return deleteReason;
+    }
+
+    public void setDeleteReason(String deleteReason) {
+        this.deleteReason = deleteReason;
+    }
+
+    public Timestamp getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Timestamp deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public boolean isFlagged() {
+        return isFlagged;
+    }
+
+    public void setFlagged(boolean flagged) {
+        isFlagged = flagged;
+    }
+
+    public String getFlagReason() {
+        return flagReason;
+    }
+
+    public void setFlagReason(String flagReason) {
+        this.flagReason = flagReason;
+    }
+
+    public String getThumbnailImage() {
+        if (thumbnailImage == null && hasImages()) {
+            return getFirstImage();
+        }
+        return thumbnailImage;
+    }
+
+    public void setThumbnailImage(String thumbnailImage) {
+        this.thumbnailImage = thumbnailImage;
+    }
+
     public User getHost() {
         return host;
     }
@@ -312,7 +302,53 @@ public String getStatusForAdmin() {
         this.bookings = bookings;
     }
 
-    // Helper methods
+    // Helper methods for reporting and flagging
+    public boolean isReported() {
+        return reportCount > 0;
+    }
+
+    public String getStatusForAdmin() {
+        if (isDeleted) return "Đã xóa";
+        if (isFlagged) return "Bị đánh dấu";
+        if (reportCount > 0) return "Bị báo cáo";
+        if (!isActive) return "Chờ duyệt";
+        return "Hoạt động";
+    }
+
+    // FIXED: Add location methods to resolve JSP error
+    /**
+     * Get location for display (compatibility method for JSP)
+     * Returns address if available, otherwise returns cityName
+     */
+    public String getLocation() {
+        if (this.address != null && !this.address.trim().isEmpty()) {
+            return this.address.trim();
+        } else if (this.cityName != null && !this.cityName.trim().isEmpty()) {
+            return this.cityName.trim();
+        } else {
+            return "Chưa có thông tin địa chỉ";
+        }
+    }
+
+    /**
+     * Get full location display (address + city)
+     */
+    public String getFullLocation() {
+        StringBuilder location = new StringBuilder();
+        
+        if (this.address != null && !this.address.trim().isEmpty()) {
+            location.append(this.address.trim());
+        }
+        
+        if (this.cityName != null && !this.cityName.trim().isEmpty()) {
+            if (location.length() > 0) {
+                location.append(", ");
+            }
+            location.append(this.cityName.trim());
+        }
+        
+        return location.length() > 0 ? location.toString() : "Chưa có thông tin địa chỉ";
+    }
 
     /**
      * Get accommodation type in Vietnamese
