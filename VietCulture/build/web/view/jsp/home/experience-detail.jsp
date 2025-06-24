@@ -951,6 +951,33 @@
             font-size: 3rem;
             margin-bottom: 10px;
         }
+
+        .star-rating-custom {
+            direction: rtl;
+            display: flex;
+            justify-content: flex-start;
+            font-size: 2.2rem;
+            gap: 0.2em;
+        }
+        .star-rating-custom input[type="radio"] {
+            display: none;
+        }
+        .star-rating-custom label {
+            color: #ccc;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-size: 2.2rem;
+            padding: 0 2px;
+        }
+        .star-rating-custom label:before {
+            content: '\2605'; /* Unicode ngôi sao đầy */
+            display: inline-block;
+        }
+        .star-rating-custom input[type="radio"]:checked ~ label,
+        .star-rating-custom label:hover,
+        .star-rating-custom label:hover ~ label {
+            color: #FFD700;
+        }
     </style>
 </head>
 <body>
@@ -1352,112 +1379,34 @@
                         <i class="ri-star-line"></i>
                         Đánh giá từ khách hàng
                     </h3>
-                    
                     <c:choose>
-                        <c:when test="${experience.averageRating > 0}">
-                            <div class="rating-overview">
-                                <div class="rating-score">
-                                    <div class="rating-number">
-                                        <fmt:formatNumber value="${experience.averageRating}" maxFractionDigits="1" />
+                        <c:when test="${not empty reviews}">
+                            <c:forEach var="review" items="${reviews}">
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <c:choose>
+                                            <c:when test="${not empty review.travelerAvatar}">
+                                                <img src="${review.travelerAvatar}" alt="Reviewer" class="reviewer-avatar">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" alt="Reviewer" class="reviewer-avatar">
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <div class="reviewer-info">
+                                            <h6>${review.travelerName}</h6>
+                                            <div class="review-date">
+                                                <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy"/>
+                                            </div>
+                                        </div>
+                                        <div class="review-rating">
+                                            <c:forEach begin="1" end="5" var="i">
+                                                <i class="${i <= review.rating ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                                            </c:forEach>
+                                        </div>
                                     </div>
-                                    <div class="rating-stars">
-                                        <c:forEach begin="1" end="5" var="i">
-                                            <c:choose>
-                                                <c:when test="${i <= experience.averageRating}">
-                                                    <i class="ri-star-fill"></i>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <i class="ri-star-line"></i>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:forEach>
-                                    </div>
-                                    <div class="text-muted">${experience.totalBookings} đánh giá</div>
+                                    <p>${review.comment}</p>
                                 </div>
-                                
-                                <div class="rating-breakdown">
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">5 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 75%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">75%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">4 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 18%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">18%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">3 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 5%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">5%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">2 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 1%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">1%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">1 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 1%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">1%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sample Reviews -->
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                         alt="Reviewer" class="reviewer-avatar">
-                                    <div class="reviewer-info">
-                                        <h6>Nguyễn Thị C</h6>
-                                        <div class="review-date">Tháng 6, 2024</div>
-                                    </div>
-                                    <div class="review-rating">
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                    </div>
-                                </div>
-                                <p>Trải nghiệm tuyệt vời! Hướng dẫn viên rất nhiệt tình và am hiểu về văn hóa địa phương. Tôi đã học được rất nhiều điều thú vị và có những kỷ niệm đáng nhớ.</p>
-                            </div>
-
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                         alt="Reviewer" class="reviewer-avatar">
-                                    <div class="reviewer-info">
-                                        <h6>Lê Văn D</h6>
-                                        <div class="review-date">Tháng 5, 2024</div>
-                                    </div>
-                                    <div class="review-rating">
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-line"></i>
-                                    </div>
-                                </div>
-                                <p>Hoạt động được tổ chức rất chuyên nghiệp. Lịch trình hợp lý, không bị vội vàng. Rất phù hợp cho gia đình có trẻ em. Sẽ giới thiệu cho bạn bè.</p>
-                            </div>
-
-                            <div class="text-center mt-4">
-                                <button class="btn btn-outline-primary">
-                                    <i class="ri-more-line me-2"></i>Xem thêm đánh giá
-                                </button>
-                            </div>
+                            </c:forEach>
                         </c:when>
                         <c:otherwise>
                             <div class="text-center py-5">
@@ -1639,35 +1588,29 @@
 
                                         <!-- Star Rating -->
                                         <div class="form-group">
-                                            <label for="rating">Đánh giá của bạn</label>
-                                            <div class="star-rating">
+                                            <label for="rating" style="font-weight:600;">Đánh giá của bạn</label>
+                                            <div class="star-rating-custom">
                                                 <input type="radio" id="star5" name="rating" value="5" required>
-                                                <label for="star5" class="ri-star-fill"></label>
+                                                <label for="star5" title="5 sao"></label>
                                                 <input type="radio" id="star4" name="rating" value="4">
-                                                <label for="star4" class="ri-star-fill"></label>
+                                                <label for="star4" title="4 sao"></label>
                                                 <input type="radio" id="star3" name="rating" value="3">
-                                                <label for="star3" class="ri-star-fill"></label>
+                                                <label for="star3" title="3 sao"></label>
                                                 <input type="radio" id="star2" name="rating" value="2">
-                                                <label for="star2" class="ri-star-fill"></label>
+                                                <label for="star2" title="2 sao"></label>
                                                 <input type="radio" id="star1" name="rating" value="1">
-                                                <label for="star1" class="ri-star-fill"></label>
+                                                <label for="star1" title="1 sao"></label>
                                             </div>
                                         </div>
 
                                         <!-- Review Text -->
                                         <div class="form-group">
                                             <label for="reviewText">Nhận xét của bạn</label>
-                                            <textarea class="form-control" id="reviewText" name="reviewText" rows="5" maxlength="500" placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
+                                            <textarea class="form-control" id="reviewText" name="comment" rows="5" maxlength="500" placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
                                             <small class="text-muted">Tối đa 500 ký tự</small>
                                         </div>
 
-                                        <!-- Image Upload -->
-                                        <div class="form-group">
-                                            <label for="reviewImages">Tải lên hình ảnh (tối đa 3 ảnh)</label>
-                                            <input type="file" class="form-control" id="reviewImages" name="reviewImages" accept="image/*" multiple>
-                                            <div class="image-upload-preview" id="imagePreview"></div>
-                                            <small class="text-muted">Hỗ trợ JPG, PNG. Tối đa 5MB mỗi ảnh.</small>
-                                        </div>
+
 
                                         <!-- Submit Button -->
                                         <button type="submit" class="btn btn-primary w-100">
@@ -2078,54 +2021,40 @@
                     });
                 });
             }
-            // Review form submit
-                const reviewForm = document.querySelector('.review-form');
-                if (reviewForm) {
-                    reviewForm.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        const rating = document.querySelector('input[name="rating"]:checked');
-                        const reviewText = document.getElementById('reviewText').value.trim();
-                        const submitBtn = this.querySelector('button[type="submit"]');
-                        const originalBtnText = submitBtn.innerHTML;
-                        if (!rating) {
-                            showToast('Vui lòng chọn số sao đánh giá', 'error');
-                            return;
-                        }
-                        if (reviewText.length < 10) {
-                            showToast('Nhận xét phải có ít nhất 10 ký tự', 'error');
-                            return;
-                        }
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Đang gửi...';
-                        setTimeout(() => {
-                            // Example AJAX call to submit review
-                            const formData = new FormData(this);
-                            fetch(this.action, {
-                                method: 'POST',
-                                body: formData
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    showToast('Đánh giá của bạn đã được gửi thành công!', 'success');
-                                    bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
-                                    reviewForm.reset();
-                                if (imagePreviewContainer) imagePreviewContainer.innerHTML = '';
-                                    location.reload();
-                                } else {
-                                    showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
-                                }
-                            })
-                            .catch(error => {
-                                showToast('Lỗi kết nối: ' + error.message, 'error');
-                            })
-                            .finally(() => {
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = originalBtnText;
-                            });
-                    }, 1000);
-                });
+const reviewForm = document.querySelector('.review-form');
+if (reviewForm) {
+    reviewForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData);
+
+        fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message || 'Đánh giá của bạn đã được gửi thành công!', 'success');
+                const modalInstance = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            } else {
+                showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá.', 'error');
             }
+        })
+        .catch(error => {
+            showToast('Lỗi: ' + (error.message || 'Không thể kết nối đến máy chủ.'), 'error');
+        });
+    });
+}
         });
 
         // Mở modal đánh giá khi click vào nút Đánh giá
@@ -2226,17 +2155,20 @@
                         body: formData
                     })
                     .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            showToast('Đánh giá của bạn đã được gửi thành công!', 'success');
-                            bootstrap.Modal.getInstance(document.getElementById('reviewModal')).hide();
-                            reviewForm.reset();
-                            imagePreviewContainer.innerHTML = '';
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
-                        }
-                    })
+.then(data => {
+    if (data.success) {
+        showToast(data.message || 'Đánh giá của bạn đã được gửi thành công!', 'success');
+        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+        setTimeout(() => {
+            window.location.reload();
+        }, 1200);
+    } else {
+        showToast(data.message || 'Có lỗi xảy ra khi gửi đánh giá.', 'error');
+    }
+})
                     .catch(error => {
                         showToast('Lỗi kết nối: ' + error.message, 'error');
                     })

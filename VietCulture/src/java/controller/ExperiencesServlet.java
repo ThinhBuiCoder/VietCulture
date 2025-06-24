@@ -4,16 +4,21 @@ import dao.ExperienceDAO;
 import dao.RegionDAO;
 import dao.CityDAO;
 import dao.CategoryDAO;
+import dao.BookingDAO;
+import dao.ReviewDAO;
 import model.Experience;
 import model.Region;
 import model.City;
 import model.Category;
+import model.User;
+import model.Review;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,6 +38,8 @@ public class ExperiencesServlet extends HttpServlet {
     private RegionDAO regionDAO;
     private CityDAO cityDAO;
     private CategoryDAO categoryDAO;
+    private BookingDAO bookingDAO;
+    private ReviewDAO reviewDAO;
     
     @Override
     public void init() throws ServletException {
@@ -42,6 +49,8 @@ public class ExperiencesServlet extends HttpServlet {
             regionDAO = new RegionDAO();
             cityDAO = new CityDAO();
             categoryDAO = new CategoryDAO();
+            bookingDAO = new BookingDAO();
+            reviewDAO = new ReviewDAO();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize DAOs", e);
             throw new ServletException("Failed to initialize servlet", e);
@@ -112,6 +121,19 @@ public class ExperiencesServlet extends HttpServlet {
             
             // Set experience data
             request.setAttribute("experience", experience);
+
+            // Lấy danh sách review cho experience này
+            List<Review> reviews = reviewDAO.getReviewsByExperienceId(experienceId);
+            request.setAttribute("reviews", reviews);
+            
+            // Check if user has booked this experience
+            HttpSession session = request.getSession(false);
+            User user = (session != null) ? (User) session.getAttribute("user") : null;
+            boolean hasBooked = false;
+            if (user != null) {
+                hasBooked = bookingDAO.hasUserBookedExperience(user.getUserId(), experienceId);
+            }
+            request.setAttribute("hasBooked", hasBooked);
             
             // Log access
             LOGGER.info("Experience detail accessed - ID: " + experienceId + 

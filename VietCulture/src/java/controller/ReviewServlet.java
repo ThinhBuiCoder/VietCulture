@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet(name = "ReviewServlet", urlPatterns = {"/review/*"})
+@WebServlet(name = "ReviewServlet", urlPatterns = {"/review/*", "/submitReview"})
 public class ReviewServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(ReviewServlet.class.getName());
     private final ReviewDAO reviewDAO = new ReviewDAO();

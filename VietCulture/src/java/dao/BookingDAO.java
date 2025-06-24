@@ -551,4 +551,22 @@ public class BookingDAO {
         }
         return false;
     }
+
+    /**
+     * Check if a user has booked a specific experience (any status).
+     */
+    public boolean hasUserBookedExperience(int userId, int experienceId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
 }
