@@ -377,4 +377,190 @@ INSERT INTO Reviews (accommodationId, travelerId, rating, comment) VALUES
     4,
     N'Không gian rất thoải mái, sẽ quay lại!'
 );
+<<<<<<< HEAD
 GO
+-- Thêm các bảng cho hệ thống chat vào database hiện có
+
+-- Bảng ChatRooms - Quản lý phòng chat giữa user và host
+CREATE TABLE ChatRooms (
+    chatRoomId INT PRIMARY KEY IDENTITY(1,1),
+    userId INT NOT NULL,              -- User tham gia chat
+    hostId INT NOT NULL,              -- Host tham gia chat
+    experienceId INT NULL,            -- Experience liên quan (optional)
+    accommodationId INT NULL,         -- Accommodation liên quan (optional)
+    status NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'CLOSED', 'BLOCKED')),
+    createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+    lastMessageAt DATETIME NULL,      -- Thời gian tin nhắn cuối cùng
+    lastMessage NVARCHAR(MAX) NULL,   -- Nội dung tin nhắn cuối cùng
+    FOREIGN KEY (userId) REFERENCES Users(userId),
+    FOREIGN KEY (hostId) REFERENCES Users(userId),
+    FOREIGN KEY (experienceId) REFERENCES Experiences(experienceId),
+    FOREIGN KEY (accommodationId) REFERENCES Accommodations(accommodationId),
+    -- Đảm bảo chỉ có 1 chat room giữa user-host cho mỗi experience/accommodation
+    CONSTRAINT UQ_ChatRoom_User_Host_Experience UNIQUE (userId, hostId, experienceId),
+    CONSTRAINT UQ_ChatRoom_User_Host_Accommodation UNIQUE (userId, hostId, accommodationId)
+);
+GO
+
+-- Bảng ChatMessages - Lưu trữ tin nhắn
+CREATE TABLE ChatMessages (
+    messageId INT PRIMARY KEY IDENTITY(1,1),
+    chatRoomId INT NOT NULL,
+    senderId INT NOT NULL,            -- Người gửi tin nhắn
+    receiverId INT NOT NULL,          -- Người nhận tin nhắn
+    messageContent NVARCHAR(MAX) NOT NULL,
+    messageType NVARCHAR(20) NOT NULL DEFAULT 'TEXT' CHECK (messageType IN ('TEXT', 'IMAGE', 'FILE', 'SYSTEM')),
+    attachmentUrl NVARCHAR(255) NULL, -- URL file đính kèm nếu có
+    isRead BIT NOT NULL DEFAULT 0,    -- Đã đọc chưa
+    isDeleted BIT NOT NULL DEFAULT 0, -- Đã xóa chưa
+    editedAt DATETIME NULL,           -- Thời gian chỉnh sửa
+    sentAt DATETIME NOT NULL DEFAULT GETDATE(),
+    readAt DATETIME NULL,             -- Thời gian đã đọc
+    FOREIGN KEY (chatRoomId) REFERENCES ChatRooms(chatRoomId) ON DELETE CASCADE,
+    FOREIGN KEY (senderId) REFERENCES Users(userId),
+    FOREIGN KEY (receiverId) REFERENCES Users(userId)
+);
+GO
+
+-- Bảng ChatParticipants - Quản lý thành viên trong chat room (mở rộng cho group chat sau này)
+CREATE TABLE ChatParticipants (
+    participantId INT PRIMARY KEY IDENTITY(1,1),
+    chatRoomId INT NOT NULL,
+    userId INT NOT NULL,
+    role NVARCHAR(20) NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('MEMBER', 'ADMIN')),
+    joinedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    leftAt DATETIME NULL,
+    lastSeenAt DATETIME NULL,         -- Lần cuối online trong chat này
+    notificationEnabled BIT NOT NULL DEFAULT 1,
+    FOREIGN KEY (chatRoomId) REFERENCES ChatRooms(chatRoomId) ON DELETE CASCADE,
+    FOREIGN KEY (userId) REFERENCES Users(userId),
+    CONSTRAINT UQ_ChatParticipant_Room_User UNIQUE (chatRoomId, userId)
+);
+GO
+
+-- Tạo indexes để tối ưu hiệu suất
+CREATE INDEX IX_ChatRooms_UserId ON ChatRooms(userId);
+CREATE INDEX IX_ChatRooms_HostId ON ChatRooms(hostId);
+CREATE INDEX IX_ChatRooms_LastMessageAt ON ChatRooms(lastMessageAt DESC);
+
+CREATE INDEX IX_ChatMessages_ChatRoomId ON ChatMessages(chatRoomId);
+CREATE INDEX IX_ChatMessages_SenderId ON ChatMessages(senderId);
+CREATE INDEX IX_ChatMessages_SentAt ON ChatMessages(sentAt DESC);
+CREATE INDEX IX_ChatMessages_IsRead ON ChatMessages(isRead);
+
+CREATE INDEX IX_ChatParticipants_ChatRoomId ON ChatParticipants(chatRoomId);
+CREATE INDEX IX_ChatParticipants_UserId ON ChatParticipants(userId);
+GO
+
+-- Trigger để cập nhật lastMessage và lastMessageAt khi có tin nhắn mới
+CREATE TRIGGER TR_UpdateChatRoom_LastMessage
+ON ChatMessages
+AFTER INSERT
+AS
+BEGIN
+    UPDATE cr
+    SET lastMessage = CASE 
+        WHEN i.messageType = 'TEXT' THEN i.messageContent
+        WHEN i.messageType = 'IMAGE' THEN N'[Hình ảnh]'
+        WHEN i.messageType = 'FILE' THEN N'[File đính kèm]'
+        ELSE N'[Tin nhắn hệ thống]'
+    END,
+    lastMessageAt = i.sentAt
+    FROM ChatRooms cr
+    INNER JOIN inserted i ON cr.chatRoomId = i.chatRoomId
+    WHERE cr.chatRoomId = i.chatRoomId
+END
+GO
+
+-- Thêm dữ liệu mẫu
+
+-- Tạo chat room giữa traveler và host
+INSERT INTO ChatRooms (userId, hostId, experienceId, status) VALUES
+(
+    (SELECT userId FROM Users WHERE email='tr1@example.com'),
+    (SELECT userId FROM Users WHERE email='host1@example.com'),
+    (SELECT experienceId FROM Experiences WHERE title = N'Tour đạp xe quanh Hà Nội'),
+    'ACTIVE'
+);
+
+DECLARE @chatRoomId INT = SCOPE_IDENTITY();
+
+-- Thêm participants
+INSERT INTO ChatParticipants (chatRoomId, userId) VALUES
+(@chatRoomId, (SELECT userId FROM Users WHERE email='tr1@example.com')),
+(@chatRoomId, (SELECT userId FROM Users WHERE email='host1@example.com'));
+
+-- Thêm tin nhắn mẫu
+INSERT INTO ChatMessages (chatRoomId, senderId, receiverId, messageContent) VALUES
+(
+    @chatRoomId,
+    (SELECT userId FROM Users WHERE email='tr1@example.com'),
+    (SELECT userId FROM Users WHERE email='host1@example.com'),
+    N'Xin chào! Tôi quan tâm đến tour đạp xe của bạn.'
+),
+(
+    @chatRoomId,
+    (SELECT userId FROM Users WHERE email='host1@example.com'),
+    (SELECT userId FROM Users WHERE email='tr1@example.com'),
+    N'Chào bạn! Cảm ơn bạn đã quan tâm. Tour rất thú vị, bạn có câu hỏi gì không?'
+),
+(
+    @chatRoomId,
+    (SELECT userId FROM Users WHERE email='tr1@example.com'),
+    (SELECT userId FROM Users WHERE email='host1@example.com'),
+    N'Tour có phù hợp với người mới bắt đầu không ạ?'
+);
+GO
+USE TravelerDB;
+GO
+CREATE TABLE Favorites (
+    favoriteId INT PRIMARY KEY IDENTITY(1,1),
+    userId INT NOT NULL,
+    experienceId INT NULL,
+    accommodationId INT NULL,
+    createdAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (userId) REFERENCES Users(userId),
+    FOREIGN KEY (experienceId) REFERENCES Experiences(experienceId),
+    FOREIGN KEY (accommodationId) REFERENCES Accommodations(accommodationId),
+    CHECK (experienceId IS NOT NULL OR accommodationId IS NOT NULL),
+    CHECK (NOT (experienceId IS NOT NULL AND accommodationId IS NOT NULL)) -- Chỉ cho phép 1 trong 2
+);
+
+-- Tạo indexes
+CREATE INDEX IX_Favorites_UserId ON Favorites(userId);
+CREATE INDEX IX_Favorites_CreatedAt ON Favorites(createdAt DESC);
+
+-- Tạo UNIQUE CONSTRAINTS ĐÚNG CÁCH với filtered indexes
+-- Chỉ áp dụng unique khi giá trị không NULL
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Favorites_User_Experience 
+ON Favorites (userId, experienceId) 
+WHERE experienceId IS NOT NULL;
+
+CREATE UNIQUE NONCLUSTERED INDEX UQ_Favorites_User_Accommodation 
+ON Favorites (userId, accommodationId) 
+WHERE accommodationId IS NOT NULL;
+
+-- Kiểm tra schema
+SELECT 
+    TABLE_NAME,
+    COLUMN_NAME,
+    DATA_TYPE,
+    IS_NULLABLE
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE TABLE_NAME = 'Favorites'
+ORDER BY ORDINAL_POSITION;
+
+-- Kiểm tra indexes
+SELECT 
+    i.name as index_name,
+    i.type_desc,
+    i.is_unique,
+    c.name as column_name
+FROM sys.indexes i
+JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+WHERE i.object_id = OBJECT_ID('Favorites')
+ORDER BY i.name, ic.index_column_id;
+=======
+GO
+>>>>>>> 4296148 (update booking, payOS)
