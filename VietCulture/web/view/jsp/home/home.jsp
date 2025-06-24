@@ -13,6 +13,61 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
         <style>
+<<<<<<< HEAD
+=======
+            .nav-chat-link {
+    position: relative;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.nav-chat-link:hover {
+    color: var(--primary-color) !important;
+    background-color: rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+}
+
+.message-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #FF385C;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 600;
+    border: 2px solid #10466C;
+    animation: pulse 2s infinite;
+}
+
+.message-badge.show {
+    display: flex;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+    }
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             .success-card {
                 border-left: 4px solid #28a745;
                 animation: fadeInUp 0.6s ease-out;
@@ -1011,6 +1066,7 @@
 
         <!-- Navigation -->
         <%-- Navigation (modified to work with servlet-based authentication) --%>
+<<<<<<< HEAD
         <nav class="custom-navbar">
             <div class="container">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
@@ -1107,6 +1163,113 @@
                 </div>
             </div>
         </nav>
+=======
+   <nav class="custom-navbar">
+    <div class="container">
+        <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+            <span>VIETCULTURE</span>
+        </a>
+
+        <div class="nav-center">
+            <a href="#home" class="nav-center-item">
+                Trang Chủ
+            </a>
+            <a href="/Travel/experiences" class="nav-center-item">
+                Trải Nghiệm
+            </a>
+            <a href="/Travel/accommodations" class="nav-center-item">
+                Lưu Trú
+            </a>
+        </div>
+
+        <div class="nav-right">
+            <%-- Conditional rendering based on user authentication --%>
+            <c:choose>
+                <c:when test="${not empty sessionScope.user}">
+                    <!-- Icon tin nhắn cố định cho HOST và TRAVELER -->
+                    <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
+                        <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
+                            <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
+                            <!-- Badge đỏ sẽ được thêm bằng JavaScript -->
+                        </a>
+                    </c:if>
+                    
+                    <div class="dropdown">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
+                            <i class="ri-user-line" style="color: white;"></i> 
+                            ${sessionScope.user.fullName}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <%-- Role-based dashboard access --%>
+                            <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-dashboard-line"></i> Quản Trị
+                                    </a>
+                                </li>
+                            </c:if>
+                            <c:if test="${sessionScope.user.role == 'HOST'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+                                    </a>
+                                </li>
+                            </c:if>
+                            <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                                <li>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                                        <i class="ri-vip-crown-line"></i> Nâng Lên Host
+                                    </a>
+                                </li>
+                            </c:if>
+                            
+                            <%-- Common profile options --%>
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-user-settings-line"></i> Hồ Sơ
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-logout-circle-r-line"></i> Đăng Xuất
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <%-- Not logged in state --%>
+                    <i class="ri-global-line globe-icon me-3"></i>
+                    <div class="menu-icon">
+                        <i class="ri-menu-line"></i>
+                        <div class="dropdown-menu-custom">
+                            <a href="#help-center">
+                                <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
+                            </a>
+                            <a href="${pageContext.request.contextPath}/contact">
+                                <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
+                            </a>
+                            <a href="${pageContext.request.contextPath}/login" class="nav-link">
+                                <i class="ri-login-circle-line" style="color: #10466C;"></i> Đăng Nhập
+                            </a>
+                            <a href="${pageContext.request.contextPath}/register">
+                                <i class="ri-user-add-line" style="color: #10466C;"></i>Đăng Ký
+                            </a>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+</nav>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         <!-- Hero Section -->
         <section class="hero-section" id="home">
@@ -1490,7 +1653,11 @@
                     </div>
                     <div class="col-md-3 mb-4">
                         <h5>Liên Hệ</h5>
+<<<<<<< HEAD
                         <p><i class="ri-map-pin-line me-2"></i> Khu đô thị FPT City, Ngũ Hành Sơn, Da Nang 550000, Vietnam</p>
+=======
+                        <p><i class="ri-map-pin-line me-2"></i> Khu đô thị FPT City, Ngũ Hành Sơn, Da Nang 550000, Vietnam </p>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         <p><i class="ri-mail-line me-2"></i> f5@vietculture.vn</p>
                         <p><i class="ri-phone-line me-2"></i> 0123 456 789</p>
                         <p><i class="ri-customer-service-2-line me-2"></i> 1900 1234</p>
@@ -1508,6 +1675,7 @@
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
+<<<<<<< HEAD
                                             // Dropdown menu
                                             const menuIcon = document.querySelector('.menu-icon');
                                             const dropdownMenu = document.querySelector('.dropdown-menu-custom');
@@ -1812,5 +1980,364 @@
                                             // Add JSTL functions
             <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
         </script>
+=======
+                            // Dropdown menu
+                            const menuIcon = document.querySelector('.menu-icon');
+                            const dropdownMenu = document.querySelector('.dropdown-menu-custom');
+
+                            if (menuIcon && dropdownMenu) {
+                                // Toggle dropdown on click
+                                menuIcon.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                    dropdownMenu.classList.toggle('show');
+                                });
+
+                                // Close dropdown when clicking outside
+                                document.addEventListener('click', function () {
+                                    dropdownMenu.classList.remove('show');
+                                });
+
+                                // Prevent dropdown from closing when clicking inside
+                                dropdownMenu.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                });
+                            }
+
+                            // Navbar scroll effect
+                            window.addEventListener('scroll', function () {
+                                const navbar = document.querySelector('.custom-navbar');
+                                if (window.scrollY > 50) {
+                                    navbar.classList.add('scrolled');
+                                } else {
+                                    navbar.classList.remove('scrolled');
+                                }
+
+                                // Animate elements when they come into view
+                                animateOnScroll();
+                            });
+
+                            // Animate elements when they come into view
+                            function animateOnScroll() {
+                                const fadeElements = document.querySelectorAll('.fade-up');
+
+                                fadeElements.forEach(element => {
+                                    const elementTop = element.getBoundingClientRect().top;
+                                    const elementVisible = 150;
+
+                                    if (elementTop < window.innerHeight - elementVisible) {
+                                        element.classList.add('active');
+
+                                        // Stagger child elements if any
+                                        const staggerItems = element.querySelectorAll('.stagger-item');
+                                        staggerItems.forEach((item, index) => {
+                                            setTimeout(() => {
+                                                item.style.opacity = 1;
+                                                item.style.transform = 'translateY(0)';
+                                            }, 150 * index);
+                                        });
+                                    }
+                                });
+                            }
+
+                            // Cities data from backend - will be populated by controller
+                            const citiesData = {};
+            <c:forEach var="region" items="${regions}">
+                            citiesData['${region.regionId}'] = [
+                <c:forEach var="city" items="${region.cities}" varStatus="status">
+                            {id: '${city.cityId}', name: '${city.name}', vietnameseName: '${city.vietnameseName}'}<c:if test="${!status.last}">,</c:if>
+                </c:forEach>
+                            ];
+            </c:forEach>
+
+                            // Handle region selection for experiences
+                            document.getElementById('regionSelect').addEventListener('change', function () {
+                                const citySelect = document.getElementById('citySelect');
+                                const selectedRegionId = this.value;
+
+                                // Clear previous options
+                                citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+
+                                // If valid region is selected
+                                if (citiesData[selectedRegionId]) {
+                                    citySelect.disabled = false;
+                                    citiesData[selectedRegionId].forEach(city => {
+                                        const option = document.createElement('option');
+                                        option.value = city.id;
+                                        option.textContent = city.vietnameseName;
+                                        citySelect.appendChild(option);
+                                    });
+                                } else {
+                                    citySelect.disabled = true;
+                                }
+                            });
+
+                            // Handle region selection for accommodations
+                            document.getElementById('accommodationRegionSelect').addEventListener('change', function () {
+                                const citySelect = document.getElementById('accommodationCitySelect');
+                                const selectedRegionId = this.value;
+
+                                // Clear previous options
+                                citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+
+                                // If valid region is selected
+                                if (citiesData[selectedRegionId]) {
+                                    citySelect.disabled = false;
+                                    citiesData[selectedRegionId].forEach(city => {
+                                        const option = document.createElement('option');
+                                        option.value = city.id;
+                                        option.textContent = city.vietnameseName;
+                                        citySelect.appendChild(option);
+                                    });
+                                } else {
+                                    citySelect.disabled = true;
+                                }
+                            });
+
+                            // Increase guests function for experiences
+                            function increaseGuests() {
+                                const guestInput = document.getElementById('guests');
+                                let currentGuests = parseInt(guestInput.value);
+                                if (currentGuests < 10) {
+                                    guestInput.value = currentGuests + 1;
+                                }
+                            }
+
+                            // Decrease guests function for experiences
+                            function decreaseGuests() {
+                                const guestInput = document.getElementById('guests');
+                                let currentGuests = parseInt(guestInput.value);
+                                if (currentGuests > 1) {
+                                    guestInput.value = currentGuests - 1;
+                                }
+                            }
+
+                            // Increase guests function for accommodations
+                            function increaseAccommodationGuests() {
+                                const guestInput = document.getElementById('accommodationGuests');
+                                let currentGuests = parseInt(guestInput.value);
+                                if (currentGuests < 10) {
+                                    guestInput.value = currentGuests + 1;
+                                }
+                            }
+
+                            // Decrease guests function for accommodations
+                            function decreaseAccommodationGuests() {
+                                const guestInput = document.getElementById('accommodationGuests');
+                                let currentGuests = parseInt(guestInput.value);
+                                if (currentGuests > 1) {
+                                    guestInput.value = currentGuests - 1;
+                                }
+                            }
+
+                            // Filter by region function (used in Regions section)
+                            function filterByRegion(regionName) {
+                                // Find region ID by name
+                                let regionId = '';
+            <c:forEach var="region" items="${regions}">
+                                if ('${region.name}' === regionName) {
+                                    regionId = '${region.regionId}';
+                                }
+            </c:forEach>
+
+                                // Set region in the experiences form
+                                document.getElementById('regionSelect').value = regionId;
+
+                                // Trigger change event to update city options
+                                document.getElementById('regionSelect').dispatchEvent(new Event('change'));
+
+                                // Scroll to experiences section and switch to experiences tab
+                                document.getElementById('experiences-tab').click();
+                                document.getElementById('experiences').scrollIntoView({behavior: 'smooth'});
+                            }
+
+                            // Copy experience function
+                            function copyExperience(experienceName) {
+                                navigator.clipboard.writeText(experienceName)
+                                        .then(() => {
+                                            showToast(`Đã sao chép "${experienceName}"`, 'success');
+                                        })
+                                        .catch(err => {
+                                            showToast('Không thể sao chép: ' + err, 'error');
+                                        });
+                            }
+
+                            // Copy accommodation function
+                            function copyAccommodation(accommodationName) {
+                                navigator.clipboard.writeText(accommodationName)
+                                        .then(() => {
+                                            showToast(`Đã sao chép "${accommodationName}"`, 'success');
+                                        })
+                                        .catch(err => {
+                                            showToast('Không thể sao chép: ' + err, 'error');
+                                        });
+                            }
+
+                            // Show toast notification
+                            function showToast(message, type = 'success') {
+                                const toastContainer = document.querySelector('.toast-container');
+
+                                const toast = document.createElement('div');
+                                toast.className = 'toast';
+
+                                let icon = '<i class="ri-check-line"></i>';
+                                if (type === 'error') {
+                                    icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
+                                } else if (type === 'info') {
+                                    icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
+                                }
+
+                                toast.innerHTML = `${icon}<span>${message}</span>`;
+
+                                toastContainer.appendChild(toast);
+
+                                // Show toast
+                                setTimeout(() => {
+                                    toast.classList.add('show');
+                                }, 10);
+
+                                // Hide toast after 3 seconds
+                                setTimeout(() => {
+                                    toast.classList.remove('show');
+                                    setTimeout(() => {
+                                        if (toastContainer.contains(toast)) {
+                                            toastContainer.removeChild(toast);
+                                        }
+                                    }, 500);
+                                }, 3000);
+                            }
+
+                            // Initialize animations on page load
+                            document.addEventListener('DOMContentLoaded', function () {
+                                // Add js-enabled class to body to activate JavaScript animations
+                                document.body.classList.add('js-enabled');
+
+                                // Force display all cards to ensure they're visible
+                                setTimeout(function () {
+                                    document.querySelectorAll('.stagger-item').forEach(item => {
+                                        item.style.opacity = 1;
+                                        item.style.transform = 'translateY(0)';
+                                    });
+                                }, 500);
+
+                                // Initial animation check
+                                animateOnScroll();
+
+                                // Initialize staggered items
+                                const staggerItems = document.querySelectorAll('.stagger-item');
+                                staggerItems.forEach((item, index) => {
+                                    item.style.transitionDelay = `${index * 0.1}s`;
+                                });
+
+                                // Smooth scroll for nav links
+                                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                                    anchor.addEventListener('click', function (e) {
+                                        e.preventDefault();
+
+                                        const targetId = this.getAttribute('href').substring(1);
+                                        if (targetId === '')
+                                            return;
+
+                                        const targetElement = document.getElementById(targetId);
+                                        if (targetElement) {
+                                            window.scrollTo({
+                                                top: targetElement.offsetTop - 100,
+                                                behavior: 'smooth'
+                                            });
+                                        }
+                                    });
+                                });
+
+                                // Category filter functionality
+                                document.querySelectorAll('.category-item').forEach(category => {
+                                    category.addEventListener('click', function () {
+                                        const categoryValue = this.getAttribute('data-category');
+
+                                        // Find category ID by name
+                                        let categoryId = '';
+            <c:forEach var="category" items="${categories}">
+                                        if ('${category.name}' === categoryValue) {
+                                            categoryId = '${category.categoryId}';
+                                        }
+            </c:forEach>
+
+                                        const categorySelect = document.getElementById('categorySelect');
+
+                                        // Set category in the form
+                                        if (categoryId) {
+                                            categorySelect.value = categoryId;
+                                        } else {
+                                            // Fallback for default categories
+                                            for (let i = 0; i < categorySelect.options.length; i++) {
+                                                if (categorySelect.options[i].text.includes(this.querySelector('h5').textContent)) {
+                                                    categorySelect.selectedIndex = i;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        // Switch to experiences tab and scroll there
+                                        document.getElementById('experiences-tab').click();
+                                        document.getElementById('experiences').scrollIntoView({behavior: 'smooth'});
+                                    });
+                                });
+                            });
+                            
+function updateMessageBadge() {
+    <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
+        fetch('${pageContext.request.contextPath}/chat/api/unread-count')
+            .then(response => response.json())
+            .then(data => {
+                const unreadCount = data.unreadCount || 0;
+                const chatLink = document.querySelector('.nav-chat-link');
+                
+                if (chatLink) {
+                    // Tìm hoặc tạo badge
+                    let badge = chatLink.querySelector('.message-badge');
+                    
+                    if (unreadCount > 0) {
+                        if (!badge) {
+                            // Tạo badge mới
+                            badge = document.createElement('span');
+                            badge.className = 'message-badge';
+                            chatLink.appendChild(badge);
+                        }
+                        
+                        // Cập nhật số lượng và hiển thị
+                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        badge.classList.add('show');
+                    } else {
+                        // Ẩn badge nếu không có tin nhắn
+                        if (badge) {
+                            badge.classList.remove('show');
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error getting unread count:', error);
+            });
+    </c:if>
+}
+
+// Cập nhật DOMContentLoaded hiện có
+document.addEventListener('DOMContentLoaded', function () {
+    // ... các code hiện có ...
+    
+    // Thêm vào cuối function DOMContentLoaded
+    updateMessageBadge();
+    
+    // Cập nhật badge mỗi 30 giây
+    setInterval(updateMessageBadge, 30000);
+    
+    // Cập nhật badge khi focus vào trang
+    window.addEventListener('focus', updateMessageBadge);
+    
+    // ... phần còn lại của code hiện có ...
+});
+                            // Add JSTL functions
+            <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+        </script>
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     </body>
 </html>

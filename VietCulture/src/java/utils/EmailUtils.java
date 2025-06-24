@@ -8,11 +8,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+<<<<<<< HEAD
  * EmailUtils for OTP-based registration system and booking confirmations Simple
  * and efficient email sending with OTP codes and booking notifications
  */
 public class EmailUtils {
 
+=======
+ * EmailUtils for OTP-based registration system
+ * Simple and efficient email sending with OTP codes
+ */
+public class EmailUtils {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(EmailUtils.class.getName());
 
     // Email configuration
@@ -41,7 +48,11 @@ public class EmailUtils {
      */
     public static boolean testSMTPConnection() {
         LOGGER.info("🔗 Testing SMTP connection...");
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         try {
             Properties props = getSmtpProperties();
             Session session = Session.getInstance(props, new Authenticator() {
@@ -95,6 +106,7 @@ public class EmailUtils {
      */
     public static boolean sendRegistrationOTP(String toEmail, String userName, String otpCode) {
         LOGGER.info("📧 Sending registration OTP to: " + toEmail);
+<<<<<<< HEAD
 
         try {
             Session session = getEmailSession();
@@ -111,6 +123,24 @@ public class EmailUtils {
             LOGGER.info("✅ Registration OTP sent successfully to: " + toEmail);
             return true;
 
+=======
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Mã xác thực đăng ký VietCulture", "UTF-8");
+            
+            String htmlContent = createOTPEmailTemplate(userName, otpCode);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Registration OTP sent successfully to: " + toEmail);
+            return true;
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "❌ Failed to send registration OTP to: " + toEmail, e);
             return false;
@@ -122,6 +152,7 @@ public class EmailUtils {
      */
     public static boolean sendWelcomeEmail(String toEmail, String userName) {
         LOGGER.info("🎉 Sending welcome email to: " + toEmail);
+<<<<<<< HEAD
 
         try {
             Session session = getEmailSession();
@@ -138,6 +169,24 @@ public class EmailUtils {
             LOGGER.info("✅ Welcome email sent successfully to: " + toEmail);
             return true;
 
+=======
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Chào mừng bạn đến với VietCulture!", "UTF-8");
+            
+            String htmlContent = createWelcomeEmailTemplate(userName);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Welcome email sent successfully to: " + toEmail);
+            return true;
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "❌ Failed to send welcome email to: " + toEmail, e);
             return false;
@@ -149,6 +198,7 @@ public class EmailUtils {
      */
     public static boolean sendPasswordResetOTP(String toEmail, String userName, String otpCode) {
         LOGGER.info("🔐 Sending password reset OTP to: " + toEmail);
+<<<<<<< HEAD
 
         try {
             Session session = getEmailSession();
@@ -165,6 +215,24 @@ public class EmailUtils {
             LOGGER.info("✅ Password reset OTP sent successfully to: " + toEmail);
             return true;
 
+=======
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Mã xác thực đặt lại mật khẩu VietCulture", "UTF-8");
+            
+            String htmlContent = createPasswordResetOTPTemplate(userName, otpCode);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Password reset OTP sent successfully to: " + toEmail);
+            return true;
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "❌ Failed to send password reset OTP to: " + toEmail, e);
             return false;
@@ -172,6 +240,7 @@ public class EmailUtils {
     }
 
     /**
+<<<<<<< HEAD
      * Send booking confirmation email
      */
     public static boolean sendBookingConfirmationEmail(String toEmail, String userName,
@@ -235,6 +304,8 @@ public class EmailUtils {
     }
 
     /**
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * Create OTP email template
      */
     private static String createOTPEmailTemplate(String userName, String otpCode) {
@@ -449,6 +520,7 @@ public class EmailUtils {
             </html>
             """.formatted(userName);
     }
+<<<<<<< HEAD
 
     /**
      * Create booking confirmation email template
@@ -967,10 +1039,47 @@ public class EmailUtils {
             String serviceName, String bookingDate, String bookingTime,
             int numberOfPeople, String totalPrice, String paymentMethod) {
         return """
+=======
+    // Add this method to your EmailUtils class
+
+/**
+ * Send password reset confirmation email
+ */
+public static boolean sendPasswordResetConfirmation(String toEmail, String userName) {
+    LOGGER.info("🔐 Sending password reset confirmation to: " + toEmail);
+    
+    try {
+        Session session = getEmailSession();
+        MimeMessage message = new MimeMessage(session);
+        
+        message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+        message.setSubject("Mật khẩu đã được đặt lại thành công - VietCulture", "UTF-8");
+        
+        String htmlContent = createPasswordResetConfirmationTemplate(userName);
+        message.setContent(htmlContent, "text/html; charset=UTF-8");
+        
+        Transport.send(message);
+        LOGGER.info("✅ Password reset confirmation sent successfully to: " + toEmail);
+        return true;
+        
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "❌ Failed to send password reset confirmation to: " + toEmail, e);
+        return false;
+    }
+}
+
+/**
+ * Create password reset confirmation email template
+ */
+private static String createPasswordResetConfirmationTemplate(String userName) {
+    return """
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
+<<<<<<< HEAD
             <title>Thanh toán thành công - VietCulture</title>
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
@@ -982,6 +1091,19 @@ public class EmailUtils {
                     border: 3px solid #4BB543; 
                     font-size: 48px; 
                     color: #4BB543; 
+=======
+            <title>Mật khẩu đã được đặt lại thành công</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #10B981, #059669); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 40px 30px; text-align: center; }
+                .success-icon { 
+                    background: #fff; 
+                    border: 3px solid #10B981; 
+                    font-size: 48px; 
+                    color: #10B981; 
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     padding: 20px; 
                     margin: 30px auto; 
                     border-radius: 50%;
@@ -991,6 +1113,7 @@ public class EmailUtils {
                     align-items: center;
                     justify-content: center;
                 }
+<<<<<<< HEAD
                 .booking-card { 
                     background: white; 
                     border: 2px solid #4BB543; 
@@ -1289,6 +1412,35 @@ public class EmailUtils {
                 .cta-button { 
                     display: inline-block; 
                     background: #e74c3c; 
+=======
+                .info-box { 
+                    background: #e6f7ff; 
+                    border-left: 4px solid #1890ff; 
+                    color: #0050b3; 
+                    padding: 15px; 
+                    margin: 20px 0; 
+                    border-radius: 5px; 
+                }
+                .security-tips {
+                    background: #fff;
+                    border: 1px solid #d9d9d9;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    text-align: left;
+                }
+                .tip {
+                    display: flex;
+                    align-items: flex-start;
+                    margin-bottom: 10px;
+                    gap: 10px;
+                }
+                .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                .highlight { color: #10B981; font-weight: bold; }
+                .cta-button { 
+                    display: inline-block; 
+                    background: #10B981; 
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     color: white; 
                     padding: 12px 24px; 
                     text-decoration: none; 
@@ -1296,6 +1448,7 @@ public class EmailUtils {
                     margin: 20px 0; 
                     font-weight: bold;
                 }
+<<<<<<< HEAD
                 .retry-button { 
                     display: inline-block; 
                     background: #4BB543; 
@@ -1313,11 +1466,14 @@ public class EmailUtils {
                     border-radius: 8px; 
                     margin: 20px 0; 
                 }
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
+<<<<<<< HEAD
                     <div class="error-icon">✗</div>
                     <h1>😔 Thanh Toán Không Thành Công</h1>
                     <p>VietCulture - Nền tảng trải nghiệm du lịch</p>
@@ -1447,11 +1603,54 @@ public class EmailUtils {
                 <div class="footer">
                     <p>© 2025 VietCulture - Nền tảng trải nghiệm du lịch cộng đồng</p>
                     <p>Email tự động - vui lòng không trả lời trực tiếp email này</p>
+=======
+                    <h1>✅ Mật Khẩu Đã Được Đặt Lại</h1>
+                    <p>VietCulture</p>
+                </div>
+                <div class="content">
+                    <div class="success-icon">✓</div>
+                    
+                    <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                    <p>Mật khẩu cho tài khoản VietCulture của bạn đã được đặt lại thành công.</p>
+                    
+                    <div class="info-box">
+                        <strong>🕐 Thời gian:</strong> %s<br>
+                        <strong>🔐 Trạng thái:</strong> Đặt lại thành công
+                    </div>
+                    
+                    <div class="security-tips">
+                        <h3>💡 Lời khuyên bảo mật:</h3>
+                        <div class="tip">
+                            <span>🔒</span>
+                            <span>Sử dụng mật khẩu mạnh và độc nhất cho mỗi tài khoản</span>
+                        </div>
+                        <div class="tip">
+                            <span>🚫</span>
+                            <span>Không chia sẻ mật khẩu với bất kỳ ai</span>
+                        </div>
+                        <div class="tip">
+                            <span>🔍</span>
+                            <span>Kiểm tra thường xuyên hoạt động tài khoản</span>
+                        </div>
+                        <div class="tip">
+                            <span>📱</span>
+                            <span>Bật xác thực 2 yếu tố khi có thể</span>
+                        </div>
+                    </div>
+                    
+                    <p>Nếu bạn không thực hiện thao tác này, vui lòng liên hệ với chúng tôi ngay lập tức.</p>
+                    
+                    <a href="#" class="cta-button">🏠 Về Trang Chủ</a>
+                </div>
+                <div class="footer">
+                    <p>© 2025 VietCulture. Email tự động - vui lòng không trả lời.</p>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     <p>Hỗ trợ khẩn cấp: kienltde180359@gmail.com | 1900 1234</p>
                 </div>
             </div>
         </body>
         </html>
+<<<<<<< HEAD
         """.formatted(userName, bookingId, serviceName, totalPrice, paymentMethod,
                 java.time.LocalDateTime.now().format(
                         java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
@@ -1459,3 +1658,256 @@ public class EmailUtils {
     }
 
 }
+=======
+        """.formatted(userName, java.time.LocalDateTime.now().format(
+            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+}
+/**
+ * Send booking confirmation email
+ */
+public static boolean sendBookingConfirmationEmail(String toEmail, String customerName, 
+                                                 int bookingId, String serviceName, 
+                                                 String bookingDate, String timeSlot, 
+                                                 int numberOfPeople, String totalPrice) {
+    LOGGER.info("📧 Sending booking confirmation to: " + toEmail);
+    
+    try {
+        Session session = getEmailSession();
+        MimeMessage message = new MimeMessage(session);
+        
+        message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+        message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+        message.setSubject("Xác nhận đặt chỗ thành công - VietCulture", "UTF-8");
+        
+        String htmlContent = createBookingConfirmationTemplate(
+            customerName, bookingId, serviceName, bookingDate, 
+            timeSlot, numberOfPeople, totalPrice);
+        message.setContent(htmlContent, "text/html; charset=UTF-8");
+        
+        Transport.send(message);
+        LOGGER.info("✅ Booking confirmation sent successfully to: " + toEmail);
+        return true;
+        
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "❌ Failed to send booking confirmation to: " + toEmail, e);
+        return false;
+    }
+}
+
+/**
+ * Create booking confirmation email template
+ */
+private static String createBookingConfirmationTemplate(String customerName, int bookingId, 
+                                                      String serviceName, String bookingDate, 
+                                                      String timeSlot, int numberOfPeople, 
+                                                      String totalPrice) {
+    return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Xác nhận đặt chỗ thành công</title>
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
+                .container { max-width: 600px; margin: 0 auto; background: white; }
+                .header { 
+                    background: linear-gradient(135deg, #10466C, #83C5BE); 
+                    color: white; 
+                    padding: 30px; 
+                    text-align: center; 
+                    border-radius: 0;
+                }
+                .content { padding: 30px; }
+                .booking-card {
+                    background: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 8px;
+                    padding: 25px;
+                    margin: 20px 0;
+                }
+                .booking-id {
+                    background: #10466C;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    display: inline-block;
+                    margin-bottom: 20px;
+                }
+                .service-name {
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: #10466C;
+                    margin-bottom: 15px;
+                }
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 0;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                .detail-row:last-child {
+                    border-bottom: none;
+                }
+                .detail-label {
+                    font-weight: 600;
+                    color: #666;
+                }
+                .detail-value {
+                    font-weight: bold;
+                    color: #333;
+                }
+                .total-price {
+                    background: #e8f5e8;
+                    border: 2px solid #10466C;
+                    border-radius: 8px;
+                    padding: 15px;
+                    text-align: center;
+                    margin: 20px 0;
+                }
+                .total-price .amount {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #10466C;
+                }
+                .status-badge {
+                    background: #28a745;
+                    color: white;
+                    padding: 6px 12px;
+                    border-radius: 15px;
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                .next-steps {
+                    background: #fff3cd;
+                    border-left: 4px solid #ffc107;
+                    padding: 20px;
+                    margin: 25px 0;
+                    border-radius: 0 8px 8px 0;
+                }
+                .cta-section {
+                    text-align: center;
+                    margin: 30px 0;
+                }
+                .cta-button {
+                    display: inline-block;
+                    background: #10466C;
+                    color: white;
+                    padding: 15px 30px;
+                    text-decoration: none;
+                    border-radius: 25px;
+                    font-weight: bold;
+                    margin: 10px;
+                }
+                .contact-info {
+                    background: #e3f2fd;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    text-align: center;
+                }
+                .footer { 
+                    background: #333; 
+                    color: white; 
+                    padding: 25px; 
+                    text-align: center; 
+                    font-size: 14px; 
+                }
+                .highlight { color: #10466C; font-weight: bold; }
+                .icon { font-size: 18px; margin-right: 8px; }
+                
+                @media (max-width: 600px) {
+                    .detail-row { flex-direction: column; align-items: flex-start; }
+                    .detail-value { margin-top: 5px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Đặt Chỗ Thành Công!</h1>
+                    <p>VietCulture - Trải nghiệm đáng nhớ đang chờ bạn</p>
+                </div>
+                
+                <div class="content">
+                    <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                    <p>Cảm ơn bạn đã đặt chỗ với VietCulture. Đơn đặt chỗ của bạn đã được xác nhận thành công!</p>
+                    
+                    <div class="booking-card">
+                        <div class="booking-id">📋 Mã đặt chỗ: #%d</div>
+                        <div class="status-badge">✅ Đã xác nhận</div>
+                        
+                        <div class="service-name">🌟 %s</div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">📅</span>Ngày:</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">⏰</span>Thời gian:</span>
+                            <span class="detail-value">%s</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label"><span class="icon">👥</span>Số người:</span>
+                            <span class="detail-value">%d người</span>
+                        </div>
+                        
+                        <div class="total-price">
+                            <div>💰 Tổng thanh toán</div>
+                            <div class="amount">%s</div>
+                        </div>
+                    </div>
+                    
+                    <div class="next-steps">
+                        <h3>📋 Các bước tiếp theo:</h3>
+                        <ul>
+                            <li><strong>Chuẩn bị:</strong> Vui lòng có mặt đúng giờ đã đặt</li>
+                            <li><strong>Liên hệ:</strong> Host sẽ liên hệ với bạn trước 24h</li>
+                            <li><strong>Thay đổi:</strong> Liên hệ với chúng tôi nếu cần điều chỉnh</li>
+                            <li><strong>Đánh giá:</strong> Chia sẻ trải nghiệm sau chuyến đi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="cta-section">
+                        <a href="#" class="cta-button">📱 Xem Chi Tiết</a>
+                        <a href="#" class="cta-button">💬 Liên Hệ Host</a>
+                    </div>
+                    
+                    <div class="contact-info">
+                        <h3>🆘 Cần hỗ trợ?</h3>
+                        <p><strong>Hotline:</strong> 1900 1234 (24/7)<br>
+                        <strong>Email:</strong> support@vietculture.com<br>
+                        <strong>Live Chat:</strong> Trên website VietCulture</p>
+                    </div>
+                    
+                    <p style="text-align: center; color: #666; font-style: italic;">
+                        Chúc bạn có những trải nghiệm tuyệt vời cùng VietCulture! 🎊
+                    </p>
+                </div>
+                
+                <div class="footer">
+                    <p><strong>© 2025 VietCulture</strong> - Nền tảng trải nghiệm du lịch cộng đồng</p>
+                    <p>Email tự động - vui lòng không trả lời trực tiếp</p>
+                    <p>Mã đặt chỗ: #%d | Ngày gửi: %s</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """.formatted(
+            customerName,           // %s - tên khách hàng
+            bookingId,             // %d - mã đặt chỗ
+            serviceName,           // %s - tên dịch vụ
+            bookingDate,           // %s - ngày đặt
+            timeSlot,              // %s - khung giờ
+            numberOfPeople,        // %d - số người
+            totalPrice,            // %s - tổng tiền
+            bookingId,             // %d - mã đặt chỗ (footer)
+            java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))  // ngày gửi
+        );
+}
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

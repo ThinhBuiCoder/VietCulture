@@ -11,7 +11,10 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 public class UserDAO {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
 
     /**
@@ -28,7 +31,12 @@ public class UserDAO {
             WHERE email = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -50,6 +58,7 @@ public class UserDAO {
     /**
      * Get user by ID
      */
+<<<<<<< HEAD
     public User getUserById(int userId) throws SQLException {
         String sql = """
             SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
@@ -74,6 +83,61 @@ public class UserDAO {
         return null;
     }
 
+=======
+public User getUserById(int userId) throws SQLException {
+    String sql = """
+        SELECT userId, email, fullName, role, phone, createdAt, 
+               businessName, averageRating, totalExperiences
+        FROM Users 
+        WHERE userId = ?
+    """;
+
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, userId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapBasicUserFromResultSet(rs);
+            }
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error getting user by ID: " + userId, e);
+        // Return null instead of throwing to prevent servlet crash
+        return null;
+    }
+    return null;
+}
+private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
+    User user = new User();
+    
+    try {
+        user.setUserId(rs.getInt("userId"));
+        user.setEmail(rs.getString("email"));
+        user.setFullName(rs.getString("fullName"));
+        user.setRole(rs.getString("role"));
+        
+        // Handle optional fields safely
+        try {
+            user.setPhone(rs.getString("phone"));
+            user.setCreatedAt(rs.getDate("createdAt"));
+            user.setBusinessName(rs.getString("businessName"));
+            user.setAverageRating(rs.getDouble("averageRating"));
+            user.setTotalExperiences(rs.getInt("totalExperiences"));
+        } catch (SQLException e) {
+            // Optional fields may not exist or be null, that's OK
+            LOGGER.log(Level.FINE, "Optional user field not found: " + e.getMessage());
+        }
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error mapping basic user from ResultSet", e);
+        throw e;
+    }
+    
+    return user;
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Create new user
      */
@@ -87,7 +151,12 @@ public class UserDAO {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getPassword());
@@ -149,7 +218,12 @@ public class UserDAO {
             WHERE email = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -176,7 +250,12 @@ public class UserDAO {
             WHERE verificationToken = ? AND emailVerified = 0
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, token);
 
@@ -199,7 +278,12 @@ public class UserDAO {
             WHERE userId = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -221,7 +305,12 @@ public class UserDAO {
             WHERE userId = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, token);
             ps.setTimestamp(2, new java.sql.Timestamp(expiry.getTime()));
@@ -249,7 +338,12 @@ public class UserDAO {
             WHERE userId = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getFullName());
@@ -288,7 +382,12 @@ public class UserDAO {
     public boolean updatePassword(int userId, String newPassword) throws SQLException {
         String sql = "UPDATE Users SET password = ? WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             // Hash the new password
             String hashedPassword = utils.PasswordUtils.hashPasswordWithSalt(newPassword);
@@ -321,7 +420,12 @@ public class UserDAO {
     public boolean updateAvatar(int userId, String avatarUrl) throws SQLException {
         String sql = "UPDATE Users SET avatar = ? WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, avatarUrl);
             ps.setInt(2, userId);
@@ -340,7 +444,12 @@ public class UserDAO {
     public void updateFullName(int userId, String fullName) throws SQLException {
         String sql = "UPDATE Users SET fullName = ? WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, fullName);
             ps.setInt(2, userId);
@@ -361,7 +470,12 @@ public class UserDAO {
     public boolean emailExists(String email) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -380,7 +494,12 @@ public class UserDAO {
     public boolean emailExistsForOtherUser(String email, int currentUserId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ? AND userId != ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
             ps.setInt(2, currentUserId);
@@ -410,7 +529,12 @@ public class UserDAO {
             ORDER BY createdAt DESC
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, role);
 
@@ -429,7 +553,12 @@ public class UserDAO {
     public boolean updateUserStatus(int userId, boolean isActive) throws SQLException {
         String sql = "UPDATE Users SET isActive = ? WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setBoolean(1, isActive);
             ps.setInt(2, userId);
@@ -448,7 +577,12 @@ public class UserDAO {
     public boolean softDeleteUser(int userId, String reason) throws SQLException {
         String sql = "UPDATE Users SET isActive = 0 WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -467,7 +601,12 @@ public class UserDAO {
     public boolean restoreUser(int userId) throws SQLException {
         String sql = "UPDATE Users SET isActive = 1 WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -485,7 +624,12 @@ public class UserDAO {
     public boolean hardDeleteUser(int userId) throws SQLException {
         String sql = "DELETE FROM Users WHERE userId = ?";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -514,7 +658,12 @@ public class UserDAO {
                  WHERE a.hostId = ? AND b.status = 'COMPLETED') as totalRevenue
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
             ps.setInt(2, userId);
@@ -553,7 +702,12 @@ public class UserDAO {
 
         sqlBuilder.append(" ORDER BY createdAt DESC");
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             String searchPattern = "%" + keyword + "%";
             ps.setString(1, searchPattern);
@@ -578,7 +732,13 @@ public class UserDAO {
     public int getTotalUsersCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE isActive = 1";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             if (rs.next()) {
                 return rs.getInt(1);
@@ -593,7 +753,12 @@ public class UserDAO {
     public int getUsersCountByRole(String role) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE role = ? AND isActive = 1";
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, role);
 
@@ -655,7 +820,12 @@ public class UserDAO {
         params.add((page - 1) * pageSize);
         params.add(pageSize);
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -705,7 +875,12 @@ public class UserDAO {
             params.add(searchPattern);
         }
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -733,7 +908,13 @@ public class UserDAO {
             GROUP BY role
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             while (rs.next()) {
                 counts.put(rs.getString("role"), rs.getInt("count"));
@@ -767,7 +948,12 @@ public class UserDAO {
             WHERE userId = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, newRole);
             ps.setInt(2, userId);
@@ -811,7 +997,13 @@ public class UserDAO {
                 """;
         }
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             if (rs.next()) {
                 int currentPeriod = rs.getInt("current_period");
@@ -841,7 +1033,12 @@ public class UserDAO {
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = months - 1; i >= 0; i--) {
                 ps.setInt(1, -i - 1);
@@ -873,7 +1070,12 @@ public class UserDAO {
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = months - 1; i >= 0; i--) {
                 ps.setInt(1, -i - 1);
@@ -904,7 +1106,13 @@ public class UserDAO {
             GROUP BY region
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             while (rs.next()) {
                 String regionName = rs.getString("region");
@@ -926,7 +1134,12 @@ public class UserDAO {
             WHERE userId = ? AND role = 'HOST'
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setDouble(1, averageRating);
             ps.setInt(2, totalExperiences);
@@ -958,7 +1171,12 @@ public class UserDAO {
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, offset);
             ps.setInt(2, limit);
@@ -1006,7 +1224,12 @@ public class UserDAO {
         parameters.add(offset);
         parameters.add(limit);
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < parameters.size(); i++) {
                 ps.setObject(i + 1, parameters.get(i));
@@ -1030,7 +1253,12 @@ public class UserDAO {
             WHERE isActive = 1 AND role = 'HOST' AND region = ?
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, region);
 
@@ -1052,7 +1280,12 @@ public class UserDAO {
             WHERE isActive = 1 AND role = 'HOST'
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -1079,7 +1312,12 @@ public class UserDAO {
             ORDER BY averageRating DESC, totalExperiences DESC
         """;
 
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, limit);
 
@@ -1133,17 +1371,117 @@ public class UserDAO {
         return user;
     }
 
+<<<<<<< HEAD
+=======
+    public int getRecentHostsCount(int days) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+public boolean canBecomeHost(int userId) throws SQLException {
+    String sql = """
+        SELECT role, emailVerified, isActive 
+        FROM Users 
+        WHERE userId = ?
+    """;
+
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, userId);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                String role = rs.getString("role");
+                boolean emailVerified = rs.getBoolean("emailVerified");
+                boolean isActive = rs.getBoolean("isActive");
+                
+                return "TRAVELER".equals(role) && emailVerified && isActive;
+            }
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error checking if user can become host: " + userId, e);
+        throw e;
+    }
+    return false;
+}
+
+public boolean upgradeUserToHost(int userId) throws SQLException {
+    String sql = """
+        UPDATE Users 
+        SET role = 'HOST',
+            averageRating = 0,
+            totalExperiences = 0,
+            totalRevenue = 0
+        WHERE userId = ? AND role = 'TRAVELER' AND emailVerified = 1 AND isActive = 1
+    """;
+
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, userId);
+
+        int rowsAffected = ps.executeUpdate();
+        if (rowsAffected > 0) {
+            LOGGER.info("User upgraded to HOST - ID: " + userId);
+            return true;
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error upgrading user to host: " + userId, e);
+        throw e;
+    }
+    return false;
+}
+public boolean updateHostBusinessInfo(int userId, String businessName, String businessType, 
+                                    String businessAddress, String businessDescription, 
+                                    String taxId, String skills, String region) throws SQLException {
+    String sql = """
+        UPDATE Users 
+        SET businessName = ?, businessType = ?, businessAddress = ?, 
+            businessDescription = ?, taxId = ?, skills = ?, region = ?
+        WHERE userId = ? AND role = 'HOST'
+    """;
+
+    try (Connection conn = DBUtils.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, businessName);
+        ps.setString(2, businessType);
+        ps.setString(3, businessAddress);
+        ps.setString(4, businessDescription);
+        ps.setString(5, taxId);
+        ps.setString(6, skills);
+        ps.setString(7, region);
+        ps.setInt(8, userId);
+
+        int rowsAffected = ps.executeUpdate();
+        if (rowsAffected > 0) {
+            LOGGER.info("Host business info updated - ID: " + userId);
+            return true;
+        }
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Error updating host business info: " + userId, e);
+        throw e;
+    }
+    return false;
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Inner class for user statistics
      */
     public static class UserStats {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int totalBookings;
         private int totalExperiences;
         private double totalRevenue;
 
+<<<<<<< HEAD
         public UserStats() {
         }
+=======
+        public UserStats() {}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         public UserStats(int totalBookings, int totalExperiences, double totalRevenue) {
             this.totalBookings = totalBookings;
@@ -1151,6 +1489,7 @@ public class UserDAO {
             this.totalRevenue = totalRevenue;
         }
 
+<<<<<<< HEAD
         public int getTotalBookings() {
             return totalBookings;
         }
@@ -1185,3 +1524,24 @@ public class UserDAO {
         }
     }
 }
+=======
+        public int getTotalBookings() { return totalBookings; }
+        public void setTotalBookings(int totalBookings) { this.totalBookings = totalBookings; }
+
+        public int getTotalExperiences() { return totalExperiences; }
+        public void setTotalExperiences(int totalExperiences) { this.totalExperiences = totalExperiences; }
+
+        public double getTotalRevenue() { return totalRevenue; }
+        public void setTotalRevenue(double totalRevenue) { this.totalRevenue = totalRevenue; }
+
+        @Override
+        public String toString() {
+            return "UserStats{" +
+                   "totalBookings=" + totalBookings +
+                   ", totalExperiences=" + totalExperiences +
+                   ", totalRevenue=" + totalRevenue +
+                   '}';
+        }
+    }
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

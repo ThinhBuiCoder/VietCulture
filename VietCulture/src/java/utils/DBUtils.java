@@ -7,12 +7,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBUtils {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     // Sử dụng Logger thay cho System.out
     private static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
 
     // Cấu hình kết nối database
+<<<<<<< HEAD
     private static final String DB_URL = "jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB_b;encrypt=true;trustServerCertificate=true";
+=======
+    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final String USERNAME = "sa";
     private static final String PASSWORD = "123";
 
@@ -34,7 +41,10 @@ public class DBUtils {
 
     /**
      * Lấy kết nối đến database
+<<<<<<< HEAD
      *
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * @return Connection tới database
      * @throws SQLException nếu không thể kết nối
      */
@@ -51,7 +61,10 @@ public class DBUtils {
 
     /**
      * Đóng kết nối an toàn
+<<<<<<< HEAD
      *
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * @param conn Connection cần đóng
      */
     public static void closeConnection(Connection conn) {
@@ -67,7 +80,10 @@ public class DBUtils {
 
     /**
      * Kiểm tra kết nối database
+<<<<<<< HEAD
      *
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * @return true nếu kết nối thành công, false nếu không
      */
     public static boolean testConnection() {
@@ -82,7 +98,10 @@ public class DBUtils {
 
     /**
      * Kiểm tra thông tin kết nối
+<<<<<<< HEAD
      *
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * @return Thông tin chi tiết về kết nối
      */
     public static String getConnectionInfo() {
@@ -91,12 +110,19 @@ public class DBUtils {
 
     /**
      * Main method để kiểm tra kết nối trực tiếp
+<<<<<<< HEAD
      *
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
      * @param args Tham số dòng lệnh
      */
     public static void main(String[] args) {
         LOGGER.info("Testing database connection...");
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         if (testConnection()) {
             LOGGER.info("Connection successful!");
             LOGGER.info("Connection Details: " + getConnectionInfo());
@@ -104,4 +130,8 @@ public class DBUtils {
             LOGGER.severe("Connection failed. Please check your database configuration.");
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

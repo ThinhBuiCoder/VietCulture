@@ -12,20 +12,36 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 public class BookingDAO {
+<<<<<<< HEAD
 
     private static final Logger LOGGER = Logger.getLogger(BookingDAO.class.getName());
 
     // ========== BOOKING OPERATIONS ==========
+=======
+    private static final Logger LOGGER = Logger.getLogger(BookingDAO.class.getName());
+    
+    // ========== BOOKING OPERATIONS ==========
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get total bookings count by user (traveler)
      */
     public int getTotalBookingsByUser(int userId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ?";
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, userId);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -34,17 +50,29 @@ public class BookingDAO {
         }
         return 0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get bookings by user with pagination
      */
     public List<Booking> getBookingsByUser(int userId, int offset, int limit) throws SQLException {
         List<Booking> bookings = new ArrayList<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         String sql = """
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+<<<<<<< HEAD
+=======
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                    e.title as experienceName, a.name as accommodationName
             FROM Bookings b
             LEFT JOIN Experiences e ON b.experienceId = e.experienceId
@@ -53,6 +81,7 @@ public class BookingDAO {
             ORDER BY b.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -60,6 +89,16 @@ public class BookingDAO {
             ps.setInt(2, offset);
             ps.setInt(3, limit);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, userId);
+            ps.setInt(2, offset);
+            ps.setInt(3, limit);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Booking booking = mapBookingFromResultSet(rs);
@@ -69,7 +108,11 @@ public class BookingDAO {
         }
         return bookings;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get booking by ID
      */
@@ -78,17 +121,30 @@ public class BookingDAO {
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+<<<<<<< HEAD
+=======
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                    e.title as experienceName, a.name as accommodationName
             FROM Bookings b
             LEFT JOIN Experiences e ON b.experienceId = e.experienceId
             LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
             WHERE b.bookingId = ?
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, bookingId);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, bookingId);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapBookingFromResultSet(rs);
@@ -97,7 +153,11 @@ public class BookingDAO {
         }
         return null;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Create new booking
      */
@@ -105,12 +165,23 @@ public class BookingDAO {
         String sql = """
             INSERT INTO Bookings (experienceId, accommodationId, travelerId, bookingDate, 
                                 bookingTime, numberOfPeople, totalPrice, status, 
+<<<<<<< HEAD
                                 specialRequests, contactInfo)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+=======
+                                specialRequests, contactInfo, paymentMethod, paymentStatus,
+                                paymentOrderCode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             ps.setObject(1, booking.getExperienceId());
             ps.setObject(2, booking.getAccommodationId());
             ps.setInt(3, booking.getTravelerId());
@@ -121,9 +192,18 @@ public class BookingDAO {
             ps.setString(8, booking.getStatus());
             ps.setString(9, booking.getSpecialRequests());
             ps.setString(10, booking.getContactInfo());
+<<<<<<< HEAD
 
             int affectedRows = ps.executeUpdate();
 
+=======
+            ps.setString(11, booking.getPaymentMethod());
+            ps.setString(12, booking.getPaymentStatus());
+            ps.setObject(13, booking.getPaymentOrderCode());
+            
+            int affectedRows = ps.executeUpdate();
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
@@ -136,34 +216,95 @@ public class BookingDAO {
         }
         return 0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Update booking status
      */
     public boolean updateBookingStatus(int bookingId, String status) throws SQLException {
         String sql = "UPDATE Bookings SET status = ? WHERE bookingId = ?";
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, status);
             ps.setInt(2, bookingId);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, status);
+            ps.setInt(2, bookingId);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             int rowsAffected = ps.executeUpdate();
             LOGGER.info("Booking status updated: " + bookingId + " -> " + status);
             return rowsAffected > 0;
         }
     }
+<<<<<<< HEAD
 
+=======
+    
+    /**
+     * Update payment status
+     */
+    public boolean updatePaymentStatus(int bookingId, String paymentStatus) throws SQLException {
+        String sql = "UPDATE Bookings SET paymentStatus = ? WHERE bookingId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, paymentStatus);
+            ps.setInt(2, bookingId);
+            
+            int rowsAffected = ps.executeUpdate();
+            LOGGER.info("Payment status updated: " + bookingId + " -> " + paymentStatus);
+            return rowsAffected > 0;
+        }
+    }
+    
+    /**
+     * Delete booking by ID
+     */
+    public boolean deleteBooking(int bookingId) throws SQLException {
+        String sql = "DELETE FROM Bookings WHERE bookingId = ?";
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, bookingId);
+            
+            int rowsAffected = ps.executeUpdate();
+            LOGGER.info("Booking deleted: " + bookingId);
+            return rowsAffected > 0;
+        }
+    }
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get bookings by host (for host dashboard)
      */
     public List<Booking> getBookingsByHost(int hostId, int offset, int limit) throws SQLException {
         List<Booking> bookings = new ArrayList<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         String sql = """
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
                    b.status, b.specialRequests, b.contactInfo, b.createdAt,
+<<<<<<< HEAD
+=======
+                   b.paymentMethod, b.paymentStatus, b.paymentOrderCode,
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                    e.title as experienceName, a.name as accommodationName,
                    u.fullName as travelerName, u.email as travelerEmail
             FROM Bookings b
@@ -174,14 +315,25 @@ public class BookingDAO {
             ORDER BY b.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             ps.setInt(1, hostId);
             ps.setInt(2, hostId);
             ps.setInt(3, offset);
             ps.setInt(4, limit);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Booking booking = mapBookingFromResultSet(rs);
@@ -196,7 +348,11 @@ public class BookingDAO {
         }
         return bookings;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get total bookings count by host
      */
@@ -207,12 +363,22 @@ public class BookingDAO {
             LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
             WHERE (e.hostId = ? OR a.hostId = ?)
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, hostId);
             ps.setInt(2, hostId);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -221,7 +387,11 @@ public class BookingDAO {
         }
         return 0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get revenue by host
      */
@@ -233,12 +403,22 @@ public class BookingDAO {
             LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
             WHERE (e.hostId = ? OR a.hostId = ?) AND b.status = 'COMPLETED'
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, hostId);
             ps.setInt(2, hostId);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getDouble("totalRevenue");
@@ -247,8 +427,14 @@ public class BookingDAO {
         }
         return 0.0;
     }
+<<<<<<< HEAD
 
     // ========== ADMIN STATISTICS ==========
+=======
+    
+    // ========== ADMIN STATISTICS ==========
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get current month bookings count
      */
@@ -258,28 +444,45 @@ public class BookingDAO {
             FROM Bookings 
             WHERE createdAt >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
         }
         return 0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get weekly bookings data for dashboard chart
      */
     public List<Integer> getWeeklyBookingsData() throws SQLException {
         List<Integer> data = new ArrayList<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         String sql = """
             SELECT COUNT(*) as count
             FROM Bookings 
             WHERE createdAt >= DATEADD(DAY, ?, GETDATE())
             AND createdAt < DATEADD(DAY, ?, GETDATE())
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -287,6 +490,16 @@ public class BookingDAO {
                 ps.setInt(1, -i - 1);
                 ps.setInt(2, -i);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = 6; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+                
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         data.add(rs.getInt("count"));
@@ -298,42 +511,71 @@ public class BookingDAO {
         }
         return data;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get total bookings count
      */
     public int getTotalBookingsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Bookings";
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
         }
         return 0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get total revenue
      */
     public double getTotalRevenue() throws SQLException {
         String sql = "SELECT ISNULL(SUM(totalPrice), 0) FROM Bookings WHERE status = 'COMPLETED'";
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getDouble(1);
             }
         }
         return 0.0;
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get booking growth percentage
      */
     public double getBookingGrowthPercentage(String period) throws SQLException {
         String sql = getGrowthSQL(period, "Bookings", "COUNT(*)");
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
@@ -352,11 +594,34 @@ public class BookingDAO {
         return 0.0;
     }
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                int currentPeriod = rs.getInt("current_period");
+                int previousPeriod = rs.getInt("previous_period");
+                
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+                
+                return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+        
+        return 0.0;
+    }
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get revenue growth percentage
      */
     public double getRevenueGrowthPercentage(String period) throws SQLException {
         String sql = getGrowthSQL(period, "Bookings", "ISNULL(SUM(totalPrice), 0)", "AND status = 'COMPLETED'");
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
@@ -375,18 +640,45 @@ public class BookingDAO {
         return 0.0;
     }
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                double currentPeriod = rs.getDouble("current_period");
+                double previousPeriod = rs.getDouble("previous_period");
+                
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+                
+                return ((currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+        
+        return 0.0;
+    }
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get monthly booking trends
      */
     public List<Integer> getMonthlyBookingTrends(int months) throws SQLException {
         List<Integer> data = new ArrayList<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         String sql = """
             SELECT COUNT(*) as count
             FROM Bookings 
             WHERE createdAt >= DATEADD(MONTH, ?, GETDATE())
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -394,6 +686,16 @@ public class BookingDAO {
                 ps.setInt(1, -i - 1);
                 ps.setInt(2, -i);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+                
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         data.add(rs.getInt("count"));
@@ -403,16 +705,27 @@ public class BookingDAO {
                 }
             }
         }
+<<<<<<< HEAD
 
         return data;
     }
 
+=======
+        
+        return data;
+    }
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get monthly revenue trends
      */
     public List<Double> getMonthlyRevenueTrends(int months) throws SQLException {
         List<Double> data = new ArrayList<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         String sql = """
             SELECT ISNULL(SUM(totalPrice), 0) as revenue
             FROM Bookings 
@@ -420,6 +733,7 @@ public class BookingDAO {
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
             AND status = 'COMPLETED'
         """;
+<<<<<<< HEAD
 
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -427,6 +741,16 @@ public class BookingDAO {
                 ps.setInt(1, -i - 1);
                 ps.setInt(2, -i);
 
+=======
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+                
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         data.add(rs.getDouble("revenue"));
@@ -436,11 +760,20 @@ public class BookingDAO {
                 }
             }
         }
+<<<<<<< HEAD
 
         return data;
     }
 
     // ========== HELPER METHODS ==========
+=======
+        
+        return data;
+    }
+    
+    // ========== HELPER METHODS ==========
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Map ResultSet to Booking object
      */
@@ -458,6 +791,7 @@ public class BookingDAO {
         booking.setSpecialRequests(rs.getString("specialRequests"));
         booking.setContactInfo(rs.getString("contactInfo"));
         booking.setCreatedAt(rs.getDate("createdAt"));
+<<<<<<< HEAD
 
         // Set experience or accommodation name if available
         if (rs.getString("experienceName") != null) {
@@ -470,29 +804,72 @@ public class BookingDAO {
         return booking;
     }
 
+=======
+        
+        // Payment fields
+        try {
+            booking.setPaymentMethod(rs.getString("paymentMethod"));
+            booking.setPaymentStatus(rs.getString("paymentStatus"));
+            booking.setPaymentOrderCode(rs.getObject("paymentOrderCode") != null ? rs.getLong("paymentOrderCode") : null);
+        } catch (SQLException e) {
+            // Payment fields may not exist in some queries
+            LOGGER.log(Level.FINE, "Payment fields not available in query", e);
+        }
+        
+        // Set experience or accommodation name if available
+        try {
+            if (rs.getString("experienceName") != null) {
+                booking.setExperienceName(rs.getString("experienceName"));
+            }
+            if (rs.getString("accommodationName") != null) {
+                booking.setAccommodationName(rs.getString("accommodationName"));
+            }
+        } catch (SQLException e) {
+            // Name fields may not exist in some queries
+            LOGGER.log(Level.FINE, "Name fields not available in query", e);
+        }
+        
+        return booking;
+    }
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Generate growth SQL based on period
      */
     private String getGrowthSQL(String period, String tableName, String aggregateFunction, String... additionalConditions) {
         String condition = additionalConditions.length > 0 ? additionalConditions[0] : "";
+<<<<<<< HEAD
 
         return switch (period) {
             case "week" ->
                 String.format("""
+=======
+        
+        return switch (period) {
+            case "week" -> String.format("""
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 SELECT 
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(DAY, -7, GETDATE()) %s) as current_period,
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
                      AND createdAt < DATEADD(DAY, -7, GETDATE()) %s) as previous_period
                 """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
+<<<<<<< HEAD
             case "year" ->
                 String.format("""
+=======
+            case "year" -> String.format("""
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 SELECT 
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(YEAR, -1, GETDATE()) %s) as current_period,
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
                      AND createdAt < DATEADD(YEAR, -1, GETDATE()) %s) as previous_period
                 """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
+<<<<<<< HEAD
             default ->
                 String.format("""
+=======
+            default -> String.format("""
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 SELECT 
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(MONTH, -1, GETDATE()) %s) as current_period,
                     (SELECT %s FROM %s WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
@@ -500,8 +877,12 @@ public class BookingDAO {
                 """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
         };
     }
+<<<<<<< HEAD
 
     public void deleteBooking(int bookingId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }
+=======
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

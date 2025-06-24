@@ -12,7 +12,10 @@ import java.util.logging.Logger;
  * Lớp DAO để xử lý các thao tác với bảng Reviews trong cơ sở dữ liệu
  */
 public class ReviewDAO {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(ReviewDAO.class.getName());
 
     /**
@@ -24,7 +27,13 @@ public class ReviewDAO {
             FROM Reviews 
             WHERE isVisible = 1
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getDouble("avgRating");
             }
@@ -50,7 +59,12 @@ public class ReviewDAO {
             WHERE r.isVisible = 1
             ORDER BY r.createdAt DESC
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, limit);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -67,7 +81,12 @@ public class ReviewDAO {
      */
     public boolean softDeleteReview(int reviewId, String reason) throws SQLException {
         String sql = "UPDATE Reviews SET isVisible = 0, deleteReason = ?, deletedAt = GETDATE() WHERE reviewId = ?";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setString(1, reason);
             pstmt.setInt(2, reviewId);
             int rowsAffected = pstmt.executeUpdate();
@@ -84,7 +103,12 @@ public class ReviewDAO {
      */
     public boolean restoreReview(int reviewId) throws SQLException {
         String sql = "UPDATE Reviews SET isVisible = 1, deleteReason = NULL, deletedAt = NULL WHERE reviewId = ?";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, reviewId);
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -100,7 +124,12 @@ public class ReviewDAO {
      */
     public boolean deleteReview(int reviewId) throws SQLException {
         String sql = "DELETE FROM Reviews WHERE reviewId = ?";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, reviewId);
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -130,7 +159,12 @@ public class ReviewDAO {
             ORDER BY r.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, (page - 1) * pageSize);
             pstmt.setInt(2, pageSize);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -148,7 +182,13 @@ public class ReviewDAO {
      */
     public int getReportedReviewsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Reviews WHERE reportCount > 0";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -175,7 +215,12 @@ public class ReviewDAO {
             ORDER BY r.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, (page - 1) * pageSize);
             pstmt.setInt(2, pageSize);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -193,7 +238,13 @@ public class ReviewDAO {
      */
     public int getFlaggedReviewsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Reviews WHERE isFlagged = 1";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -220,7 +271,12 @@ public class ReviewDAO {
             ORDER BY r.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, (page - 1) * pageSize);
             pstmt.setInt(2, pageSize);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -238,7 +294,13 @@ public class ReviewDAO {
      */
     public int getPendingReviewsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Reviews WHERE isVisible = 0 AND isDeleted = 0";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -265,7 +327,12 @@ public class ReviewDAO {
             ORDER BY r.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, (page - 1) * pageSize);
             pstmt.setInt(2, pageSize);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -283,7 +350,13 @@ public class ReviewDAO {
      */
     public int getDeletedReviewsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Reviews WHERE isDeleted = 1";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -309,7 +382,12 @@ public class ReviewDAO {
             ORDER BY r.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, (page - 1) * pageSize);
             pstmt.setInt(2, pageSize);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -327,7 +405,13 @@ public class ReviewDAO {
      */
     public int getTotalReviewsCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Reviews";
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -343,7 +427,12 @@ public class ReviewDAO {
             INSERT INTO Reviews (experienceId, accommodationId, travelerId, rating, comment, photos, isVisible)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setObject(1, review.getExperienceId());
             pstmt.setObject(2, review.getAccommodationId());
             pstmt.setInt(3, review.getTravelerId());
@@ -375,7 +464,12 @@ public class ReviewDAO {
             SET rating = ?, comment = ?, photos = ?, isVisible = ?
             WHERE reviewId = ?
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, review.getRating());
             pstmt.setString(2, review.getComment());
             pstmt.setString(3, review.getPhotos());
@@ -406,7 +500,12 @@ public class ReviewDAO {
             LEFT JOIN Accommodations a ON r.accommodationId = a.accommodationId
             WHERE r.reviewId = ?
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, reviewId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -425,7 +524,12 @@ public class ReviewDAO {
             INSERT INTO ReviewActions (reviewId, action, details, createdAt)
             VALUES (?, ?, ?, GETDATE())
         """;
+<<<<<<< HEAD
         try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+=======
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             pstmt.setInt(1, reviewId);
             pstmt.setString(2, action);
             pstmt.setString(3, details);
@@ -461,4 +565,8 @@ public class ReviewDAO {
         }
         return review;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

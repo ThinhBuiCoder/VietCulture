@@ -26,7 +26,10 @@ import java.util.logging.Logger;
     "/admin/statistics/export"
 })
 public class AdminStatisticsServlet extends HttpServlet {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(AdminStatisticsServlet.class.getName());
 
     private UserDAO userDAO;
@@ -61,9 +64,13 @@ public class AdminStatisticsServlet extends HttpServlet {
 
         String pathInfo = request.getServletPath();
         String period = request.getParameter("period");
+<<<<<<< HEAD
         if (period == null) {
             period = "month";
         }
+=======
+        if (period == null) period = "month";
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         try {
             switch (pathInfo) {
@@ -212,9 +219,13 @@ public class AdminStatisticsServlet extends HttpServlet {
             throws SQLException, IOException {
 
         String format = request.getParameter("format");
+<<<<<<< HEAD
         if (format == null) {
             format = "excel";
         }
+=======
+        if (format == null) format = "excel";
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         // Set response headers for download
         if ("pdf".equals(format)) {
@@ -412,9 +423,13 @@ public class AdminStatisticsServlet extends HttpServlet {
      */
     private boolean isAdminAuthenticated(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
+<<<<<<< HEAD
         if (session == null) {
             return false;
         }
+=======
+        if (session == null) return false;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         User user = (User) session.getAttribute("user");
         return user != null && "ADMIN".equals(user.getRole()); // Changed from userType to role
@@ -441,7 +456,10 @@ public class AdminStatisticsServlet extends HttpServlet {
      * Inner class for Activity
      */
     public static class Activity {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private String action;
         private String description;
         private String status;
@@ -463,6 +481,7 @@ public class AdminStatisticsServlet extends HttpServlet {
 
         private String getIconForType(String type) {
             switch (type) {
+<<<<<<< HEAD
                 case "success":
                     return "fa-check-circle";
                 case "warning":
@@ -473,10 +492,18 @@ public class AdminStatisticsServlet extends HttpServlet {
                     return "fa-info-circle";
                 default:
                     return "fa-circle";
+=======
+                case "success": return "fa-check-circle";
+                case "warning": return "fa-exclamation-triangle";
+                case "error": return "fa-times-circle";
+                case "info": return "fa-info-circle";
+                default: return "fa-circle";
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             }
         }
 
         // Getters and setters
+<<<<<<< HEAD
         public String getAction() {
             return action;
         }
@@ -550,3 +577,33 @@ public class AdminStatisticsServlet extends HttpServlet {
         }
     }
 }
+=======
+        public String getAction() { return action; }
+        public void setAction(String action) { this.action = action; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+
+        public Date getCreatedAt() { return createdAt; }
+        public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+        public String getUserName() { return userName; }
+        public void setUserName(String userName) { this.userName = userName; }
+
+        public String getUserRole() { return userRole; } // Changed from userType
+        public void setUserRole(String userRole) { this.userRole = userRole; }
+
+        public String getUserAvatar() { return userAvatar; }
+        public void setUserAvatar(String userAvatar) { this.userAvatar = userAvatar; }
+
+        public String getIcon() { return icon; }
+        public void setIcon(String icon) { this.icon = icon; }
+    }
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

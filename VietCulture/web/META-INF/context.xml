@@ -10,6 +10,21 @@
         username="sa" 
         password="123"
         driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        url="jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true"
+    />
+    <!-- Trường hợp dùng cho máy riêng của bạn -->
+    <!--
+    <Resource 
+        name="jdbc/TravelerDB" 
+        auth="Container" 
+        type="javax.sql.DataSource"
+        maxTotal="100" 
+        maxIdle="30" 
+        maxWaitMillis="10000"
+        username="sa" 
+        password="123"
+        driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
         url="jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB_b;encrypt=true;trustServerCertificate=true"
     />
+    -->
 </Context>

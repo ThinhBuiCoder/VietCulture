@@ -15,7 +15,10 @@ import java.util.logging.Logger;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
     private UserDAO userDAO;
 
@@ -48,8 +51,13 @@ public class LoginServlet extends HttpServlet {
 
         try {
             // Validate input
+<<<<<<< HEAD
             if (email == null || email.trim().isEmpty()
                     || password == null || password.trim().isEmpty()) {
+=======
+            if (email == null || email.trim().isEmpty() ||
+                password == null || password.trim().isEmpty()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 request.setAttribute("error", "Vui lòng nhập email và mật khẩu.");
                 request.getRequestDispatcher("/view/jsp/home/login.jsp").forward(request, response);
                 return;
@@ -137,4 +145,8 @@ public class LoginServlet extends HttpServlet {
                 return contextPath + "/view/jsp/home/home.jsp";
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

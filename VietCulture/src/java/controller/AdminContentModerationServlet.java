@@ -22,10 +22,16 @@ import java.util.logging.Logger;
     "/admin/content/moderation/*",
     "/admin/content/moderate",
     "/admin/content/flag"
+<<<<<<< HEAD
 // BỎ 2 dòng accommodation approval
 })
 public class AdminContentModerationServlet extends HttpServlet {
 
+=======
+    // BỎ 2 dòng accommodation approval
+})
+public class AdminContentModerationServlet extends HttpServlet {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(AdminContentModerationServlet.class.getName());
 
     private ExperienceDAO experienceDAO;
@@ -248,9 +254,15 @@ public class AdminContentModerationServlet extends HttpServlet {
             if (success) {
                 // Log moderation activity
                 logModerationActivity(adminId, contentType, contentId, action, reason, notes);
+<<<<<<< HEAD
 
                 LOGGER.info(String.format("Admin %d performed %s on %s ID %d",
                         adminId, action, contentType, contentId));
+=======
+                
+                LOGGER.info(String.format("Admin %d performed %s on %s ID %d", 
+                    adminId, action, contentType, contentId));
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             }
 
             sendJsonResponse(response, success, message, null);
@@ -278,7 +290,11 @@ public class AdminContentModerationServlet extends HttpServlet {
 
         try {
             int contentId = Integer.parseInt(contentIdStr);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             HttpSession session = request.getSession();
             User admin = (User) session.getAttribute("user");
             int adminId = admin != null ? admin.getUserId() : 0;
@@ -302,7 +318,11 @@ public class AdminContentModerationServlet extends HttpServlet {
      */
     private Map<String, Object> getModerationStatistics() throws SQLException {
         Map<String, Object> stats = new HashMap<>();
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         try {
             // Experience statistics
             int pendingExperiences = experienceDAO.getPendingExperiencesCount();
@@ -331,11 +351,19 @@ public class AdminContentModerationServlet extends HttpServlet {
             stats.put("pendingModerationCount", totalPending);
             stats.put("flaggedContentCount", totalFlagged);
             stats.put("approvedContentCount", totalApproved);
+<<<<<<< HEAD
 
             stats.put("pendingExperiences", pendingExperiences);
             stats.put("pendingAccommodations", pendingAccommodations);
             stats.put("pendingReviews", pendingReviews);
 
+=======
+            
+            stats.put("pendingExperiences", pendingExperiences);
+            stats.put("pendingAccommodations", pendingAccommodations);
+            stats.put("pendingReviews", pendingReviews);
+            
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             stats.put("flaggedExperiences", flaggedExperiences);
             stats.put("flaggedAccommodations", flaggedAccommodations);
             stats.put("flaggedReviews", flaggedReviews);
@@ -354,7 +382,11 @@ public class AdminContentModerationServlet extends HttpServlet {
     /**
      * Get moderation queue with filters
      */
+<<<<<<< HEAD
     private List<ModerationItem> getModerationQueue(String priority, String type, String status, int page, int pageSize)
+=======
+    private List<ModerationItem> getModerationQueue(String priority, String type, String status, int page, int pageSize) 
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             throws SQLException {
         List<ModerationItem> queue = new ArrayList<>();
 
@@ -365,6 +397,7 @@ public class AdminContentModerationServlet extends HttpServlet {
                 for (Experience exp : experiences) {
                     User host = userDAO.getUserById(exp.getHostId());
                     queue.add(new ModerationItem(
+<<<<<<< HEAD
                             exp.getExperienceId(),
                             "experience",
                             exp.getTitle(),
@@ -375,6 +408,18 @@ public class AdminContentModerationServlet extends HttpServlet {
                             getViolations(exp),
                             false, // AI detection placeholder
                             0 // AI confidence placeholder
+=======
+                        exp.getExperienceId(),
+                        "experience",
+                        exp.getTitle(),
+                        truncateText(exp.getDescription(), 100),
+                        host != null ? host.getFullName() : "Unknown",
+                        exp.getCreatedAt(),
+                        determinePriority(exp),
+                        getViolations(exp),
+                        false, // AI detection placeholder
+                        0      // AI confidence placeholder
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     ));
                 }
             }
@@ -385,6 +430,7 @@ public class AdminContentModerationServlet extends HttpServlet {
                 for (Accommodation acc : accommodations) {
                     User host = userDAO.getUserById(acc.getHostId());
                     queue.add(new ModerationItem(
+<<<<<<< HEAD
                             acc.getAccommodationId(),
                             "accommodation",
                             acc.getName(),
@@ -395,6 +441,18 @@ public class AdminContentModerationServlet extends HttpServlet {
                             getViolations(acc),
                             false, // AI detection placeholder
                             0 // AI confidence placeholder
+=======
+                        acc.getAccommodationId(),
+                        "accommodation",
+                        acc.getName(),
+                        truncateText(acc.getDescription(), 100),
+                        host != null ? host.getFullName() : "Unknown",
+                        acc.getCreatedAt(),
+                        determinePriority(acc),
+                        getViolations(acc),
+                        false, // AI detection placeholder
+                        0      // AI confidence placeholder
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     ));
                 }
             }
@@ -402,9 +460,13 @@ public class AdminContentModerationServlet extends HttpServlet {
             // Sort by priority and date
             queue.sort((a, b) -> {
                 int priorityCompare = getPriorityWeight(b.getPriority()) - getPriorityWeight(a.getPriority());
+<<<<<<< HEAD
                 if (priorityCompare != 0) {
                     return priorityCompare;
                 }
+=======
+                if (priorityCompare != 0) return priorityCompare;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 return b.getCreatedAt().compareTo(a.getCreatedAt());
             });
 
@@ -421,7 +483,11 @@ public class AdminContentModerationServlet extends HttpServlet {
      */
     private int getModerationQueueCount(String priority, String type, String status) throws SQLException {
         int count = 0;
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         try {
             if (type == null || "experience".equals(type)) {
                 count += getFilteredExperiencesCount(status);
@@ -432,7 +498,11 @@ public class AdminContentModerationServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error getting moderation queue count", e);
         }
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         return count;
     }
 
@@ -549,9 +619,13 @@ public class AdminContentModerationServlet extends HttpServlet {
     }
 
     private String truncateText(String text, int maxLength) {
+<<<<<<< HEAD
         if (text == null) {
             return "";
         }
+=======
+        if (text == null) return "";
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         return text.length() > maxLength ? text.substring(0, maxLength) + "..." : text;
     }
 
@@ -567,6 +641,7 @@ public class AdminContentModerationServlet extends HttpServlet {
 
     private int getPriorityWeight(String priority) {
         switch (priority) {
+<<<<<<< HEAD
             case "HIGH":
                 return 3;
             case "MEDIUM":
@@ -575,6 +650,12 @@ public class AdminContentModerationServlet extends HttpServlet {
                 return 1;
             default:
                 return 0;
+=======
+            case "HIGH": return 3;
+            case "MEDIUM": return 2;
+            case "LOW": return 1;
+            default: return 0;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         }
     }
 
@@ -600,15 +681,24 @@ public class AdminContentModerationServlet extends HttpServlet {
 
     private void logModerationActivity(int adminId, String contentType, int contentId, String action, String reason, String notes) {
         // Placeholder - implement with database logging
+<<<<<<< HEAD
         LOGGER.info(String.format("Moderation activity logged: Admin %d, %s %d, Action: %s",
                 adminId, contentType, contentId, action));
+=======
+        LOGGER.info(String.format("Moderation activity logged: Admin %d, %s %d, Action: %s", 
+            adminId, contentType, contentId, action));
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     }
 
     private boolean isAdminAuthenticated(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
+<<<<<<< HEAD
         if (session == null) {
             return false;
         }
+=======
+        if (session == null) return false;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         User user = (User) session.getAttribute("user");
         return user != null && "ADMIN".equals(user.getRole());
@@ -637,7 +727,10 @@ public class AdminContentModerationServlet extends HttpServlet {
      * Moderation item class
      */
     public static class ModerationItem {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int contentId;
         private String contentType;
         private String title;
@@ -650,8 +743,13 @@ public class AdminContentModerationServlet extends HttpServlet {
         private int aiConfidence;
 
         public ModerationItem(int contentId, String contentType, String title, String contentPreview,
+<<<<<<< HEAD
                 String authorName, Date createdAt, String priority, List<String> violations,
                 boolean aiDetected, int aiConfidence) {
+=======
+                            String authorName, Date createdAt, String priority, List<String> violations,
+                            boolean aiDetected, int aiConfidence) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             this.contentId = contentId;
             this.contentType = contentType;
             this.title = title;
@@ -665,6 +763,7 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
 
         // Getters
+<<<<<<< HEAD
         public int getContentId() {
             return contentId;
         }
@@ -704,13 +803,28 @@ public class AdminContentModerationServlet extends HttpServlet {
         public int getAiConfidence() {
             return aiConfidence;
         }
+=======
+        public int getContentId() { return contentId; }
+        public String getContentType() { return contentType; }
+        public String getTitle() { return title; }
+        public String getContentPreview() { return contentPreview; }
+        public String getAuthorName() { return authorName; }
+        public Date getCreatedAt() { return createdAt; }
+        public String getPriority() { return priority; }
+        public List<String> getViolations() { return violations; }
+        public boolean isAiDetected() { return aiDetected; }
+        public int getAiConfidence() { return aiConfidence; }
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     }
 
     /**
      * Supporting classes for moderation system
      */
     public static class ModerationActivity {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int activityId;
         private int adminId;
         private String adminName;
@@ -722,7 +836,11 @@ public class AdminContentModerationServlet extends HttpServlet {
 
         // Constructor and getters
         public ModerationActivity(int activityId, int adminId, String adminName, String contentType,
+<<<<<<< HEAD
                 int contentId, String action, String reason, Date timestamp) {
+=======
+                                int contentId, String action, String reason, Date timestamp) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             this.activityId = activityId;
             this.adminId = adminId;
             this.adminName = adminName;
@@ -734,6 +852,7 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
 
         // Getters
+<<<<<<< HEAD
         public int getActivityId() {
             return activityId;
         }
@@ -769,6 +888,19 @@ public class AdminContentModerationServlet extends HttpServlet {
 
     public static class ModerationHistory {
 
+=======
+        public int getActivityId() { return activityId; }
+        public int getAdminId() { return adminId; }
+        public String getAdminName() { return adminName; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getAction() { return action; }
+        public String getReason() { return reason; }
+        public Date getTimestamp() { return timestamp; }
+    }
+
+    public static class ModerationHistory {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int historyId;
         private String contentType;
         private int contentId;
@@ -779,7 +911,11 @@ public class AdminContentModerationServlet extends HttpServlet {
 
         // Constructor and getters
         public ModerationHistory(int historyId, String contentType, int contentId, String action,
+<<<<<<< HEAD
                 String reason, String adminName, Date timestamp) {
+=======
+                               String reason, String adminName, Date timestamp) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             this.historyId = historyId;
             this.contentType = contentType;
             this.contentId = contentId;
@@ -790,6 +926,7 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
 
         // Getters
+<<<<<<< HEAD
         public int getHistoryId() {
             return historyId;
         }
@@ -821,6 +958,18 @@ public class AdminContentModerationServlet extends HttpServlet {
 
     public static class ContentFlag {
 
+=======
+        public int getHistoryId() { return historyId; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getAction() { return action; }
+        public String getReason() { return reason; }
+        public String getAdminName() { return adminName; }
+        public Date getTimestamp() { return timestamp; }
+    }
+
+    public static class ContentFlag {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int flagId;
         private String contentType;
         private int contentId;
@@ -832,7 +981,11 @@ public class AdminContentModerationServlet extends HttpServlet {
 
         // Constructor and getters
         public ContentFlag(int flagId, String contentType, int contentId, String reason,
+<<<<<<< HEAD
                 String severity, String reporterName, Date reportedAt, boolean resolved) {
+=======
+                         String severity, String reporterName, Date reportedAt, boolean resolved) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             this.flagId = flagId;
             this.contentType = contentType;
             this.contentId = contentId;
@@ -844,6 +997,7 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
 
         // Getters
+<<<<<<< HEAD
         public int getFlagId() {
             return flagId;
         }
@@ -877,3 +1031,15 @@ public class AdminContentModerationServlet extends HttpServlet {
         }
     }
 }
+=======
+        public int getFlagId() { return flagId; }
+        public String getContentType() { return contentType; }
+        public int getContentId() { return contentId; }
+        public String getReason() { return reason; }
+        public String getSeverity() { return severity; }
+        public String getReporterName() { return reporterName; }
+        public Date getReportedAt() { return reportedAt; }
+        public boolean isResolved() { return resolved; }
+    }
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

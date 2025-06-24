@@ -6,7 +6,10 @@ import java.util.Date;
 import java.util.List;
 
 public class Accommodation {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private int accommodationId;
     private int hostId;
     private String name;
@@ -29,6 +32,10 @@ public class Accommodation {
     private boolean isFlagged = false;
     private String flagReason;
     private String thumbnailImage;
+<<<<<<< HEAD
+=======
+    
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     // Related objects
     private User host; // Updated to User instead of Host
     private City city;
@@ -47,7 +54,11 @@ public class Accommodation {
     }
 
     public Accommodation(int hostId, String name, String description, int cityId,
+<<<<<<< HEAD
             String address, String type, double pricePerNight) {
+=======
+                         String address, String type, double pricePerNight) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         this();
         this.hostId = hostId;
         this.name = name;
@@ -59,6 +70,7 @@ public class Accommodation {
         this.createdAt = new Date();
     }
 
+<<<<<<< HEAD
     public int getReportCount() {
         return reportCount;
     }
@@ -139,6 +151,8 @@ public class Accommodation {
         return "Hoạt động";
     }
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     // Getters and Setters
     public int getAccommodationId() {
         return accommodationId;
@@ -260,6 +274,68 @@ public class Accommodation {
         this.totalBookings = totalBookings;
     }
 
+<<<<<<< HEAD
+=======
+    public int getReportCount() {
+        return reportCount;
+    }
+
+    public void setReportCount(int reportCount) {
+        this.reportCount = reportCount;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public String getDeleteReason() {
+        return deleteReason;
+    }
+
+    public void setDeleteReason(String deleteReason) {
+        this.deleteReason = deleteReason;
+    }
+
+    public Timestamp getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Timestamp deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public boolean isFlagged() {
+        return isFlagged;
+    }
+
+    public void setFlagged(boolean flagged) {
+        isFlagged = flagged;
+    }
+
+    public String getFlagReason() {
+        return flagReason;
+    }
+
+    public void setFlagReason(String flagReason) {
+        this.flagReason = flagReason;
+    }
+
+    public String getThumbnailImage() {
+        if (thumbnailImage == null && hasImages()) {
+            return getFirstImage();
+        }
+        return thumbnailImage;
+    }
+
+    public void setThumbnailImage(String thumbnailImage) {
+        this.thumbnailImage = thumbnailImage;
+    }
+
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     public User getHost() {
         return host;
     }
@@ -323,7 +399,58 @@ public class Accommodation {
         this.bookings = bookings;
     }
 
+<<<<<<< HEAD
     // Helper methods
+=======
+    // Helper methods for reporting and flagging
+    public boolean isReported() {
+        return reportCount > 0;
+    }
+
+    public String getStatusForAdmin() {
+        if (isDeleted) return "Đã xóa";
+        if (isFlagged) return "Bị đánh dấu";
+        if (reportCount > 0) return "Bị báo cáo";
+        if (!isActive) return "Chờ duyệt";
+        return "Hoạt động";
+    }
+
+    // FIXED: Add location methods to resolve JSP error
+    /**
+     * Get location for display (compatibility method for JSP)
+     * Returns address if available, otherwise returns cityName
+     */
+    public String getLocation() {
+        if (this.address != null && !this.address.trim().isEmpty()) {
+            return this.address.trim();
+        } else if (this.cityName != null && !this.cityName.trim().isEmpty()) {
+            return this.cityName.trim();
+        } else {
+            return "Chưa có thông tin địa chỉ";
+        }
+    }
+
+    /**
+     * Get full location display (address + city)
+     */
+    public String getFullLocation() {
+        StringBuilder location = new StringBuilder();
+        
+        if (this.address != null && !this.address.trim().isEmpty()) {
+            location.append(this.address.trim());
+        }
+        
+        if (this.cityName != null && !this.cityName.trim().isEmpty()) {
+            if (location.length() > 0) {
+                location.append(", ");
+            }
+            location.append(this.cityName.trim());
+        }
+        
+        return location.length() > 0 ? location.toString() : "Chưa có thông tin địa chỉ";
+    }
+
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get accommodation type in Vietnamese
      */
@@ -428,9 +555,13 @@ public class Accommodation {
      * Check if this is a new accommodation
      */
     public boolean isNew() {
+<<<<<<< HEAD
         if (createdAt == null) {
             return false;
         }
+=======
+        if (createdAt == null) return false;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         Date now = new Date();
         long diffInMillies = now.getTime() - createdAt.getTime();
@@ -476,6 +607,7 @@ public class Accommodation {
 
     @Override
     public String toString() {
+<<<<<<< HEAD
         return "Accommodation{"
                 + "accommodationId=" + accommodationId
                 + ", name='" + name + '\''
@@ -488,3 +620,17 @@ public class Accommodation {
                 + '}';
     }
 }
+=======
+        return "Accommodation{" +
+               "accommodationId=" + accommodationId +
+               ", name='" + name + '\'' +
+               ", type='" + type + '\'' +
+               ", address='" + address + '\'' +
+               ", pricePerNight=" + pricePerNight +
+               ", isActive=" + isActive +
+               ", averageRating=" + averageRating +
+               ", totalBookings=" + totalBookings +
+               '}';
+    }
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

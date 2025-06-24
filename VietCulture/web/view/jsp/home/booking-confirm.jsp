@@ -6,11 +6,19 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
+<<<<<<< HEAD
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Xác Nhận Đặt Chỗ | VietCulture</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+=======
+    <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Xác Nhận Đặt Chỗ | VietCareer</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" rel="stylesheet">
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
         <style>
             :root {
@@ -74,6 +82,7 @@
                 margin-right: 12px !important;
             }
 
+<<<<<<< HEAD
             /* Breadcrumb */
             .breadcrumb-container {
                 background-color: var(--light-color);
@@ -106,6 +115,8 @@
                 color: var(--dark-color);
             }
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             /* Main Content */
             .main-content {
                 min-height: 100vh;
@@ -237,6 +248,7 @@
                 margin-bottom: 20px;
             }
 
+<<<<<<< HEAD
             .service-info.experience {
                 background: rgba(255, 56, 92, 0.1);
                 border-left: 4px solid var(--primary-color);
@@ -247,6 +259,8 @@
                 border-left: 4px solid var(--secondary-color);
             }
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             .service-image {
                 width: 100px;
                 height: 80px;
@@ -267,6 +281,7 @@
                 font-size: 0.9rem;
             }
 
+<<<<<<< HEAD
             /* Service Type Badge */
             .service-type-badge {
                 display: inline-flex;
@@ -290,6 +305,8 @@
                 color: var(--secondary-color);
             }
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             /* Price Summary */
             .price-summary {
                 background: var(--light-color);
@@ -555,12 +572,18 @@
         <nav class="custom-navbar">
             <div class="container">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+<<<<<<< HEAD
                     <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
+=======
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCareer Logo">
+                    <span>VIETCAREER</span>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 </a>
             </div>
         </nav>
 
+<<<<<<< HEAD
         <!-- Breadcrumb -->
         <div class="breadcrumb-container">
             <div class="container">
@@ -602,6 +625,8 @@
             </div>
         </div>
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         <!-- Header -->
         <div class="confirm-header">
             <div class="container">
@@ -648,6 +673,7 @@
                             Thông tin dịch vụ
                         </h3>
 
+<<<<<<< HEAD
                         <!-- Service Type Badge -->
                         <c:choose>
                             <c:when test="${bookingType == 'experience'}">
@@ -667,6 +693,10 @@
                         <!-- Experience Service Info -->
                         <c:if test="${bookingType == 'experience' and not empty experience}">
                             <div class="service-info experience">
+=======
+                        <c:if test="${bookingType == 'experience'}">
+                            <div class="service-info">
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                                 <c:choose>
                                     <c:when test="${not empty experience.images}">
                                         <c:set var="firstImage" value="${fn:split(experience.images, ',')[0]}" />
@@ -684,6 +714,7 @@
                                     <h4>${experience.title}</h4>
                                     <p><i class="ri-map-pin-line me-1"></i> ${experience.location}</p>
                                     <p><i class="ri-user-star-line me-1"></i> Hướng dẫn viên ${experience.hostName}</p>
+<<<<<<< HEAD
                                     <p><i class="ri-group-line me-1"></i> Tối đa ${experience.maxGroupSize} người</p>
                                 </div>
                             </div>
@@ -757,6 +788,35 @@
                         </c:if>
 
                         <!-- Common Special Requests -->
+=======
+                                </div>
+                            </div>
+                        </c:if>
+                        <c:if test="${bookingType == 'accommodation'}">
+                            <div class="service-info">
+                                <h4>Lưu trú</h4>
+                                <p>Thông tin lưu trú sẽ được hiển thị ở đây</p>
+                            </div>
+                        </c:if>
+
+                        <div class="detail-row">
+                            <span class="detail-label">Ngày tham gia:</span>
+                            <span class="detail-value">
+                                <fmt:formatDate value="${formData.bookingDate}" pattern="EEEE, dd/MM/yyyy" />
+                            </span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">Thời gian:</span>
+                            <span class="detail-value">${formData.timeSlotDisplayName}</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <span class="detail-label">Số người tham gia:</span>
+                            <span class="detail-value">${formData.numberOfPeople} người</span>
+                        </div>
+
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         <c:if test="${not empty formData.specialRequests}">
                             <div class="detail-row">
                                 <span class="detail-label">Yêu cầu đặc biệt:</span>
@@ -803,6 +863,7 @@
                                 </div>
                                 <div>
                                     <div class="fw-bold">Thanh toán tiền mặt</div>
+<<<<<<< HEAD
                                     <small class="text-muted">
                                         <c:choose>
                                             <c:when test="${bookingType == 'experience'}">
@@ -816,6 +877,9 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </small>
+=======
+                                    <small class="text-muted">Thanh toán trực tiếp tại địa điểm</small>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                                 </div>
                             </label>
 
@@ -838,7 +902,11 @@
                             <input type="checkbox" id="agreeTerms" required>
                             <label for="agreeTerms" class="terms-text">
                                 Tôi đồng ý với <a href="${pageContext.request.contextPath}/terms" target="_blank">Điều khoản sử dụng</a> và
+<<<<<<< HEAD
                                 <a href="${pageContext.request.contextPath}/privacy" target="_blank">Chính sách bảo mật</a> của VietCulture.
+=======
+                                <a href="${pageContext.request.contextPath}/privacy" target="_blank">Chính sách bảo mật</a> của VietCareer.
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                                 Tôi hiểu rằng việc đặt chỗ này sẽ được xác nhận sau khi thanh toán thành công.
                             </label>
                         </div>
@@ -847,8 +915,11 @@
                     <!-- Action Buttons -->
                     <form id="confirmForm" action="${pageContext.request.contextPath}/booking" method="post">
                         <input type="hidden" name="action" id="formAction" value="confirm">
+<<<<<<< HEAD
                         <!-- Hidden field để xác định service type -->
                         <input type="hidden" name="serviceType" value="${bookingType}">
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
                         <div class="action-buttons">
                             <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
@@ -866,7 +937,11 @@
 
                             <button type="button" class="btn btn-primary" id="onlinePaymentBtn">
                                 <span class="btn-text">
+<<<<<<< HEAD
                                     <i class="ri-bank-card-line me-2"></i>Thanh Toán PayOS
+=======
+                                    <i class="ri-bank-card-line me-2"></i>Thanh Toán Online
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                                 </span>
                                 <span class="btn-loading d-none">
                                     <span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...
@@ -883,6 +958,7 @@
                             <i class="ri-calculator-line me-2"></i>Tóm tắt giá
                         </h4>
 
+<<<<<<< HEAD
                         <!-- Experience Pricing -->
                         <c:if test="${bookingType == 'experience'}">
                             <div class="price-row">
@@ -920,6 +996,23 @@
                                 </span>
                             </div>
                         </c:if>
+=======
+                        <div class="price-row">
+                            <span>
+                                <c:choose>
+                                    <c:when test="${bookingType == 'experience'}">
+                                        <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfPeople} người
+                                    </c:when>
+                                    <c:otherwise>
+                                        Giá cơ bản × ${formData.numberOfPeople} người
+                                    </c:otherwise>
+                                </c:choose>
+                            </span>
+                            <span>
+                                <fmt:formatNumber value="${formData.totalPrice - (formData.totalPrice * 0.05)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                            </span>
+                        </div>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
                         <div class="price-row">
                             <span>Phí dịch vụ (5%)</span>
@@ -982,13 +1075,18 @@
         </div>
 
         <!-- Scripts -->
+<<<<<<< HEAD
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+=======
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         <script>
             // Payment method selection
             const paymentMethods = document.querySelectorAll('.payment-method');
             const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
             const cashPaymentBtn = document.getElementById('cashPaymentBtn');
             const onlinePaymentBtn = document.getElementById('onlinePaymentBtn');
+<<<<<<< HEAD
 
             paymentMethods.forEach((method, index) => {
                 method.addEventListener('click', function () {
@@ -1002,12 +1100,23 @@
                     paymentRadios[index].checked = true;
 
                     // Update button visibility
+=======
+            const confirmForm = document.getElementById('confirmForm');
+            const agreeTerms = document.getElementById('agreeTerms');
+
+            paymentMethods.forEach((method, index) => {
+                method.addEventListener('click', function () {
+                    paymentMethods.forEach(m => m.classList.remove('selected'));
+                    this.classList.add('selected');
+                    paymentRadios[index].checked = true;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     updateButtonVisibility();
                 });
             });
 
             function updateButtonVisibility() {
                 const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+<<<<<<< HEAD
                 if (selectedMethod === 'cash') {
                     cashPaymentBtn.style.display = 'block';
                     onlinePaymentBtn.style.display = 'none';
@@ -1021,6 +1130,12 @@
             const confirmForm = document.getElementById('confirmForm');
             const agreeTerms = document.getElementById('agreeTerms');
 
+=======
+                cashPaymentBtn.style.display = selectedMethod === 'cash' ? 'block' : 'none';
+                onlinePaymentBtn.style.display = selectedMethod === 'online' ? 'block' : 'none';
+            }
+
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             function validateForm() {
                 if (!agreeTerms.checked) {
                     alert('Vui lòng đồng ý với điều khoản sử dụng để tiếp tục.');
@@ -1030,14 +1145,20 @@
             }
 
             function setFormAction(action) {
+<<<<<<< HEAD
                 // Validate form first
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 if (!validateForm()) {
                     return;
                 }
 
                 const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
+<<<<<<< HEAD
                 // Validate payment method matches action
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 if (action === 'payment' && selectedMethod !== 'online') {
                     alert('Vui lòng chọn phương thức thanh toán online.');
                     return;
@@ -1047,6 +1168,7 @@
                     return;
                 }
 
+<<<<<<< HEAD
                 // Set the correct action
                 if (action === 'payment') {
                     document.getElementById('formAction').value = 'payos-payment';
@@ -1058,6 +1180,12 @@
                 showLoadingState(action === 'confirm' ? 'cashPaymentBtn' : 'onlinePaymentBtn');
 
                 // Submit the form
+=======
+                // Sửa từ 'momo-payment' thành 'payos-payment'
+                document.getElementById('formAction').value = action === 'payment' ? 'payos-payment' : 'confirm';
+
+                showLoadingState(action === 'confirm' ? 'cashPaymentBtn' : 'onlinePaymentBtn');
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 confirmForm.submit();
             }
 
@@ -1075,13 +1203,19 @@
             document.addEventListener('DOMContentLoaded', function () {
                 updateButtonVisibility();
 
+<<<<<<< HEAD
                 // Cash payment button
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 cashPaymentBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     setFormAction('confirm');
                 });
 
+<<<<<<< HEAD
                 // Online payment button - Updated for PayOS
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 onlinePaymentBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     setFormAction('payment');

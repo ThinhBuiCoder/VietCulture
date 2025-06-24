@@ -25,7 +25,10 @@ import utils.PasswordUtils;
     "/admin/users/*"
 })
 public class AdminUserManagementServlet extends HttpServlet {
+<<<<<<< HEAD
 
+=======
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(AdminUserManagementServlet.class.getName());
 
     private UserDAO userDAO;
@@ -156,9 +159,13 @@ public class AdminUserManagementServlet extends HttpServlet {
             String pageParam = request.getParameter("page");
             if (pageParam != null && !pageParam.isEmpty()) {
                 page = Integer.parseInt(pageParam);
+<<<<<<< HEAD
                 if (page < 1) {
                     page = 1;
                 }
+=======
+                if (page < 1) page = 1;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             }
         } catch (NumberFormatException e) {
             // Use default page = 1
@@ -227,10 +234,17 @@ public class AdminUserManagementServlet extends HttpServlet {
         String password = request.getParameter("password");
 
         // Validate input
+<<<<<<< HEAD
         if (email == null || email.trim().isEmpty()
                 || fullName == null || fullName.trim().isEmpty()
                 || role == null || role.trim().isEmpty()
                 || password == null || password.trim().isEmpty()) {
+=======
+        if (email == null || email.trim().isEmpty() ||
+            fullName == null || fullName.trim().isEmpty() ||
+            role == null || role.trim().isEmpty() ||
+            password == null || password.trim().isEmpty()) {
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             sendJsonResponse(response, false, "Vui lòng điền đầy đủ thông tin bắt buộc.", null);
             return;
@@ -418,9 +432,13 @@ public class AdminUserManagementServlet extends HttpServlet {
      */
     private boolean isAdminAuthenticated(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
+<<<<<<< HEAD
         if (session == null) {
             return false;
         }
+=======
+        if (session == null) return false;
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         User user = (User) session.getAttribute("user");
         return user != null && "ADMIN".equals(user.getRole()); // Changed from userType to role
@@ -447,4 +465,8 @@ public class AdminUserManagementServlet extends HttpServlet {
             out.flush();
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
