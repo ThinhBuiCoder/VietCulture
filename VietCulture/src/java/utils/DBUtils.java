@@ -16,10 +16,14 @@ public class DBUtils {
 
     // Cấu hình kết nối database
 <<<<<<< HEAD
+<<<<<<< HEAD
     private static final String DB_URL = "jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB_b;encrypt=true;trustServerCertificate=true";
 =======
     private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+    private static final String DB_URL = "jdbc:sqlserver://DESKTOP-09LI1S6\\SQLEXPRESS;databaseName=TravelerDB_b;encrypt=true;trustServerCertificate=true";
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     private static final String USERNAME = "sa";
     private static final String PASSWORD = "123";
 

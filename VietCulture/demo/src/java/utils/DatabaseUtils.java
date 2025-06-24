@@ -8,7 +8,10 @@ import java.sql.SQLException;
  * Tiện ích kết nối cơ sở dữ liệu.
  */
 public class DatabaseUtils {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     // Thay đổi các giá trị sau cho phù hợp với cấu hình SQL Server của bạn
     private static final String DB_URL = "jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=payOS;encrypt=true;trustServerCertificate=true;";
     private static final String DB_USER = "sa";

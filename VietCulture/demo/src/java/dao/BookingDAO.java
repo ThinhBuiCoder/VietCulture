@@ -16,10 +16,18 @@ public class BookingDAO {
      */
     public int addBooking(Booking booking) {
         String sql = "INSERT INTO Bookings (customerName, email, phone, tourName, amount, paymentStatus, createdAt) "
+<<<<<<< HEAD
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtils.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+=======
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             stmt.setString(1, booking.getCustomerName());
             stmt.setString(2, booking.getEmail());
             stmt.setString(3, booking.getPhone());
@@ -48,12 +56,22 @@ public class BookingDAO {
      */
     public boolean updatePaymentStatus(int bookingID, String status) {
         String sql = "UPDATE Bookings SET paymentStatus = ? WHERE bookingID = ?";
+<<<<<<< HEAD
 
         try (Connection conn = DatabaseUtils.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, status);
             stmt.setInt(2, bookingID);
 
+=======
+        
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, status);
+            stmt.setInt(2, bookingID);
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             int affectedRows = stmt.executeUpdate();
             return affectedRows > 0;
         } catch (SQLException ex) {
@@ -68,9 +86,16 @@ public class BookingDAO {
      */
     public Booking getBookingById(int bookingID) {
         String sql = "SELECT * FROM Bookings WHERE bookingID = ?";
+<<<<<<< HEAD
 
         try (Connection conn = DatabaseUtils.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+=======
+        
+        try (Connection conn = DatabaseUtils.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             stmt.setInt(1, bookingID);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -91,4 +116,8 @@ public class BookingDAO {
         }
         return null;
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a

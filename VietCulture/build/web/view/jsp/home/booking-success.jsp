@@ -1195,34 +1195,67 @@
 
         .social-buttons {
             display: flex;
-            justify-content: center;
             gap: 10px;
-            margin-top: 15px;
+            justify-content: center;
         }
 
         .social-btn {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-decoration: none;
             color: white;
+            text-decoration: none;
             transition: var(--transition);
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
-
-        .social-btn.facebook { background: #3b5998; }
-        .social-btn.twitter { background: #1da1f2; }
-        .social-btn.instagram { background: #e4405f; }
-        .social-btn.zalo { background: #0068ff; }
 
         .social-btn:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             color: white;
         }
 
+<<<<<<< HEAD
+=======
+        .social-btn.facebook { background: #1877F2; }
+        .social-btn.twitter { background: #1DA1F2; }
+        .social-btn.instagram { background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D); }
+        .social-btn.zalo { background: #0068FF; }
+
+        /* Review Reminder */
+        .review-reminder {
+            background: linear-gradient(135deg, #FFF3CD, #FFEAA7);
+            border: 1px solid #FFE066;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .review-reminder h6 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .review-reminder p {
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        .review-reminder .btn-outline-warning {
+            border-color: #FFC107;
+            color: #856404;
+        }
+
+        .review-reminder .btn-outline-warning:hover {
+            background-color: #FFC107;
+            border-color: #FFC107;
+            color: #212529;
+        }
+
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         /* Success Alert */
         .success-alert {
             background: rgba(75, 181, 67, 0.1);
@@ -1443,7 +1476,7 @@
                         <div class="step-number">4</div>
                         <div class="step-content">
                             <h6>Tận hưởng trải nghiệm</h6>
-                            <p>Đến đúng giờ và tận hưởng trải nghiệm tuyệt vời! Đừng quên đánh giá sau khi hoàn thành.</p>
+                            <p>Đến đúng giờ và tận hưởng trải nghiệm tuyệt vời! Bạn có thể đánh giá ngay bây giờ hoặc sau khi hoàn thành trải nghiệm.</p>
                         </div>
                     </div>
                 </div>
@@ -1459,6 +1492,13 @@
                         <i class="ri-bookmark-line"></i>
                         Xem Đặt Chỗ Của Tôi
                     </a>
+                    
+                    <c:if test="${booking.isExperienceBooking()}">
+                        <a href="${pageContext.request.contextPath}/experiences/${booking.experienceId}#reviews" class="btn btn-warning">
+                            <i class="ri-star-line"></i>
+                            Đánh Giá Ngay
+                        </a>
+                    </c:if>
                     
                     <a href="${pageContext.request.contextPath}/experiences" class="btn btn-success">
                         <i class="ri-search-line"></i>
@@ -1516,6 +1556,23 @@
                         </div>
                     </c:if>
                 </div>
+
+                <!-- Review Reminder -->
+                <c:if test="${booking.isExperienceBooking()}">
+                    <div class="review-reminder">
+                        <h6>
+                            <i class="ri-star-fill me-2" style="color: #FFD700;"></i>
+                            Chia sẻ trải nghiệm
+                        </h6>
+                        <p class="small text-muted mb-3">
+                            Đánh giá của bạn giúp cải thiện dịch vụ và hỗ trợ cộng đồng du lịch
+                        </p>
+                        <a href="${pageContext.request.contextPath}/experiences/${booking.experienceId}#reviews" class="btn btn-outline-warning btn-sm w-100">
+                            <i class="ri-star-line me-1"></i>
+                            Đánh giá ngay
+                        </a>
+                    </div>
+                </c:if>
 
                 <!-- Contact Support -->
                 <div class="contact-info">

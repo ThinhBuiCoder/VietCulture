@@ -7,11 +7,15 @@
 <html lang="vi">
     <head>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Xác Nhận Đặt Chỗ | VietCulture</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<<<<<<< HEAD
 =======
     <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,6 +23,8 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         <link href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" rel="stylesheet">
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
         <style>
             :root {
@@ -83,6 +89,7 @@
             }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             /* Breadcrumb */
             .breadcrumb-container {
                 background-color: var(--light-color);
@@ -117,6 +124,8 @@
 
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             /* Main Content */
             .main-content {
                 min-height: 100vh;
@@ -249,6 +258,7 @@
             }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             .service-info.experience {
                 background: rgba(255, 56, 92, 0.1);
                 border-left: 4px solid var(--primary-color);
@@ -261,6 +271,8 @@
 
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             .service-image {
                 width: 100px;
                 height: 80px;
@@ -281,6 +293,7 @@
                 font-size: 0.9rem;
             }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
             /* Service Type Badge */
             .service-type-badge {
@@ -307,6 +320,8 @@
 
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             /* Price Summary */
             .price-summary {
                 background: var(--light-color);
@@ -573,6 +588,7 @@
             <div class="container">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
 <<<<<<< HEAD
+<<<<<<< HEAD
                     <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
 =======
@@ -627,6 +643,14 @@
 
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                    <span>VIETCULTURE</span>
+                </a>
+            </div>
+        </nav>
+
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         <!-- Header -->
         <div class="confirm-header">
             <div class="container">
@@ -674,6 +698,7 @@
                         </h3>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                         <!-- Service Type Badge -->
                         <c:choose>
                             <c:when test="${bookingType == 'experience'}">
@@ -697,6 +722,10 @@
                         <c:if test="${bookingType == 'experience'}">
                             <div class="service-info">
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                        <c:if test="${bookingType == 'experience'}">
+                            <div class="service-info">
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 <c:choose>
                                     <c:when test="${not empty experience.images}">
                                         <c:set var="firstImage" value="${fn:split(experience.images, ',')[0]}" />
@@ -714,6 +743,7 @@
                                     <h4>${experience.title}</h4>
                                     <p><i class="ri-map-pin-line me-1"></i> ${experience.location}</p>
                                     <p><i class="ri-user-star-line me-1"></i> Hướng dẫn viên ${experience.hostName}</p>
+<<<<<<< HEAD
 <<<<<<< HEAD
                                     <p><i class="ri-group-line me-1"></i> Tối đa ${experience.maxGroupSize} người</p>
                                 </div>
@@ -789,11 +819,17 @@
 
                         <!-- Common Special Requests -->
 =======
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 </div>
                             </div>
                         </c:if>
                         <c:if test="${bookingType == 'accommodation'}">
                             <div class="service-info">
+<<<<<<< HEAD
+=======
+                                <!-- TODO: Add accommodation details -->
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 <h4>Lưu trú</h4>
                                 <p>Thông tin lưu trú sẽ được hiển thị ở đây</p>
                             </div>
@@ -816,7 +852,10 @@
                             <span class="detail-value">${formData.numberOfPeople} người</span>
                         </div>
 
+<<<<<<< HEAD
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                         <c:if test="${not empty formData.specialRequests}">
                             <div class="detail-row">
                                 <span class="detail-label">Yêu cầu đặc biệt:</span>
@@ -864,6 +903,7 @@
                                 <div>
                                     <div class="fw-bold">Thanh toán tiền mặt</div>
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     <small class="text-muted">
                                         <c:choose>
                                             <c:when test="${bookingType == 'experience'}">
@@ -880,6 +920,9 @@
 =======
                                     <small class="text-muted">Thanh toán trực tiếp tại địa điểm</small>
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                                    <small class="text-muted">Thanh toán trực tiếp tại địa điểm</small>
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 </div>
                             </label>
 
@@ -903,16 +946,21 @@
                             <label for="agreeTerms" class="terms-text">
                                 Tôi đồng ý với <a href="${pageContext.request.contextPath}/terms" target="_blank">Điều khoản sử dụng</a> và
 <<<<<<< HEAD
+<<<<<<< HEAD
                                 <a href="${pageContext.request.contextPath}/privacy" target="_blank">Chính sách bảo mật</a> của VietCulture.
 =======
                                 <a href="${pageContext.request.contextPath}/privacy" target="_blank">Chính sách bảo mật</a> của VietCareer.
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                                <a href="${pageContext.request.contextPath}/privacy" target="_blank">Chính sách bảo mật</a> của VietCulture.
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 Tôi hiểu rằng việc đặt chỗ này sẽ được xác nhận sau khi thanh toán thành công.
                             </label>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
+<<<<<<< HEAD
                     <form id="confirmForm" action="${pageContext.request.contextPath}/booking" method="post">
                         <input type="hidden" name="action" id="formAction" value="confirm">
 <<<<<<< HEAD
@@ -920,6 +968,11 @@
                         <input type="hidden" name="serviceType" value="${bookingType}">
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                    <!-- Action Buttons -->
+                    <form id="confirmForm" action="${pageContext.request.contextPath}/booking" method="post">
+                        <input type="hidden" name="action" id="formAction" value="confirm">
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
                         <div class="action-buttons">
                             <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
@@ -938,10 +991,14 @@
                             <button type="button" class="btn btn-primary" id="onlinePaymentBtn">
                                 <span class="btn-text">
 <<<<<<< HEAD
+<<<<<<< HEAD
                                     <i class="ri-bank-card-line me-2"></i>Thanh Toán PayOS
 =======
                                     <i class="ri-bank-card-line me-2"></i>Thanh Toán Online
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                                    <i class="ri-bank-card-line me-2"></i>Thanh Toán Online
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                                 </span>
                                 <span class="btn-loading d-none">
                                     <span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...
@@ -958,6 +1015,7 @@
                             <i class="ri-calculator-line me-2"></i>Tóm tắt giá
                         </h4>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
                         <!-- Experience Pricing -->
                         <c:if test="${bookingType == 'experience'}">
@@ -997,6 +1055,8 @@
                             </div>
                         </c:if>
 =======
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                         <div class="price-row">
                             <span>
                                 <c:choose>
@@ -1012,7 +1072,10 @@
                                 <fmt:formatNumber value="${formData.totalPrice - (formData.totalPrice * 0.05)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
                             </span>
                         </div>
+<<<<<<< HEAD
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
                         <div class="price-row">
                             <span>Phí dịch vụ (5%)</span>
@@ -1076,10 +1139,14 @@
 
         <!-- Scripts -->
 <<<<<<< HEAD
+<<<<<<< HEAD
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 =======
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         <script>
             // Payment method selection
             const paymentMethods = document.querySelectorAll('.payment-method');
@@ -1087,6 +1154,9 @@
             const cashPaymentBtn = document.getElementById('cashPaymentBtn');
             const onlinePaymentBtn = document.getElementById('onlinePaymentBtn');
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
             paymentMethods.forEach((method, index) => {
                 method.addEventListener('click', function () {
@@ -1100,6 +1170,7 @@
                     paymentRadios[index].checked = true;
 
                     // Update button visibility
+<<<<<<< HEAD
 =======
             const confirmForm = document.getElementById('confirmForm');
             const agreeTerms = document.getElementById('agreeTerms');
@@ -1110,13 +1181,21 @@
                     this.classList.add('selected');
                     paymentRadios[index].checked = true;
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                     updateButtonVisibility();
                 });
             });
 
+<<<<<<< HEAD
             function updateButtonVisibility() {
                 const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 <<<<<<< HEAD
+=======
+
+            function updateButtonVisibility() {
+                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 if (selectedMethod === 'cash') {
                     cashPaymentBtn.style.display = 'block';
                     onlinePaymentBtn.style.display = 'none';
@@ -1130,6 +1209,7 @@
             const confirmForm = document.getElementById('confirmForm');
             const agreeTerms = document.getElementById('agreeTerms');
 
+<<<<<<< HEAD
 =======
                 cashPaymentBtn.style.display = selectedMethod === 'cash' ? 'block' : 'none';
                 onlinePaymentBtn.style.display = selectedMethod === 'online' ? 'block' : 'none';
@@ -1198,24 +1278,83 @@
                 btnLoading.classList.remove('d-none');
                 btn.disabled = true;
             }
+=======
+            function validateForm() {
+                if (!agreeTerms.checked) {
+                    alert('Vui lòng đồng ý với điều khoản sử dụng để tiếp tục.');
+                    return false;
+                }
+                return true;
+            }
+
+            function setFormAction(action) {
+                // Validate form first
+                if (!validateForm()) {
+                    return; // Don't prevent default, just return
+                }
+
+                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+                // Validate payment method matches action
+                if (action === 'payment' && selectedMethod !== 'online') {
+                    alert('Vui lòng chọn phương thức thanh toán online.');
+                    return;
+                }
+                if (action === 'confirm' && selectedMethod !== 'cash') {
+                    alert('Vui lòng chọn phương thức thanh toán tiền mặt.');
+                    return;
+                }
+
+                // Set the correct action
+                if (action === 'payment') {
+                    document.getElementById('formAction').value = 'momo-payment';
+                } else {
+                    document.getElementById('formAction').value = 'confirm';
+                }
+
+                // Show loading state
+                showLoadingState(action === 'confirm' ? 'cashPaymentBtn' : 'onlinePaymentBtn');
+
+                // Submit the form
+                confirmForm.submit();
+            }
+
+            function showLoadingState(buttonId) {
+                const btn = document.getElementById(buttonId);
+                const btnText = btn.querySelector('.btn-text');
+                const btnLoading = btn.querySelector('.btn-loading');
+
+                btnText.classList.add('d-none');
+                btnLoading.classList.remove('d-none');
+                btn.disabled = true;
+            }
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
             // Add click event listeners to buttons
             document.addEventListener('DOMContentLoaded', function () {
                 updateButtonVisibility();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                 // Cash payment button
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                // Cash payment button
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 cashPaymentBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     setFormAction('confirm');
                 });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
                 // Online payment button - Updated for PayOS
 =======
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                // Online payment button
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 onlinePaymentBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     setFormAction('payment');

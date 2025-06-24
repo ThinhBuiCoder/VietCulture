@@ -882,7 +882,56 @@ public class BookingDAO {
     public void deleteBooking(int bookingId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+<<<<<<< HEAD
 }
 =======
 }
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+
+    /**
+     * Check if a user has a COMPLETED booking for a specific experience.
+     */
+    public boolean hasUserCompletedExperienceBooking(int userId, int experienceId) throws SQLException {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM Bookings 
+            WHERE travelerId = ? 
+            AND experienceId = ? 
+            AND status = 'COMPLETED'
+        """;
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if a user has booked a specific experience (any status).
+     */
+    public boolean hasUserBookedExperience(int userId, int experienceId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+}
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a

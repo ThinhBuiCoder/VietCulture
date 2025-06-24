@@ -65,6 +65,7 @@
                 </library>
                 <library dirs="200">
 <<<<<<< HEAD
+<<<<<<< HEAD
                     <file>${file.reference.httpclient5-5.1.4.jar-1}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
@@ -97,6 +98,9 @@
 =======
                     <file>${file.reference.mssql-jdbc-12.8.1.jre8.jar}</file>
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+                    <file>${file.reference.jakarta.servlet-api-6.1.0.jar}</file>
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                     <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
             </web-module-libraries>

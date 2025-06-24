@@ -12,18 +12,30 @@ import java.io.BufferedReader;
 import java.io.IOException;
 
 /**
+<<<<<<< HEAD
  * Servlet xử lý callback webhook từ PayOS. Sử dụng manual JSON parsing để tránh
  * dependency issues với PayOS SDK 1.0.3
  */
 @WebServlet("/payos-callback")
 public class PayOSCallbackServlet extends HttpServlet {
 
+=======
+ * Servlet xử lý callback webhook từ PayOS.
+ * Sử dụng manual JSON parsing để tránh dependency issues với PayOS SDK 1.0.3
+ */
+@WebServlet("/payos-callback")
+public class PayOSCallbackServlet extends HttpServlet {
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     private BookingDAO bookingDAO = new BookingDAO();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         response.setCharacterEncoding("UTF-8");
 
         try {
@@ -48,7 +60,11 @@ public class PayOSCallbackServlet extends HttpServlet {
             // Xử lý webhook - sử dụng manual parsing thay vì SDK
             // Vì PayOS SDK 1.0.3 có Webhook constructor phức tạp
             boolean paymentProcessed = processPaymentWebhookManual(webhookBody);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             if (paymentProcessed) {
                 // Trả về 200 OK cho PayOS
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -61,7 +77,11 @@ public class PayOSCallbackServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error processing PayOS webhook: " + e.getMessage());
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             // Trả về lỗi 500
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error: " + e.getMessage());
@@ -75,7 +95,11 @@ public class PayOSCallbackServlet extends HttpServlet {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode rootNode = mapper.readTree(webhookBody);
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             // PayOS webhook structure:
             // {
             //   "code": "00",
@@ -94,16 +118,29 @@ public class PayOSCallbackServlet extends HttpServlet {
             //   },
             //   "signature": "..."
             // }
+<<<<<<< HEAD
             String code = rootNode.get("code").asText();
             JsonNode dataNode = rootNode.get("data");
 
+=======
+            
+            String code = rootNode.get("code").asText();
+            JsonNode dataNode = rootNode.get("data");
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             if (dataNode != null) {
                 long orderCode = dataNode.get("orderCode").asLong();
                 String dataCode = dataNode.has("code") ? dataNode.get("code").asText() : code;
                 String desc = dataNode.has("desc") ? dataNode.get("desc").asText() : "No description";
+<<<<<<< HEAD
 
                 int bookingID = (int) orderCode;
 
+=======
+                
+                int bookingID = (int) orderCode;
+                
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 // Cập nhật trạng thái thanh toán
                 String paymentStatus;
                 if ("00".equals(code) && "00".equals(dataCode)) {
@@ -122,12 +159,20 @@ public class PayOSCallbackServlet extends HttpServlet {
                     System.err.println("Failed to update payment status for booking: " + bookingID);
                     return false;
                 }
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             } else {
                 System.err.println("No data node found in webhook");
                 return false;
             }
+<<<<<<< HEAD
 
+=======
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         } catch (Exception e) {
             System.err.println("Error in manual webhook processing: " + e.getMessage());
             e.printStackTrace();
@@ -142,4 +187,8 @@ public class PayOSCallbackServlet extends HttpServlet {
         response.setContentType("text/plain;charset=UTF-8");
         response.getWriter().write("PayOS Callback endpoint is working!");
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a

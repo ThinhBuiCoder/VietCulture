@@ -10,7 +10,11 @@
         username="sa" 
         password="123"
         driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
+<<<<<<< HEAD
         url="jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true"
+=======
+        url="jdbc:sqlserver://DESKTOP-09LI1S6\\SQLEXPRESS;databaseName=TravelerDB_b;encrypt=true;trustServerCertificate=true"
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     />
     <!-- Trường hợp dùng cho máy riêng của bạn -->
     <!--

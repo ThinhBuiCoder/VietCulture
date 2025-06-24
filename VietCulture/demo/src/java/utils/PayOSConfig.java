@@ -6,7 +6,10 @@ import vn.payos.PayOS;
  * Cấu hình PayOS.
  */
 public class PayOSConfig {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     // Các thông tin xác thực từ PayOS (Client ID, Api Key, Checksum Key)
     public static final String CLIENT_ID = "283be80f-75a2-42d0-9328-29bf371ee4fa";
     public static final String API_KEY = "b1c4a6b9-5626-412b-8e30-da48c324368e";

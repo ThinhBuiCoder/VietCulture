@@ -4,6 +4,7 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <file>file:/D:/SU25/SWP391/Project/VietCulture/web/view/jsp/home/accommodation-detail.jsp</file>
             <file>file:/D:/SU25/SWP391/Project/VietCulture/web/view/jsp/home/home.jsp</file>
 =======
@@ -107,6 +108,21 @@
             <file>file:/D:/Project/Project/VietCulture/src/java/utils/EmailUtils.java</file>
             <file>file:/D:/Project/Project/VietCulture/web/view/jsp/admin/content/content-delete.jsp</file>
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/host/experiences/create.jsp</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/controller/RegisterServlet.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/META-INF/context.xml</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/controller/ReviewServlet.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/model/Review.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/utils/DBUtils.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/home/experiences.jsp</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/admin/content/moderation-overview.jsp</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/home/forgot-password.jsp</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/controller/BookingServlet.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/src/java/listener/DatabaseInitializationListener.java</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/host/experiences/manage.jsp</file>
+            <file>file:/D:/DOWNLOADS/Project_16_6/Project/VietCulture/web/view/jsp/home/experience-detail.jsp</file>
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         </group>
     </open-files>
 </project-private>

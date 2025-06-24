@@ -21,7 +21,10 @@ import java.time.LocalDateTime;
  */
 @WebServlet("/BookingServlet")
 public class BookingServlet extends HttpServlet {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     private BookingDAO bookingDAO = new BookingDAO();
 
     @Override
@@ -34,7 +37,11 @@ public class BookingServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -47,12 +54,21 @@ public class BookingServlet extends HttpServlet {
             String amountStr = request.getParameter("amount");
 
             // Validate dữ liệu đầu vào
+<<<<<<< HEAD
             if (customerName == null || customerName.trim().isEmpty()
                     || email == null || email.trim().isEmpty()
                     || phone == null || phone.trim().isEmpty()
                     || tourName == null || tourName.trim().isEmpty()
                     || amountStr == null || amountStr.trim().isEmpty()) {
 
+=======
+            if (customerName == null || customerName.trim().isEmpty() ||
+                email == null || email.trim().isEmpty() ||
+                phone == null || phone.trim().isEmpty() ||
+                tourName == null || tourName.trim().isEmpty() ||
+                amountStr == null || amountStr.trim().isEmpty()) {
+                
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 request.setAttribute("error", "Vui lòng điền đầy đủ thông tin");
                 request.getRequestDispatcher("booking.jsp").forward(request, response);
                 return;
@@ -94,7 +110,11 @@ public class BookingServlet extends HttpServlet {
             // Tạo item data với tên ngắn gọn
             String shortTourName = getTourShortName(tourName);
             ItemData item = ItemData.builder()
+<<<<<<< HEAD
                     .name(shortTourName) // Rút ngắn tên tour
+=======
+                    .name(shortTourName)  // Rút ngắn tên tour
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                     .quantity(1)
                     .price(amount.intValue())
                     .build();
@@ -106,11 +126,19 @@ public class BookingServlet extends HttpServlet {
 
             // Tạo payment data với description ngắn (≤ 25 ký tự)
             String shortDescription = "Tour #" + bookingID;  // Ví dụ: "Tour #123" = 8 ký tự
+<<<<<<< HEAD
 
             PaymentData paymentData = PaymentData.builder()
                     .orderCode((long) bookingID)
                     .amount(amount.intValue())
                     .description(shortDescription) // ≤ 25 ký tự
+=======
+            
+            PaymentData paymentData = PaymentData.builder()
+                    .orderCode((long) bookingID)
+                    .amount(amount.intValue())
+                    .description(shortDescription)  // ≤ 25 ký tự
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                     .returnUrl(returnUrl)
                     .cancelUrl(cancelUrl)
                     .item(item)
@@ -135,7 +163,11 @@ public class BookingServlet extends HttpServlet {
             request.getRequestDispatcher("booking.jsp").forward(request, response);
         }
     }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     /**
      * Rút ngắn tên tour để phù hợp với PayOS item name requirements
      */
@@ -153,4 +185,8 @@ public class BookingServlet extends HttpServlet {
             return tourName.length() > 20 ? tourName.substring(0, 20) : tourName;
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a

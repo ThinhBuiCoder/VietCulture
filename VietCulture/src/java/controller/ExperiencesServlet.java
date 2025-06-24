@@ -5,19 +5,29 @@ import dao.RegionDAO;
 import dao.CityDAO;
 import dao.CategoryDAO;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import dao.FavoriteDAO;
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+import dao.BookingDAO;
+import dao.ReviewDAO;
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 import model.Experience;
 import model.Region;
 import model.City;
 import model.Category;
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 import model.User;
 import service.FavoriteService;
 import utils.DBUtils;
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+=======
+import model.User;
+import model.Review;
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -25,6 +35,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import jakarta.servlet.http.HttpSession;
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -66,9 +80,14 @@ public class ExperiencesServlet extends HttpServlet {
     private CityDAO cityDAO;
     private CategoryDAO categoryDAO;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
     private FavoriteService favoriteService;
+=======
+    private BookingDAO bookingDAO;
+    private ReviewDAO reviewDAO;
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     
 >>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     @Override
@@ -84,6 +103,11 @@ public class ExperiencesServlet extends HttpServlet {
             cityDAO = new CityDAO();
             categoryDAO = new CategoryDAO();
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+            bookingDAO = new BookingDAO();
+            reviewDAO = new ReviewDAO();
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize DAOs", e);
             throw new ServletException("Failed to initialize servlet", e);
@@ -246,6 +270,22 @@ public class ExperiencesServlet extends HttpServlet {
             // Set experience data
             request.setAttribute("experience", experience);
 
+<<<<<<< HEAD
+=======
+            // Lấy danh sách review cho experience này
+            List<Review> reviews = reviewDAO.getReviewsByExperienceId(experienceId);
+            request.setAttribute("reviews", reviews);
+            
+            // Check if user has booked this experience
+            HttpSession session = request.getSession(false);
+            User user = (session != null) ? (User) session.getAttribute("user") : null;
+            boolean hasBooked = false;
+            if (user != null) {
+                hasBooked = bookingDAO.hasUserBookedExperience(user.getUserId(), experienceId);
+            }
+            request.setAttribute("hasBooked", hasBooked);
+            
+>>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             // Log access
             LOGGER.info("Experience detail accessed - ID: " + experienceId
                     + ", Title: " + experience.getTitle());
