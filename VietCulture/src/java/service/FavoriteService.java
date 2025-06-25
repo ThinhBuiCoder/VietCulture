@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import static service.FavoriteService.ItemType.values;
 
 public class FavoriteService {
     

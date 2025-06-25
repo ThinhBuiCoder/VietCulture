@@ -7,7 +7,6 @@ import java.util.Date;
  * Lớp mô hình đại diện cho một trải nghiệm du lịch
  */
 public class Experience {
-
     private int experienceId;
     private int hostId;
     private String title;
@@ -34,20 +33,19 @@ public class Experience {
     private boolean isFlagged = false;
     private String flagReason;
     private String firstImage;
-    private String categoryName;
+private String categoryName;
 
     // Các trường bổ sung để hiển thị
     private String cityName;
     private String hostName;
 
     // Constructor mặc định
-    public Experience() {
-    }
+    public Experience() {}
 
     // Constructor với các trường bắt buộc
-    public Experience(int hostId, String title, String description, String location,
-            int cityId, String type, double price, int maxGroupSize,
-            Date duration, String difficulty, String language) {
+    public Experience(int hostId, String title, String description, String location, 
+                     int cityId, String type, double price, int maxGroupSize, 
+                     Date duration, String difficulty, String language) {
         this.hostId = hostId;
         this.title = title;
         this.description = description;
@@ -64,18 +62,18 @@ public class Experience {
         this.totalBookings = 0;
     }
 
-    public void setFirstImage(String firstImage) {
-        this.firstImage = firstImage;
-    }
 
-    public String getCategoryName() {
-        return categoryName;
-    }
+public void setFirstImage(String firstImage) {
+    this.firstImage = firstImage;
+}
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
-    }
+public String getCategoryName() {
+    return categoryName;
+}
 
+public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
+}
     // Getters và Setters cho các trường liên quan đến báo cáo và xóa
     public int getReportCount() {
         return reportCount;
@@ -131,18 +129,10 @@ public class Experience {
     }
 
     public String getStatusForAdmin() {
-        if (isDeleted) {
-            return "Đã xóa";
-        }
-        if (isFlagged) {
-            return "Bị đánh dấu";
-        }
-        if (reportCount > 0) {
-            return "Bị báo cáo";
-        }
-        if (!isActive) {
-            return "Chờ duyệt";
-        }
+        if (isDeleted) return "Đã xóa";
+        if (isFlagged) return "Bị đánh dấu";
+        if (reportCount > 0) return "Bị báo cáo";
+        if (!isActive) return "Chờ duyệt";
         return "Hoạt động";
     }
 
@@ -366,19 +356,19 @@ public class Experience {
 
     @Override
     public String toString() {
-        return "Experience{"
-                + "experienceId=" + experienceId
-                + ", hostId=" + hostId
-                + ", title='" + title + '\''
-                + ", location='" + location + '\''
-                + ", type='" + type + '\''
-                + ", price=" + price
-                + ", maxGroupSize=" + maxGroupSize
-                + ", difficulty='" + difficulty + '\''
-                + ", isActive=" + isActive
-                + ", averageRating=" + averageRating
-                + ", totalBookings=" + totalBookings
-                + '}';
+        return "Experience{" +
+                "experienceId=" + experienceId +
+                ", hostId=" + hostId +
+                ", title='" + title + '\'' +
+                ", location='" + location + '\'' +
+                ", type='" + type + '\'' +
+                ", price=" + price +
+                ", maxGroupSize=" + maxGroupSize +
+                ", difficulty='" + difficulty + '\'' +
+                ", isActive=" + isActive +
+                ", averageRating=" + averageRating +
+                ", totalBookings=" + totalBookings +
+                '}';
     }
 
     public void setHost(User host) {
@@ -390,5 +380,10 @@ public class Experience {
         this.cityId = city.getCityId();
         this.cityName = city.getVietnameseName();
     }
+
+    public void setCategoryId(int parseInt) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
 
 }
