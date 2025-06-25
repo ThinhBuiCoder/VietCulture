@@ -20,10 +20,6 @@ import java.util.logging.Logger;
 
 @WebServlet("/admin/dashboard")
 public class AdminDashboardServlet extends HttpServlet {
-<<<<<<< HEAD
-
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(AdminDashboardServlet.class.getName());
 
     private UserDAO userDAO;
@@ -68,13 +64,7 @@ public class AdminDashboardServlet extends HttpServlet {
 
     private boolean isAdminAuthenticated(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
-<<<<<<< HEAD
-        if (session == null) {
-            return false;
-        }
-=======
         if (session == null) return false;
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         User user = (User) session.getAttribute("user");
         return user != null && "ADMIN".equals(user.getRole()); // Updated to role
@@ -128,10 +118,6 @@ public class AdminDashboardServlet extends HttpServlet {
     }
 
     public static class Activity {
-<<<<<<< HEAD
-
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private String action;
         private String description;
         private java.util.Date createdAt;
@@ -153,68 +139,25 @@ public class AdminDashboardServlet extends HttpServlet {
 
         private String getIconForType(String type) {
             switch (type != null ? type.toLowerCase() : "") {
-<<<<<<< HEAD
-                case "success":
-                    return "fa-check-circle";
-                case "warning":
-                    return "fa-exclamation-triangle";
-                case "error":
-                    return "fa-times-circle";
-                case "info":
-                    return "fa-info-circle";
-                default:
-                    return "fa-circle";
-=======
                 case "success": return "fa-check-circle";
                 case "warning": return "fa-exclamation-triangle";
                 case "error": return "fa-times-circle";
                 case "info": return "fa-info-circle";
                 default: return "fa-circle";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             }
         }
 
         public String getStatusClass() {
             switch (status != null ? status.toLowerCase() : "") {
-<<<<<<< HEAD
-                case "success":
-                    return "text-success";
-                case "warning":
-                    return "text-warning";
-                case "error":
-                    return "text-danger";
-                case "pending":
-                    return "text-warning";
-                default:
-                    return "text-info";
-=======
                 case "success": return "text-success";
                 case "warning": return "text-warning";
                 case "error": return "text-danger";
                 case "pending": return "text-warning";
                 default: return "text-info";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             }
         }
 
         public String getTimeAgo() {
-<<<<<<< HEAD
-            if (createdAt == null) {
-                return "Vừa xong";
-            }
-            long diffInMillies = System.currentTimeMillis() - createdAt.getTime();
-            long diffInMinutes = diffInMillies / (60 * 1000);
-            if (diffInMinutes < 1) {
-                return "Vừa xong";
-            }
-            if (diffInMinutes < 60) {
-                return diffInMinutes + " phút trước";
-            }
-            long diffInHours = diffInMinutes / 60;
-            if (diffInHours < 24) {
-                return diffInHours + " giờ trước";
-            }
-=======
             if (createdAt == null) return "Vừa xong";
             long diffInMillies = System.currentTimeMillis() - createdAt.getTime();
             long diffInMinutes = diffInMillies / (60 * 1000);
@@ -222,88 +165,11 @@ public class AdminDashboardServlet extends HttpServlet {
             if (diffInMinutes < 60) return diffInMinutes + " phút trước";
             long diffInHours = diffInMinutes / 60;
             if (diffInHours < 24) return diffInHours + " giờ trước";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             long diffInDays = diffInHours / 24;
             return diffInDays + " ngày trước";
         }
 
         // Getters and setters
-<<<<<<< HEAD
-        public String getAction() {
-            return action;
-        }
-
-        public void setAction(String action) {
-            this.action = action;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public java.util.Date getCreatedAt() {
-            return createdAt;
-        }
-
-        public void setCreatedAt(java.util.Date createdAt) {
-            this.createdAt = createdAt;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public void setStatus(String status) {
-            this.status = status;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-            this.icon = getIconForType(type);
-        }
-
-        public String getUserName() {
-            return userName;
-        }
-
-        public void setUserName(String userName) {
-            this.userName = userName;
-        }
-
-        public String getUserRole() {
-            return userRole;
-        } // Updated to userRole
-
-        public void setUserRole(String userRole) {
-            this.userRole = userRole;
-        }
-
-        public String getUserAvatar() {
-            return userAvatar;
-        }
-
-        public void setUserAvatar(String userAvatar) {
-            this.userAvatar = userAvatar;
-        }
-
-        public String getIcon() {
-            return icon;
-        }
-
-        public void setIcon(String icon) {
-            this.icon = icon;
-        }
-    }
-}
-=======
         public String getAction() { return action; }
         public void setAction(String action) { this.action = action; }
         public String getDescription() { return description; }
@@ -324,4 +190,3 @@ public class AdminDashboardServlet extends HttpServlet {
         public void setIcon(String icon) { this.icon = icon; }
     }
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

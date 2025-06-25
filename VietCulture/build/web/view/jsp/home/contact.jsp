@@ -20,11 +20,7 @@
             .dropdown-item i {
                 color: #10466C;
             }
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             .navbar-brand img {
                 height: 50px !important;
                 width: auto !important;
@@ -33,11 +29,7 @@
                 object-fit: contain !important;
                 display: inline-block !important;
             }
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             :root {
                 --primary-color: #FF385C;
                 --secondary-color: #83C5BE;
@@ -586,7 +578,7 @@
         <nav class="custom-navbar">
             <div class="container">
                 <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                     <span>VIETCULTURE</span>
                 </a>
 
@@ -696,13 +688,8 @@
                             </div>
                             <h4>Địa Chỉ</h4>
                             <p>Khu đô thị FPT City<br>
-<<<<<<< HEAD
                                 Ngũ Hành Sơn, Đà Nẵng<br>
                                 550000, Việt Nam</p>
-=======
-                            Ngũ Hành Sơn, Đà Nẵng<br>
-                            550000, Việt Nam</p>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -712,13 +699,8 @@
                             </div>
                             <h4>Điện Thoại</h4>
                             <p>Hotline: <strong>1900 1234</strong><br>
-<<<<<<< HEAD
                                 Di động: <strong>0123 456 789</strong><br>
                                 Fax: (0236) 3731 234</p>
-=======
-                            Di động: <strong>0123 456 789</strong><br>
-                            Fax: (0236) 3731 234</p>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -728,13 +710,8 @@
                             </div>
                             <h4>Email</h4>
                             <p>Chung: <strong>f5@vietculture.vn</strong><br>
-<<<<<<< HEAD
                                 Hỗ trợ: <strong>support@vietculture.vn</strong><br>
                                 Kinh doanh: <strong>business@vietculture.vn</strong></p>
-=======
-                            Hỗ trợ: <strong>support@vietculture.vn</strong><br>
-                            Kinh doanh: <strong>business@vietculture.vn</strong></p>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         </div>
                     </div>
                 </div>
@@ -773,11 +750,7 @@
                                     <div class="col-12">
                                         <label for="message" class="form-label">Tin Nhắn *</label>
                                         <textarea class="form-control" id="message" name="message" rows="6" required 
-<<<<<<< HEAD
                                                   placeholder="Vui lòng mô tả chi tiết yêu cầu của bạn..."></textarea>
-=======
-                                                placeholder="Vui lòng mô tả chi tiết yêu cầu của bạn..."></textarea>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                                     </div>
                                     <div class="col-12">
                                         <div class="form-check">
@@ -804,11 +777,7 @@
         <section class="map-section">
             <div class="container">
                 <h2 class="text-center mb-5">Tìm Chúng Tôi Trên Bản Đồ</h2>
-<<<<<<< HEAD
 
-=======
-                
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 <div class="map-container">
                     <iframe class="map-iframe" 
                             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3835.856168121187!2d108.25831631533315!3d15.968885088969625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3142116949840599%3A0x365b35580f52e8d5!2sFPT%20University%20Danang!5e0!3m2!1sen!2s!4v1635789123456!5m2!1sen!2s"
@@ -816,11 +785,7 @@
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">
                     </iframe>
-<<<<<<< HEAD
 
-=======
-                    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                     <div class="map-overlay">
                         <h5><i class="ri-map-pin-fill text-primary me-2"></i>VietCulture Office</h5>
                         <p><i class="ri-building-line me-2"></i>Đại học FPT Đà Nẵng</p>
@@ -883,11 +848,7 @@
                                     </div>
                                 </div>
                             </div>
-<<<<<<< HEAD
 
-=======
-                            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
@@ -900,11 +861,7 @@
                                     </div>
                                 </div>
                             </div>
-<<<<<<< HEAD
 
-=======
-                            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
@@ -917,11 +874,7 @@
                                     </div>
                                 </div>
                             </div>
-<<<<<<< HEAD
 
-=======
-                            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                             <div class="accordion-item">
                                 <h2 class="accordion-header">
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
@@ -990,7 +943,6 @@
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-<<<<<<< HEAD
                             // Dropdown menu functionality
                             const menuIcon = document.querySelector('.menu-icon');
                             const dropdownMenu = document.querySelector('.dropdown-menu-custom');
@@ -1120,136 +1072,6 @@
                                     observer.observe(el);
                                 });
                             });
-=======
-            // Dropdown menu functionality
-            const menuIcon = document.querySelector('.menu-icon');
-            const dropdownMenu = document.querySelector('.dropdown-menu-custom');
-
-            if (menuIcon && dropdownMenu) {
-                menuIcon.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    dropdownMenu.classList.toggle('show');
-                });
-
-                document.addEventListener('click', function () {
-                    dropdownMenu.classList.remove('show');
-                });
-
-                dropdownMenu.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                });
-            }
-
-            // Navbar scroll effect
-            window.addEventListener('scroll', function () {
-                const navbar = document.querySelector('.custom-navbar');
-                if (window.scrollY > 50) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
-            });
-
-            // Form validation and submission
-            document.querySelector('form').addEventListener('submit', function(e) {
-                const name = document.getElementById('fullName').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const subject = document.getElementById('subject').value;
-                const message = document.getElementById('message').value.trim();
-                const agreeTerms = document.getElementById('agreeTerms').checked;
-
-                if (!name || !email || !subject || !message || !agreeTerms) {
-                    e.preventDefault();
-                    alert('Vui lòng điền đầy đủ thông tin và đồng ý với điều khoản sử dụng.');
-                    return;
-                }
-
-                // Email validation
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    e.preventDefault();
-                    alert('Vui lòng nhập địa chỉ email hợp lệ.');
-                    return;
-                }
-
-                // Phone validation (if provided)
-                const phone = document.getElementById('phone').value.trim();
-                if (phone) {
-                    const phoneRegex = /^[0-9+\-\s()]{10,15}$/;
-                    if (!phoneRegex.test(phone)) {
-                        e.preventDefault();
-                        alert('Vui lòng nhập số điện thoại hợp lệ.');
-                        return;
-                    }
-                }
-            });
-
-            // Smooth scrolling for anchor links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href').substring(1);
-                    if (targetId === '') return;
-
-                    const targetElement = document.getElementById(targetId);
-                    if (targetElement) {
-                        window.scrollTo({
-                            top: targetElement.offsetTop - 100,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
-            });
-
-            // Auto-hide success message after 5 seconds
-            const successCard = document.querySelector('.success-card');
-            if (successCard) {
-                setTimeout(() => {
-                    successCard.style.display = 'none';
-                }, 5000);
-            }
-
-            // Add loading state to form submission
-            document.querySelector('form button[type="submit"]').addEventListener('click', function() {
-                const btn = this;
-                const originalText = btn.innerHTML;
-                
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="ri-loader-4-line me-2"></i>Đang gửi...';
-                    btn.disabled = true;
-                    
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
-                    }, 2000);
-                }, 100);
-            });
-
-            // Initialize page animations
-            document.addEventListener('DOMContentLoaded', function() {
-                // Animate contact cards on scroll
-                const observerOptions = {
-                    threshold: 0.1,
-                    rootMargin: '0px 0px -50px 0px'
-                };
-
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            entry.target.style.opacity = '1';
-                            entry.target.style.transform = 'translateY(0)';
-                        }
-                    });
-                }, observerOptions);
-
-                document.querySelectorAll('.contact-info-card, .contact-form').forEach(el => {
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(30px)';
-                    el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                    observer.observe(el);
-                });
-            });
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         </script>
     </body>
 </html>

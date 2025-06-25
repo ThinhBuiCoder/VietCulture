@@ -7,10 +7,7 @@ import java.util.Date;
  * Lớp mô hình đại diện cho một đánh giá (review) trong hệ thống
  */
 public class Review {
-<<<<<<< HEAD
 
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private int reviewId;
     private Integer experienceId; // Nullable, liên kết với trải nghiệm
     private Integer accommodationId; // Nullable, liên kết với chỗ ở
@@ -38,12 +35,8 @@ public class Review {
     private String accommodationName;
 
     // Constructor mặc định
-<<<<<<< HEAD
     public Review() {
     }
-=======
-    public Review() {}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
     // Constructor với các trường cơ bản
     public Review(int travelerId, int rating, String comment) {
@@ -237,10 +230,6 @@ public class Review {
     }
 
     // Các phương thức hỗ trợ
-<<<<<<< HEAD
-=======
-
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Kiểm tra xem review có bị báo cáo hay không
      */
@@ -252,7 +241,6 @@ public class Review {
      * Lấy trạng thái review cho admin
      */
     public String getStatusForAdmin() {
-<<<<<<< HEAD
         if (isDeleted) {
             return "Đã xóa";
         }
@@ -265,12 +253,6 @@ public class Review {
         if (!isVisible) {
             return "Chờ duyệt";
         }
-=======
-        if (isDeleted) return "Đã xóa";
-        if (isFlagged) return "Bị đánh dấu";
-        if (reportCount > 0) return "Bị báo cáo";
-        if (!isVisible) return "Chờ duyệt";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         return "Hiển thị";
     }
 
@@ -326,7 +308,6 @@ public class Review {
      */
     public String getRatingText() {
         switch (rating) {
-<<<<<<< HEAD
             case 5:
                 return "Xuất sắc";
             case 4:
@@ -339,14 +320,6 @@ public class Review {
                 return "Rất kém";
             default:
                 return "Chưa đánh giá";
-=======
-            case 5: return "Xuất sắc";
-            case 4: return "Tốt";
-            case 3: return "Trung bình";
-            case 2: return "Kém";
-            case 1: return "Rất kém";
-            default: return "Chưa đánh giá";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         }
     }
 
@@ -409,7 +382,6 @@ public class Review {
 
     @Override
     public String toString() {
-<<<<<<< HEAD
         return "Review{"
                 + "reviewId=" + reviewId
                 + ", rating=" + rating
@@ -423,18 +395,3 @@ public class Review {
                 + '}';
     }
 }
-=======
-        return "Review{" +
-                "reviewId=" + reviewId +
-                ", rating=" + rating +
-                ", comment='" + (comment != null ? getShortComment(50) : "") + '\'' +
-                ", experienceId=" + experienceId +
-                ", accommodationId=" + accommodationId +
-                ", travelerName='" + (travelerName != null ? travelerName : "") + '\'' +
-                ", reviewType='" + getReviewTypeText() + '\'' +
-                ", isVisible=" + isVisible +
-                ", isDeleted=" + isDeleted +
-                '}';
-    }
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

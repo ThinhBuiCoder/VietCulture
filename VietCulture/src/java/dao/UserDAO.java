@@ -11,10 +11,6 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 public class UserDAO {
-<<<<<<< HEAD
-
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
 
     /**
@@ -31,12 +27,8 @@ public class UserDAO {
             WHERE email = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -58,32 +50,6 @@ public class UserDAO {
     /**
      * Get user by ID
      */
-<<<<<<< HEAD
-    public User getUserById(int userId) throws SQLException {
-        String sql = """
-            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
-                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
-                   businessName, businessType, businessAddress, businessDescription,
-                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
-                   permissions, emailVerified, verificationToken, tokenExpiry
-            FROM Users 
-            WHERE userId = ?
-        """;
-
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, userId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapUserFromResultSet(rs);
-                }
-            }
-        }
-        return null;
-    }
-
-=======
 public User getUserById(int userId) throws SQLException {
     String sql = """
         SELECT userId, email, fullName, role, phone, createdAt, 
@@ -137,7 +103,6 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     
     return user;
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Create new user
      */
@@ -151,12 +116,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getPassword());
@@ -218,12 +179,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE email = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -250,12 +207,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE verificationToken = ? AND emailVerified = 0
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, token);
 
@@ -278,12 +231,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE userId = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -305,12 +254,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE userId = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, token);
             ps.setTimestamp(2, new java.sql.Timestamp(expiry.getTime()));
@@ -338,12 +283,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE userId = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, user.getEmail());
             ps.setString(2, user.getFullName());
@@ -382,12 +323,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean updatePassword(int userId, String newPassword) throws SQLException {
         String sql = "UPDATE Users SET password = ? WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             // Hash the new password
             String hashedPassword = utils.PasswordUtils.hashPasswordWithSalt(newPassword);
@@ -420,12 +357,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean updateAvatar(int userId, String avatarUrl) throws SQLException {
         String sql = "UPDATE Users SET avatar = ? WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, avatarUrl);
             ps.setInt(2, userId);
@@ -444,12 +377,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public void updateFullName(int userId, String fullName) throws SQLException {
         String sql = "UPDATE Users SET fullName = ? WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, fullName);
             ps.setInt(2, userId);
@@ -470,12 +399,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean emailExists(String email) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
 
@@ -494,12 +419,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean emailExistsForOtherUser(String email, int currentUserId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE email = ? AND userId != ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, email);
             ps.setInt(2, currentUserId);
@@ -529,12 +450,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             ORDER BY createdAt DESC
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, role);
 
@@ -553,12 +470,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean updateUserStatus(int userId, boolean isActive) throws SQLException {
         String sql = "UPDATE Users SET isActive = ? WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setBoolean(1, isActive);
             ps.setInt(2, userId);
@@ -577,12 +490,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean softDeleteUser(int userId, String reason) throws SQLException {
         String sql = "UPDATE Users SET isActive = 0 WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -601,12 +510,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean restoreUser(int userId) throws SQLException {
         String sql = "UPDATE Users SET isActive = 1 WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -624,12 +529,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public boolean hardDeleteUser(int userId) throws SQLException {
         String sql = "DELETE FROM Users WHERE userId = ?";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
 
@@ -658,12 +559,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
                  WHERE a.hostId = ? AND b.status = 'COMPLETED') as totalRevenue
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, userId);
             ps.setInt(2, userId);
@@ -702,12 +599,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
 
         sqlBuilder.append(" ORDER BY createdAt DESC");
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             String searchPattern = "%" + keyword + "%";
             ps.setString(1, searchPattern);
@@ -732,13 +625,9 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public int getTotalUsersCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE isActive = 1";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             if (rs.next()) {
                 return rs.getInt(1);
@@ -753,12 +642,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public int getUsersCountByRole(String role) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Users WHERE role = ? AND isActive = 1";
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, role);
 
@@ -820,12 +705,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
         params.add((page - 1) * pageSize);
         params.add(pageSize);
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -875,12 +756,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             params.add(searchPattern);
         }
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
@@ -908,13 +785,9 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             GROUP BY role
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             while (rs.next()) {
                 counts.put(rs.getString("role"), rs.getInt("count"));
@@ -948,12 +821,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE userId = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, newRole);
             ps.setInt(2, userId);
@@ -997,13 +866,9 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
                 """;
         }
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             if (rs.next()) {
                 int currentPeriod = rs.getInt("current_period");
@@ -1033,12 +898,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = months - 1; i >= 0; i--) {
                 ps.setInt(1, -i - 1);
@@ -1070,12 +931,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             AND createdAt < DATEADD(MONTH, ?, GETDATE())
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = months - 1; i >= 0; i--) {
                 ps.setInt(1, -i - 1);
@@ -1106,13 +963,9 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             GROUP BY region
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             while (rs.next()) {
                 String regionName = rs.getString("region");
@@ -1134,12 +987,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE userId = ? AND role = 'HOST'
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setDouble(1, averageRating);
             ps.setInt(2, totalExperiences);
@@ -1171,12 +1020,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, offset);
             ps.setInt(2, limit);
@@ -1224,12 +1069,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
         parameters.add(offset);
         parameters.add(limit);
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             for (int i = 0; i < parameters.size(); i++) {
                 ps.setObject(i + 1, parameters.get(i));
@@ -1253,12 +1094,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE isActive = 1 AND role = 'HOST' AND region = ?
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setString(1, region);
 
@@ -1280,12 +1117,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             WHERE isActive = 1 AND role = 'HOST'
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -1312,12 +1145,8 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
             ORDER BY averageRating DESC, totalExperiences DESC
         """;
 
-<<<<<<< HEAD
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-=======
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
             ps.setInt(1, limit);
 
@@ -1371,8 +1200,6 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
         return user;
     }
 
-<<<<<<< HEAD
-=======
     public int getRecentHostsCount(int days) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
@@ -1463,25 +1290,15 @@ public boolean updateHostBusinessInfo(int userId, String businessName, String bu
     }
     return false;
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Inner class for user statistics
      */
     public static class UserStats {
-<<<<<<< HEAD
-
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private int totalBookings;
         private int totalExperiences;
         private double totalRevenue;
 
-<<<<<<< HEAD
-        public UserStats() {
-        }
-=======
         public UserStats() {}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         public UserStats(int totalBookings, int totalExperiences, double totalRevenue) {
             this.totalBookings = totalBookings;
@@ -1489,42 +1306,6 @@ public boolean updateHostBusinessInfo(int userId, String businessName, String bu
             this.totalRevenue = totalRevenue;
         }
 
-<<<<<<< HEAD
-        public int getTotalBookings() {
-            return totalBookings;
-        }
-
-        public void setTotalBookings(int totalBookings) {
-            this.totalBookings = totalBookings;
-        }
-
-        public int getTotalExperiences() {
-            return totalExperiences;
-        }
-
-        public void setTotalExperiences(int totalExperiences) {
-            this.totalExperiences = totalExperiences;
-        }
-
-        public double getTotalRevenue() {
-            return totalRevenue;
-        }
-
-        public void setTotalRevenue(double totalRevenue) {
-            this.totalRevenue = totalRevenue;
-        }
-
-        @Override
-        public String toString() {
-            return "UserStats{"
-                    + "totalBookings=" + totalBookings
-                    + ", totalExperiences=" + totalExperiences
-                    + ", totalRevenue=" + totalRevenue
-                    + '}';
-        }
-    }
-}
-=======
         public int getTotalBookings() { return totalBookings; }
         public void setTotalBookings(int totalBookings) { this.totalBookings = totalBookings; }
 
@@ -1544,4 +1325,3 @@ public boolean updateHostBusinessInfo(int userId, String businessName, String bu
         }
     }
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

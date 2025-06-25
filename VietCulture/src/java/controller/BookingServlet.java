@@ -8,15 +8,12 @@ import model.Experience;
 import model.Accommodation;
 import model.User;
 import utils.EmailUtils;
-<<<<<<< HEAD
 import utils.PayOSConfig;
 
 import vn.payos.PayOS;
 import vn.payos.type.CheckoutResponseData;
 import vn.payos.type.ItemData;
 import vn.payos.type.PaymentData;
-=======
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -37,19 +34,8 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 /**
-<<<<<<< HEAD
  * Enhanced BookingServlet with improved Accommodation handling
  * Maintains all existing Experience functionality while enhancing Accommodation support
-=======
- * 
- * Supported URLs:
- * - GET /booking: Hiển thị form đặt chỗ
- * - GET /booking/confirm: Hiển thị trang xác nhận
- * - GET /booking/momo-payment: Hiển thị trang thanh toán MoMo QR
- * - GET /booking/success: Hiển thị trang thành công
- * - POST /booking: Tạo booking mới
- * - POST /booking (action=confirm): Xác nhận booking tiền mặt
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
  */
 @WebServlet({"/booking", "/booking/*"})
 public class BookingServlet extends HttpServlet {
@@ -95,19 +81,12 @@ public class BookingServlet extends HttpServlet {
                 handleBookingForm(request, response);
             } else if (pathInfo.equals("/confirm")) {
                 handleBookingConfirmation(request, response);
-<<<<<<< HEAD
             } else if (pathInfo.equals("/payos-payment")) {
                 handlePayOSPaymentPage(request, response);
             } else if (pathInfo.equals("/success")) {
                 handleBookingSuccess(request, response);
             } else if (pathInfo.equals("/fail")) {
                 handleBookingFail(request, response);
-=======
-            } else if (pathInfo.equals("/momo-payment")) {
-                handleMoMoPaymentPage(request, response);
-            } else if (pathInfo.equals("/success")) {
-                handleBookingSuccess(request, response);
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
@@ -132,21 +111,12 @@ public class BookingServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-<<<<<<< HEAD
 
         try {
             if ("confirm".equals(action)) {
                 handleConfirmBooking(request, response, user);
             } else if ("payos-payment".equals(action)) {
                 handlePayOSPaymentRequest(request, response, user);
-=======
-        
-        try {
-            if ("confirm".equals(action)) {
-                handleConfirmBooking(request, response, user);
-            } else if ("momo-payment".equals(action)) {
-                handleMoMoPaymentRequest(request, response, user);
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             } else if ("complete-payment".equals(action)) {
                 handleCompletePayment(request, response, user);
             } else {
@@ -385,36 +355,7 @@ public class BookingServlet extends HttpServlet {
     /**
      * Enhanced PayOS payment handler for both service types
      */
-<<<<<<< HEAD
     private void handlePayOSPaymentRequest(HttpServletRequest request, HttpServletResponse response, User user)
-=======
-    private void handleBookingConfirmation(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException, SQLException {
-        
-        HttpSession session = request.getSession();
-        BookingFormData formData = (BookingFormData) session.getAttribute("bookingFormData");
-        
-        if (formData == null) {
-            response.sendRedirect(request.getContextPath() + "/booking");
-            return;
-        }
-        
-        // Load experience data for display
-        if (formData.getExperienceId() != null) {
-            Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
-            request.setAttribute("experience", experience);
-            request.setAttribute("bookingType", "experience");
-        }
-        
-        request.setAttribute("formData", formData);
-        request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
-    }
-    
-    /**
-     * Xác nhận đặt chỗ tiền mặt (lưu vào database)
-     */
-    private void handleConfirmBooking(HttpServletRequest request, HttpServletResponse response, User user) 
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             throws ServletException, IOException, SQLException {
 
         HttpSession session = request.getSession();
@@ -428,34 +369,10 @@ public class BookingServlet extends HttpServlet {
         try {
             // Tạo booking với status PENDING
             Booking booking = createBookingFromFormData(formData, user.getUserId());
-<<<<<<< HEAD
             booking.setStatus("PENDING");
             int bookingId = bookingDAO.createBooking(booking);
 
             if (bookingId <= 0) {
-=======
-            booking.setStatus("CONFIRMED"); // Tiền mặt -> xác nhận luôn
-            int bookingId = bookingDAO.createBooking(booking);
-            
-            if (bookingId > 0) {
-                booking.setBookingId(bookingId);
-                
-                // Gửi email xác nhận
-                sendBookingConfirmationEmail(booking, formData, user);
-                
-                // Clear form data và set success data
-                session.removeAttribute("bookingFormData");
-                session.setAttribute("successBooking", booking);
-                
-                // Log activity
-                logBookingActivity(bookingId, "CASH_PAYMENT_CONFIRMED", "Booking confirmed with cash payment");
-                
-                LOGGER.info("Cash booking created successfully - ID: " + bookingId + 
-                           ", User: " + user.getUserId());
-                
-                response.sendRedirect(request.getContextPath() + "/booking/success");
-            } else {
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
                 throw new SQLException("Failed to create booking");
             }
 
@@ -464,7 +381,6 @@ public class BookingServlet extends HttpServlet {
             // Tạo PayOS payment
             PayOS payOS = PayOSConfig.getPayOS();
             
-<<<<<<< HEAD
             // Create service-specific item data
             ItemData item = createPayOSItemData(formData);
             
@@ -500,49 +416,14 @@ public class BookingServlet extends HttpServlet {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating PayOS payment", e);
             request.setAttribute("errorMessage", "Không thể tạo link thanh toán. Vui lòng thử lại.");
-=======
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating cash booking", e);
-            request.setAttribute("errorMessage", "Không thể tạo đặt chỗ. Vui lòng thử lại.");
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
             request.setAttribute("formData", formData);
             request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
         }
     }
-<<<<<<< HEAD
 
     // ==================== FORM PARSING METHODS ====================
     /**
      * Enhanced form parsing with improved accommodation support
-=======
-    
-    
-    
-    /**
-     * Hiển thị trang đặt chỗ thành công
-     */
-    private void handleBookingSuccess(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
-        HttpSession session = request.getSession();
-        Booking booking = (Booking) session.getAttribute("successBooking");
-        
-        if (booking == null) {
-            response.sendRedirect(request.getContextPath() + "/");
-            return;
-        }
-        
-        request.setAttribute("booking", booking);
-        session.removeAttribute("successBooking");
-        
-        request.getRequestDispatcher(BOOKING_SUCCESS_PAGE).forward(request, response);
-    }
-    
-    // ==================== UTILITY METHODS ====================
-    
-    /**
-     * Parse booking form data
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
      */
     private BookingFormData parseBookingForm(HttpServletRequest request) {
         BookingFormData formData = new BookingFormData();
@@ -1373,7 +1254,6 @@ public class BookingServlet extends HttpServlet {
                     .replace("\r", "\\r")
                     .replace("\t", "\\t");
     }
-<<<<<<< HEAD
 
     private String truncateString(String input, int maxLength) {
         if (input == null) return "";
@@ -1411,47 +1291,11 @@ public class BookingServlet extends HttpServlet {
         if ((scheme.equals("http") && serverPort != 80)
                 || (scheme.equals("https") && serverPort != 443)) {
             url.append(":").append(serverPort);
-=======
-    
-    // ==================== EMAIL & NOTIFICATION METHODS ====================
-    
-    /**
-     * Send booking confirmation email
-     */
-    private void sendBookingConfirmationEmail(Booking booking, BookingFormData formData, User user) {
-        try {
-            String serviceName = "Dịch vụ VietCulture";
-            if (formData.getExperienceId() != null) {
-                Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
-                serviceName = experience.getTitle();
-            }
-            
-            // TODO: Implement email service với template cho booking confirmation
-            boolean emailSent = EmailUtils.sendBookingConfirmationEmail(
-                formData.getContactEmail(), 
-                formData.getContactName(),
-                booking.getBookingId(),
-                serviceName,
-                formData.getFormattedBookingDate(),
-                formData.getTimeSlotDisplayName(),
-                formData.getNumberOfPeople(),
-                formData.getFormattedTotalPrice()
-            );
-            
-            if (emailSent) {
-                LOGGER.info("Booking confirmation email sent to: " + formData.getContactEmail() +
-                           " for booking ID: " + booking.getBookingId());
-            }
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to send booking confirmation email", e);
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
         }
 
         url.append(contextPath);
         return url.toString();
     }
-<<<<<<< HEAD
 
     private Date resetTimeToMidnight(Date date) {
         Calendar calendar = Calendar.getInstance();
@@ -1463,36 +1307,6 @@ public class BookingServlet extends HttpServlet {
         return calendar.getTime();
     }
 
-=======
-    
-    /**
-     * Notify admin about new booking
-     */
-    private void notifyAdminNewBooking(Booking booking, BookingFormData formData) {
-        try {
-            // TODO: Implement admin notification system
-            LOGGER.info("Admin notification: New booking created - ID: " + booking.getBookingId() +
-                       ", Total: " + formData.getFormattedTotalPrice());
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to notify admin about new booking", e);
-        }
-    }
-    
-    /**
-     * Log booking activity for audit trail
-     */
-    private void logBookingActivity(int bookingId, String activity, String details) {
-        try {
-            String logMessage = String.format("Booking %d: %s - %s", bookingId, activity, details);
-            LOGGER.info(logMessage);
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to log booking activity", e);
-        }
-    }
-    
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     // ==================== HELPER METHODS ====================
     private void setCharacterEncoding(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
@@ -1511,14 +1325,7 @@ public class BookingServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/login?redirect="
                 + request.getRequestURI());
     }
-<<<<<<< HEAD
 
-=======
-    
-    /**
-     * Check if string is null hoặc empty
-     */
->>>>>>> 5d0d95f58eaf1e7ddffe420e89c182484563a48a
     private boolean isNullOrEmpty(String str) {
         return str == null || str.trim().isEmpty();
     }

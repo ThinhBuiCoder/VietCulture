@@ -456,7 +456,7 @@
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center">
                     <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-                        <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/master/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                        <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
                         <span>VIETCULTURE</span>
                     </a>
 

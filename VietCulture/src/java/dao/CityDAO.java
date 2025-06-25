@@ -8,34 +8,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 public class CityDAO {
-<<<<<<< HEAD
-
-    private static final Logger LOGGER = Logger.getLogger(CityDAO.class.getName());
-
-    /**
-     * Get city by ID
-     */
-    public City getCityById(int cityId) throws SQLException {
-        String sql = """
-            SELECT cityId, name, vietnameseName, regionId, description, imageUrl, attractions
-            FROM Cities 
-            WHERE cityId = ?
-        """;
-
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, cityId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapCityFromResultSet(rs);
-                }
-            }
-        }
-        return null;
-    }
-
-=======
     private static final Logger LOGGER = Logger.getLogger(CityDAO.class.getName());
     
     /**
@@ -126,36 +98,11 @@ private City mapBasicCityFromResultSet(ResultSet rs) throws SQLException {
         return cities;
     }
     
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get top cities with statistics
      */
     public List<CityStats> getTopCitiesWithStats(int limit) throws SQLException {
         List<CityStats> cities = new ArrayList<>();
-<<<<<<< HEAD
-
-        String sql = """
-            SELECT TOP(?) c.cityId, c.name, c.vietnameseName,
-                   COUNT(DISTINCT e.experienceId) as experienceCount,
-                   COUNT(DISTINCT a.accommodationId) as accommodationCount
-            FROM Cities c
-            LEFT JOIN Experiences e ON c.cityId = e.cityId AND e.isActive = 1
-            LEFT JOIN Accommodations a ON c.cityId = a.cityId AND a.isActive = 1
-            GROUP BY c.cityId, c.name, c.vietnameseName
-            HAVING (COUNT(DISTINCT e.experienceId) + COUNT(DISTINCT a.accommodationId)) > 0
-            ORDER BY (COUNT(DISTINCT e.experienceId) + COUNT(DISTINCT a.accommodationId)) DESC
-        """;
-
-        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, limit);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                int maxCount = 0;
-                List<CityStats> tempList = new ArrayList<>();
-
-                // First pass: collect data and find max count
-=======
         
         // Simple version without complex joins
         String sql = "SELECT TOP(?) cityId, name, vietnameseName FROM Cities ORDER BY cityId";
@@ -166,37 +113,10 @@ private City mapBasicCityFromResultSet(ResultSet rs) throws SQLException {
             ps.setInt(1, limit);
             
             try (ResultSet rs = ps.executeQuery()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 while (rs.next()) {
                     CityStats cityStats = new CityStats();
                     cityStats.setName(rs.getString("name"));
                     cityStats.setVietnameseName(rs.getString("vietnameseName"));
-<<<<<<< HEAD
-                    cityStats.setExperienceCount(rs.getInt("experienceCount"));
-                    cityStats.setAccommodationCount(rs.getInt("accommodationCount"));
-
-                    int totalCount = cityStats.getExperienceCount() + cityStats.getAccommodationCount();
-                    if (totalCount > maxCount) {
-                        maxCount = totalCount;
-                    }
-
-                    tempList.add(cityStats);
-                }
-
-                // Second pass: calculate percentages
-                for (CityStats cityStats : tempList) {
-                    int totalCount = cityStats.getExperienceCount() + cityStats.getAccommodationCount();
-                    if (maxCount > 0) {
-                        cityStats.setPercentage((double) totalCount / maxCount * 100);
-                    }
-                    cities.add(cityStats);
-                }
-            }
-        }
-        return cities;
-    }
-
-=======
                     cityStats.setExperienceCount(0); // Default values
                     cityStats.setAccommodationCount(0);
                     cityStats.setPercentage(100.0);
@@ -339,7 +259,6 @@ private City mapBasicCityFromResultSet(ResultSet rs) throws SQLException {
         return 0;
     }
     
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Map ResultSet to City object
      */
@@ -354,72 +273,16 @@ private City mapBasicCityFromResultSet(ResultSet rs) throws SQLException {
         city.setAttractions(rs.getString("attractions"));
         return city;
     }
-<<<<<<< HEAD
-
-=======
     
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Inner class for City Statistics
      */
     public static class CityStats {
-<<<<<<< HEAD
-
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         private String name;
         private String vietnameseName;
         private int experienceCount;
         private int accommodationCount;
         private double percentage;
-<<<<<<< HEAD
-
-        // Constructors, getters, setters
-        public CityStats() {
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getVietnameseName() {
-            return vietnameseName;
-        }
-
-        public void setVietnameseName(String vietnameseName) {
-            this.vietnameseName = vietnameseName;
-        }
-
-        public int getExperienceCount() {
-            return experienceCount;
-        }
-
-        public void setExperienceCount(int experienceCount) {
-            this.experienceCount = experienceCount;
-        }
-
-        public int getAccommodationCount() {
-            return accommodationCount;
-        }
-
-        public void setAccommodationCount(int accommodationCount) {
-            this.accommodationCount = accommodationCount;
-        }
-
-        public double getPercentage() {
-            return percentage;
-        }
-
-        public void setPercentage(double percentage) {
-            this.percentage = percentage;
-        }
-    }
-}
-=======
         
         // Constructors, getters, setters
         public CityStats() {}
@@ -440,4 +303,3 @@ private City mapBasicCityFromResultSet(ResultSet rs) throws SQLException {
         public void setPercentage(double percentage) { this.percentage = percentage; }
     }
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

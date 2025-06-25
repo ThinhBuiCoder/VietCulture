@@ -17,9 +17,5 @@
     <welcome-file-list>
         <welcome-file>view/jsp/home/home.jsp</welcome-file>
     </welcome-file-list>
-<<<<<<< HEAD
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
 </web-app>

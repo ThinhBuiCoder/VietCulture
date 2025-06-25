@@ -20,7 +20,6 @@ import java.util.logging.Level;
 
 @WebServlet(name = "AccommodationsServlet", urlPatterns = {"/accommodations", "/accommodations/*"})
 public class AccommodationsServlet extends HttpServlet {
-<<<<<<< HEAD
 
     private static final Logger LOGGER = Logger.getLogger(AccommodationsServlet.class.getName());
 
@@ -29,15 +28,6 @@ public class AccommodationsServlet extends HttpServlet {
 
     private static final int DEFAULT_PAGE_SIZE = 12;
 
-=======
-    private static final Logger LOGGER = Logger.getLogger(AccommodationsServlet.class.getName());
-    
-    private AccommodationDAO accommodationDAO;
-    private RegionDAO regionDAO;
-    
-    private static final int DEFAULT_PAGE_SIZE = 12;
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     @Override
     public void init() throws ServletException {
         super.init();
@@ -49,32 +39,18 @@ public class AccommodationsServlet extends HttpServlet {
             throw new ServletException("Failed to initialize servlet", e);
         }
     }
-<<<<<<< HEAD
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-=======
-    
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Set UTF-8 encoding
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
-<<<<<<< HEAD
 
         String pathInfo = request.getPathInfo();
 
-=======
-        
-        String pathInfo = request.getPathInfo();
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         try {
             if (pathInfo != null && pathInfo.length() > 1) {
                 // Handle individual accommodation view: /accommodations/{id}
@@ -85,16 +61,11 @@ public class AccommodationsServlet extends HttpServlet {
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in AccommodationsServlet", e);
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             // Set error message for user
             request.setAttribute("errorMessage", "Đã xảy ra lỗi khi truy xuất dữ liệu. Vui lòng thử lại sau.");
             request.setAttribute("accommodations", new ArrayList<Accommodation>());
             request.setAttribute("regions", new ArrayList<Region>());
-<<<<<<< HEAD
 
             // Forward to JSP with error
             request.getRequestDispatcher("/view/jsp/home/accommodations.jsp")
@@ -111,44 +82,18 @@ public class AccommodationsServlet extends HttpServlet {
      */
     private void handleAccommodationDetail(HttpServletRequest request, HttpServletResponse response,
             String pathInfo) throws ServletException, IOException, SQLException {
-=======
-            
-            // Forward to JSP with error
-            request.getRequestDispatcher("/view/jsp/home/accommodations.jsp")
-                   .forward(request, response);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error in AccommodationsServlet", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                             "Đã xảy ra lỗi không mong đợi.");
-        }
-    }
-    
-    /**
-     * Handle accommodation detail view
-     */
-    private void handleAccommodationDetail(HttpServletRequest request, HttpServletResponse response, 
-                                         String pathInfo) throws ServletException, IOException, SQLException {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         try {
             // Extract accommodation ID from path
             String accommodationIdStr = pathInfo.substring(1); // Remove leading "/"
             int accommodationId = Integer.parseInt(accommodationIdStr);
-<<<<<<< HEAD
 
             // Get accommodation details
             Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
 
-=======
-            
-            // Get accommodation details
-            Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             if (accommodation == null || !accommodation.isActive()) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Chỗ lưu trú không tồn tại hoặc đã bị tạm ngừng.");
                 return;
             }
-<<<<<<< HEAD
 
             // Set accommodation data
             request.setAttribute("accommodation", accommodation);
@@ -157,21 +102,10 @@ public class AccommodationsServlet extends HttpServlet {
             request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")
                     .forward(request, response);
 
-=======
-            
-            // Set accommodation data
-            request.setAttribute("accommodation", accommodation);
-            
-            // Forward to detail page - Updated path to match project structure
-            request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")
-                   .forward(request, response);
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID chỗ lưu trú không hợp lệ.");
         }
     }
-<<<<<<< HEAD
 
     /**
      * Handle accommodations list view
@@ -179,22 +113,12 @@ public class AccommodationsServlet extends HttpServlet {
     private void handleAccommodationsList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
 
-=======
-    
-    /**
-     * Handle accommodations list view
-     */
-    private void handleAccommodationsList(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException, SQLException {
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Get search and filter parameters
         String typeFilter = request.getParameter("type");
         String regionFilter = request.getParameter("region");
         String cityFilter = request.getParameter("city");
         String sortBy = request.getParameter("sort");
         String filter = request.getParameter("filter");
-<<<<<<< HEAD
 
         // Get pagination parameters
         int page = getIntParameter(request, "page", 1);
@@ -223,37 +147,10 @@ public class AccommodationsServlet extends HttpServlet {
             // Get regions and cities for dropdowns
             regions = regionDAO.getAllRegionsWithCities();
 
-=======
-        
-        // Get pagination parameters
-        int page = getIntParameter(request, "page", 1);
-        int pageSize = getIntParameter(request, "pageSize", DEFAULT_PAGE_SIZE);
-        
-        // Validate page parameters
-        if (page < 1) page = 1;
-        if (pageSize < 1 || pageSize > 50) pageSize = DEFAULT_PAGE_SIZE;
-        
-        List<Accommodation> accommodations = new ArrayList<>();
-        List<Region> regions = new ArrayList<>();
-        int totalAccommodations = 0;
-        
-        try {
-            // Get accommodations based on filters
-            accommodations = getFilteredAccommodations(typeFilter, regionFilter, cityFilter, 
-                                                     filter, sortBy, page, pageSize);
-            
-            // Get total count for pagination
-            totalAccommodations = getTotalAccommodationsCount(typeFilter, regionFilter, cityFilter, filter);
-            
-            // Get regions and cities for dropdowns
-            regions = regionDAO.getAllRegionsWithCities();
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         } catch (SQLException e) {
             LOGGER.log(Level.WARNING, "Error getting accommodations data", e);
             // Continue with empty lists - error will be shown in JSP
         }
-<<<<<<< HEAD
 
         // Calculate pagination
         int totalPages = totalAccommodations > 0 ? (int) Math.ceil((double) totalAccommodations / pageSize) : 1;
@@ -261,15 +158,6 @@ public class AccommodationsServlet extends HttpServlet {
         // Build query string for pagination
         String queryString = buildQueryString(request);
 
-=======
-        
-        // Calculate pagination
-        int totalPages = totalAccommodations > 0 ? (int) Math.ceil((double) totalAccommodations / pageSize) : 1;
-        
-        // Build query string for pagination
-        String queryString = buildQueryString(request);
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Set attributes for JSP
         request.setAttribute("accommodations", accommodations);
         request.setAttribute("regions", regions);
@@ -277,18 +165,13 @@ public class AccommodationsServlet extends HttpServlet {
         request.setAttribute("totalPages", totalPages);
         request.setAttribute("totalAccommodations", totalAccommodations);
         request.setAttribute("queryString", queryString);
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Set filter parameters back to JSP for form state
         request.setAttribute("selectedType", typeFilter);
         request.setAttribute("selectedRegion", regionFilter);
         request.setAttribute("selectedCity", cityFilter);
         request.setAttribute("selectedSort", sortBy);
         request.setAttribute("selectedFilter", filter);
-<<<<<<< HEAD
 
         // Forward to accommodations list page
         request.getRequestDispatcher("/view/jsp/home/accommodations.jsp")
@@ -308,27 +191,6 @@ public class AccommodationsServlet extends HttpServlet {
 
         List<Accommodation> accommodations;
 
-=======
-        
-        // Forward to accommodations list page
-        request.getRequestDispatcher("/view/jsp/home/accommodations.jsp")
-               .forward(request, response);
-    }
-    
-    /**
-     * Get filtered accommodations based on parameters
-     */
-    private List<Accommodation> getFilteredAccommodations(String type, String region, String city, 
-                                                         String filter, String sortBy, 
-                                                         int page, int pageSize) throws SQLException {
-        
-        // Convert string parameters to integers
-        int regionId = getIntFromString(region);
-        int cityId = getIntFromString(city);
-        
-        List<Accommodation> accommodations;
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Apply specific filters
         switch (filter != null ? filter : "") {
             case "popular":
@@ -351,7 +213,6 @@ public class AccommodationsServlet extends HttpServlet {
                 accommodations = searchAccommodations(type, regionId, cityId, page, pageSize);
                 break;
         }
-<<<<<<< HEAD
 
         // Apply sorting if specified and not already applied by filter
         if (sortBy != null && !sortBy.trim().isEmpty()
@@ -368,24 +229,6 @@ public class AccommodationsServlet extends HttpServlet {
     private List<Accommodation> searchAccommodations(String type, int regionId, int cityId,
             int page, int pageSize) throws SQLException {
 
-=======
-        
-        // Apply sorting if specified and not already applied by filter
-        if (sortBy != null && !sortBy.trim().isEmpty() && 
-            (filter == null || filter.trim().isEmpty())) {
-            accommodations = sortAccommodations(accommodations, sortBy);
-        }
-        
-        return accommodations;
-    }
-    
-    /**
-     * Search accommodations with basic filters
-     */
-    private List<Accommodation> searchAccommodations(String type, int regionId, int cityId, 
-                                                    int page, int pageSize) throws SQLException {
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         // Enhanced search logic with region and city filters
         if (cityId > 0) {
             // Search by city (most specific)
@@ -401,11 +244,7 @@ public class AccommodationsServlet extends HttpServlet {
             return accommodationDAO.getApprovedAccommodations(page, pageSize, null);
         }
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get popular accommodations (based on bookings and ratings)
      */
@@ -424,11 +263,7 @@ public class AccommodationsServlet extends HttpServlet {
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get newest accommodations
      */
@@ -440,11 +275,7 @@ public class AccommodationsServlet extends HttpServlet {
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get top-rated accommodations
      */
@@ -454,23 +285,14 @@ public class AccommodationsServlet extends HttpServlet {
                 .filter(a -> a.getAverageRating() > 0)
                 .sorted((a1, a2) -> {
                     int ratingCompare = Double.compare(a2.getAverageRating(), a1.getAverageRating());
-<<<<<<< HEAD
                     return ratingCompare != 0 ? ratingCompare
                             : Integer.compare(a2.getTotalBookings(), a1.getTotalBookings());
-=======
-                    return ratingCompare != 0 ? ratingCompare : 
-                           Integer.compare(a2.getTotalBookings(), a1.getTotalBookings());
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 })
                 .skip((page - 1) * pageSize)
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get low-price accommodations
      */
@@ -482,11 +304,7 @@ public class AccommodationsServlet extends HttpServlet {
                 .limit(pageSize)
                 .collect(java.util.stream.Collectors.toList());
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Sort accommodations based on sort criteria
      */
@@ -494,15 +312,9 @@ public class AccommodationsServlet extends HttpServlet {
         if (accommodations == null || accommodations.isEmpty()) {
             return accommodations;
         }
-<<<<<<< HEAD
 
         List<Accommodation> sortedList = new ArrayList<>(accommodations);
 
-=======
-        
-        List<Accommodation> sortedList = new ArrayList<>(accommodations);
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         switch (sortBy) {
             case "price-asc":
                 sortedList.sort((a1, a2) -> Double.compare(a1.getPricePerNight(), a2.getPricePerNight()));
@@ -520,17 +332,10 @@ public class AccommodationsServlet extends HttpServlet {
                 // No sorting
                 break;
         }
-<<<<<<< HEAD
 
         return sortedList;
     }
 
-=======
-        
-        return sortedList;
-    }
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get total accommodations count with enhanced filtering
      */
@@ -538,11 +343,7 @@ public class AccommodationsServlet extends HttpServlet {
         try {
             int regionId = getIntFromString(region);
             int cityId = getIntFromString(city);
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             // Count based on specific filters
             switch (filter != null ? filter : "") {
                 case "popular":
@@ -571,11 +372,7 @@ public class AccommodationsServlet extends HttpServlet {
             return 0;
         }
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Get integer parameter with default value
      */
@@ -590,11 +387,7 @@ public class AccommodationsServlet extends HttpServlet {
         }
         return defaultValue;
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Convert string to integer safely
      */
@@ -608,25 +401,15 @@ public class AccommodationsServlet extends HttpServlet {
         }
         return 0;
     }
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     /**
      * Build query string for pagination links
      */
     private String buildQueryString(HttpServletRequest request) {
         StringBuilder queryString = new StringBuilder();
-<<<<<<< HEAD
 
         String[] params = {"type", "region", "city", "sort", "filter"};
 
-=======
-        
-        String[] params = {"type", "region", "city", "sort", "filter"};
-        
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         for (String param : params) {
             String value = request.getParameter(param);
             if (value != null && !value.trim().isEmpty()) {
@@ -635,17 +418,12 @@ public class AccommodationsServlet extends HttpServlet {
                 }
                 try {
                     queryString.append(param).append("=")
-<<<<<<< HEAD
                             .append(java.net.URLEncoder.encode(value, "UTF-8"));
-=======
-                              .append(java.net.URLEncoder.encode(value, "UTF-8"));
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                 } catch (java.io.UnsupportedEncodingException e) {
                     queryString.append(param).append("=").append(value);
                 }
             }
         }
-<<<<<<< HEAD
 
         return queryString.toString();
     }
@@ -658,17 +436,3 @@ public class AccommodationsServlet extends HttpServlet {
                 + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
     }
 }
-=======
-        
-        return queryString.toString();
-    }
-    
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // Redirect POST requests to GET to avoid duplicate submissions
-        response.sendRedirect(request.getRequestURI() + 
-                            (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
-    }
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

@@ -3,128 +3,6 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <style>
-<<<<<<< HEAD
-    .admin-sidebar {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-        overflow-y: auto;
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255,255,255,0.3) transparent;
-    }
-
-    .admin-sidebar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .admin-sidebar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .admin-sidebar::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.3);
-        border-radius: 3px;
-    }
-
-    .sidebar-heading {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        font-weight: 600;
-    }
-
-    .nav-link {
-        position: relative;
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        margin: 0.125rem 0.5rem;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-    }
-
-    .nav-link:hover {
-        background-color: rgba(255,255,255,0.15);
-        transform: translateX(3px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .nav-link.active {
-        background-color: rgba(255,255,255,0.2);
-        border-left: 4px solid #fff;
-        transform: translateX(3px);
-        box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-    }
-
-    .nav-link i {
-        width: 20px;
-        text-align: center;
-    }
-
-    .status-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0.5;
-        }
-        100% {
-            opacity: 1;
-        }
-    }
-
-    .dropdown-menu-dark {
-        background-color: rgba(0,0,0,0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .dropdown-item:hover {
-        background-color: rgba(255,255,255,0.1);
-    }
-
-    .badge {
-        font-size: 0.6rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 10px;
-    }
-
-    .btn-outline-light {
-        border-width: 1px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-light:hover {
-        background-color: rgba(255,255,255,0.2);
-        border-color: rgba(255,255,255,0.5);
-        transform: translateY(-1px);
-    }
-
-    /* Mobile responsive */
-    @media (max-width: 768px) {
-        .admin-sidebar {
-            position: fixed;
-            top: 0;
-            left: -100%;
-            width: 280px;
-            height: 100vh;
-            z-index: 1050;
-            transition: left 0.3s ease;
-        }
-
-        .admin-sidebar.show {
-            left: 0;
-        }
-    }
-=======
 .admin-sidebar {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
@@ -250,7 +128,7 @@
         left: 0;
     }
 }
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
+
 </style>
 
 <!-- Admin Sidebar -->

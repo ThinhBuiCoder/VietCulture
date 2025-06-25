@@ -6,10 +6,7 @@ import java.sql.Timestamp;
  * Lớp mô hình đại diện cho một báo cáo vi phạm trong hệ thống
  */
 public class Report {
-<<<<<<< HEAD
 
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private int reportId;
     private String contentType; // 'experience', 'accommodation', 'review'
     private int contentId;
@@ -21,12 +18,8 @@ public class Report {
     private String reporterName; // Trường hiển thị từ JOIN với Users
 
     // Constructor mặc định
-<<<<<<< HEAD
     public Report() {
     }
-=======
-    public Report() {}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
     // Constructor với các trường cơ bản
     public Report(String contentType, int contentId, int reporterId, String reason, String description) {
@@ -118,7 +111,6 @@ public class Report {
      */
     public String getStatusText() {
         switch (status != null ? status : "") {
-<<<<<<< HEAD
             case "PENDING":
                 return "Đang chờ xử lý";
             case "RESOLVED":
@@ -127,12 +119,6 @@ public class Report {
                 return "Đã bác bỏ";
             default:
                 return status != null ? status : "Không xác định";
-=======
-            case "PENDING": return "Đang chờ xử lý";
-            case "RESOLVED": return "Đã xử lý";
-            case "DISMISSED": return "Đã bác bỏ";
-            default: return status != null ? status : "Không xác định";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         }
     }
 
@@ -141,7 +127,6 @@ public class Report {
      */
     public String getContentTypeText() {
         switch (contentType != null ? contentType.toLowerCase() : "") {
-<<<<<<< HEAD
             case "experience":
                 return "Trải nghiệm";
             case "accommodation":
@@ -150,12 +135,6 @@ public class Report {
                 return "Đánh giá";
             default:
                 return contentType != null ? contentType : "Không xác định";
-=======
-            case "experience": return "Trải nghiệm";
-            case "accommodation": return "Lưu trú";
-            case "review": return "Đánh giá";
-            default: return contentType != null ? contentType : "Không xác định";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         }
     }
 
@@ -174,7 +153,6 @@ public class Report {
 
     @Override
     public String toString() {
-<<<<<<< HEAD
         return "Report{"
                 + "reportId=" + reportId
                 + ", contentType='" + contentType + '\''
@@ -185,15 +163,3 @@ public class Report {
                 + '}';
     }
 }
-=======
-        return "Report{" +
-                "reportId=" + reportId +
-                ", contentType='" + contentType + '\'' +
-                ", contentId=" + contentId +
-                ", reporterName='" + (reporterName != null ? reporterName : "") + '\'' +
-                ", reason='" + (reason != null ? reason : "") + '\'' +
-                ", status='" + getStatusText() + '\'' +
-                '}';
-    }
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

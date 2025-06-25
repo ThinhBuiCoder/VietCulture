@@ -7,10 +7,7 @@ import java.util.Date;
  * Lớp mô hình đại diện cho một trải nghiệm du lịch
  */
 public class Experience {
-<<<<<<< HEAD
 
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private int experienceId;
     private int hostId;
     private String title;
@@ -37,18 +34,13 @@ public class Experience {
     private boolean isFlagged = false;
     private String flagReason;
     private String firstImage;
-<<<<<<< HEAD
     private String categoryName;
-=======
-private String categoryName;
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
     // Các trường bổ sung để hiển thị
     private String cityName;
     private String hostName;
 
     // Constructor mặc định
-<<<<<<< HEAD
     public Experience() {
     }
 
@@ -56,14 +48,6 @@ private String categoryName;
     public Experience(int hostId, String title, String description, String location,
             int cityId, String type, double price, int maxGroupSize,
             Date duration, String difficulty, String language) {
-=======
-    public Experience() {}
-
-    // Constructor với các trường bắt buộc
-    public Experience(int hostId, String title, String description, String location, 
-                     int cityId, String type, double price, int maxGroupSize, 
-                     Date duration, String difficulty, String language) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         this.hostId = hostId;
         this.title = title;
         this.description = description;
@@ -80,7 +64,6 @@ private String categoryName;
         this.totalBookings = 0;
     }
 
-<<<<<<< HEAD
     public void setFirstImage(String firstImage) {
         this.firstImage = firstImage;
     }
@@ -93,20 +76,6 @@ private String categoryName;
         this.categoryName = categoryName;
     }
 
-=======
-
-public void setFirstImage(String firstImage) {
-    this.firstImage = firstImage;
-}
-
-public String getCategoryName() {
-    return categoryName;
-}
-
-public void setCategoryName(String categoryName) {
-    this.categoryName = categoryName;
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     // Getters và Setters cho các trường liên quan đến báo cáo và xóa
     public int getReportCount() {
         return reportCount;
@@ -162,7 +131,6 @@ public void setCategoryName(String categoryName) {
     }
 
     public String getStatusForAdmin() {
-<<<<<<< HEAD
         if (isDeleted) {
             return "Đã xóa";
         }
@@ -175,12 +143,6 @@ public void setCategoryName(String categoryName) {
         if (!isActive) {
             return "Chờ duyệt";
         }
-=======
-        if (isDeleted) return "Đã xóa";
-        if (isFlagged) return "Bị đánh dấu";
-        if (reportCount > 0) return "Bị báo cáo";
-        if (!isActive) return "Chờ duyệt";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
         return "Hoạt động";
     }
 
@@ -404,7 +366,6 @@ public void setCategoryName(String categoryName) {
 
     @Override
     public String toString() {
-<<<<<<< HEAD
         return "Experience{"
                 + "experienceId=" + experienceId
                 + ", hostId=" + hostId
@@ -418,21 +379,6 @@ public void setCategoryName(String categoryName) {
                 + ", averageRating=" + averageRating
                 + ", totalBookings=" + totalBookings
                 + '}';
-=======
-        return "Experience{" +
-                "experienceId=" + experienceId +
-                ", hostId=" + hostId +
-                ", title='" + title + '\'' +
-                ", location='" + location + '\'' +
-                ", type='" + type + '\'' +
-                ", price=" + price +
-                ", maxGroupSize=" + maxGroupSize +
-                ", difficulty='" + difficulty + '\'' +
-                ", isActive=" + isActive +
-                ", averageRating=" + averageRating +
-                ", totalBookings=" + totalBookings +
-                '}';
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     }
 
     public void setHost(User host) {
@@ -445,13 +391,4 @@ public void setCategoryName(String categoryName) {
         this.cityName = city.getVietnameseName();
     }
 
-<<<<<<< HEAD
 }
-=======
-    public void setCategoryId(int parseInt) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b

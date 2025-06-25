@@ -26,10 +26,7 @@ import utils.PasswordUtils;
 
 @WebServlet("/auth/google")
 public class GoogleOAuthServlet extends HttpServlet {
-<<<<<<< HEAD
 
-=======
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
     private static final Logger LOGGER = Logger.getLogger(GoogleOAuthServlet.class.getName());
 
     // Google OAuth configuration
@@ -266,19 +263,11 @@ public class GoogleOAuthServlet extends HttpServlet {
         conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
         conn.setDoOutput(true);
 
-<<<<<<< HEAD
         String postData = "code=" + code
                 + "&client_id=" + GOOGLE_CLIENT_ID
                 + "&client_secret=" + GOOGLE_CLIENT_SECRET
                 + "&redirect_uri=" + GOOGLE_REDIRECT_URI
                 + "&grant_type=authorization_code";
-=======
-        String postData = "code=" + code +
-                "&client_id=" + GOOGLE_CLIENT_ID +
-                "&client_secret=" + GOOGLE_CLIENT_SECRET +
-                "&redirect_uri=" + GOOGLE_REDIRECT_URI +
-                "&grant_type=authorization_code";
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         try (OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream())) {
             writer.write(postData);
@@ -327,11 +316,7 @@ public class GoogleOAuthServlet extends HttpServlet {
      * Process user from Redirect Method
      */
     private void processGoogleUserRedirect(JsonObject userInfo, HttpServletRequest request,
-<<<<<<< HEAD
             HttpServletResponse response, String state) throws IOException, SQLException {
-=======
-                                         HttpServletResponse response, String state) throws IOException, SQLException {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 
         String email = userInfo.get("email").getAsString().toLowerCase().trim();
         String name = userInfo.has("name") ? userInfo.get("name").getAsString() : email;
@@ -352,13 +337,8 @@ public class GoogleOAuthServlet extends HttpServlet {
             LOGGER.info("✅ User đăng nhập thành công (Redirect): " + email);
 
             // Redirect
-<<<<<<< HEAD
             String redirectUrl = state != null && !state.isEmpty() ? state
                     : determineRedirectUrl(user, request);
-=======
-            String redirectUrl = state != null && !state.isEmpty() ? state :
-                               determineRedirectUrl(user, request);
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             response.sendRedirect(redirectUrl);
         } else {
             LOGGER.warning("❌ Không thể xử lý user từ Redirect method");
@@ -440,11 +420,7 @@ public class GoogleOAuthServlet extends HttpServlet {
     private String determineRedirectUrl(User user, HttpServletRequest request) {
         String contextPath = request.getContextPath();
 
-<<<<<<< HEAD
         switch (user.getRole()) {
-=======
-       switch (user.getRole()) {
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
             case "ADMIN":
                 return contextPath + "/admin/dashboard";
             case "HOST":
@@ -473,8 +449,4 @@ public class GoogleOAuthServlet extends HttpServlet {
         response.getWriter().write(jsonResponse.toString());
         LOGGER.info("📤 JSON response: " + jsonResponse.toString());
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
