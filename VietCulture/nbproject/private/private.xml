@@ -2,6 +2,15 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/controller/ChatServlet.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/utils/PayOSConfig.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/utils/DBUtils.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/web/META-INF/context.xml</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/service/FavoriteService.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/controller/BookingServlet.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/dao/BookingDAO.java</file>
+            <file>file:/D:/SU25/SWP391/Project/VietCulture/src/java/model/Booking.java</file>
+        </group>
     </open-files>
 </project-private>
