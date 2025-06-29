@@ -1045,8 +1045,8 @@
 
             <div class="nav-center">
                 <a href="${pageContext.request.contextPath}/" class="nav-center-item">
-                    Trang Chủ
-                </a>
+                        Trang Chủ
+                    </a>
                 <a href="${pageContext.request.contextPath}/experiences" class="nav-center-item active">
                     Trải Nghiệm
                 </a>

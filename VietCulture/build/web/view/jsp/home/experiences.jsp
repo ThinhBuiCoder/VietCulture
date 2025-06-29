@@ -894,7 +894,7 @@
             </a>
 
             <div class="nav-center">
-                <a href="#home" class="nav-center-item">Trang Chủ</a>
+                <a href="/Travel" class="nav-center-item">Trang Chủ</a>
                 <a href="/Travel/experiences" class="nav-center-item">Trải Nghiệm</a>
                 <a href="/Travel/accommodations" class="nav-center-item">Lưu Trú</a>
             </div>
