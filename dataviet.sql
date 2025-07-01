@@ -5,6 +5,7 @@ GO
 USE TravelerDB;
 GO
 
+
 -- Bảng Users (gộp Travelers, Hosts, Admins)
 CREATE TABLE Users (
     userId INT PRIMARY KEY IDENTITY(1,1),
@@ -654,4 +655,140 @@ INSERT INTO Favorites (userId, accommodationId) VALUES
 GO
 
 PRINT 'Database TravelerDB với toàn bộ dữ liệu gốc đã được tạo thành công!';
+GO
+USE TravelerDB;
+GO
+
+-- ===== THÊM TRƯỜNG MỚI CHO ADMIN APPROVAL - SCRIPT ĐÃ SỬA =====
+
+-- 1. Thêm trường adminApprovalStatus cho bảng Experiences
+ALTER TABLE Experiences 
+ADD adminApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING' 
+    CHECK (adminApprovalStatus IN ('PENDING', 'APPROVED', 'REJECTED'));
+GO
+
+-- 2. Thêm trường adminApprovalStatus cho bảng Accommodations
+ALTER TABLE Accommodations
+ADD adminApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING'
+    CHECK (adminApprovalStatus IN ('PENDING', 'APPROVED', 'REJECTED'));
+GO
+
+-- 3. Thêm các trường bổ sung cho admin - EXPERIENCES (từng cột một)
+ALTER TABLE Experiences 
+ADD adminApprovedBy INT NULL;
+GO
+
+ALTER TABLE Experiences 
+ADD adminApprovedAt DATETIME NULL;
+GO
+
+ALTER TABLE Experiences 
+ADD adminRejectReason NVARCHAR(500) NULL;
+GO
+
+ALTER TABLE Experiences 
+ADD adminNotes NVARCHAR(MAX) NULL;
+GO
+
+-- 4. Thêm các trường bổ sung cho admin - ACCOMMODATIONS (từng cột một)
+ALTER TABLE Accommodations
+ADD adminApprovedBy INT NULL;
+GO
+
+ALTER TABLE Accommodations
+ADD adminApprovedAt DATETIME NULL;
+GO
+
+ALTER TABLE Accommodations
+ADD adminRejectReason NVARCHAR(500) NULL;
+GO
+
+ALTER TABLE Accommodations
+ADD adminNotes NVARCHAR(MAX) NULL;
+GO
+
+-- 5. Thêm foreign key cho adminApprovedBy
+ALTER TABLE Experiences
+ADD CONSTRAINT FK_Experience_AdminApprovedBy 
+FOREIGN KEY (adminApprovedBy) REFERENCES Users(userId);
+GO
+
+ALTER TABLE Accommodations  
+ADD CONSTRAINT FK_Accommodation_AdminApprovedBy
+FOREIGN KEY (adminApprovedBy) REFERENCES Users(userId);
+GO
+
+-- 6. Cập nhật dữ liệu hiện có
+-- Những record có isActive = 1 được coi là đã approved
+UPDATE Experiences 
+SET adminApprovalStatus = 'APPROVED',
+    adminApprovedAt = createdAt
+WHERE isActive = 1;
+GO
+
+UPDATE Accommodations
+SET adminApprovalStatus = 'APPROVED', 
+    adminApprovedAt = createdAt
+WHERE isActive = 1;
+GO
+
+-- Những record có isActive = 0 vẫn pending
+UPDATE Experiences 
+SET adminApprovalStatus = 'PENDING'
+WHERE isActive = 0;
+GO
+
+UPDATE Accommodations
+SET adminApprovalStatus = 'PENDING'
+WHERE isActive = 0;
+GO
+
+-- 7. Thêm indexes để tăng hiệu suất
+CREATE INDEX IX_Experiences_AdminApprovalStatus ON Experiences(adminApprovalStatus);
+GO
+
+CREATE INDEX IX_Accommodations_AdminApprovalStatus ON Accommodations(adminApprovalStatus);
+GO
+
+-- 8. Tạo view để dễ truy vấn
+CREATE VIEW PublicExperiences AS
+SELECT e.*, c.vietnameseName as cityName, u.fullName as hostName
+FROM Experiences e
+LEFT JOIN Cities c ON e.cityId = c.cityId  
+LEFT JOIN Users u ON e.hostId = u.userId
+WHERE e.adminApprovalStatus = 'APPROVED' AND e.isActive = 1;
+GO
+
+CREATE VIEW PublicAccommodations AS  
+SELECT a.*, c.vietnameseName as cityName, u.fullName as hostName
+FROM Accommodations a
+LEFT JOIN Cities c ON a.cityId = c.cityId
+LEFT JOIN Users u ON a.hostId = u.userId  
+WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1;
+GO
+
+-- 9. Kiểm tra kết quả
+SELECT 
+    'Experiences' as TableName,
+    adminApprovalStatus,
+    COUNT(*) as Count
+FROM Experiences 
+GROUP BY adminApprovalStatus
+
+UNION ALL
+
+SELECT 
+    'Accommodations' as TableName,
+    adminApprovalStatus,
+    COUNT(*) as Count
+FROM Accommodations 
+GROUP BY adminApprovalStatus
+ORDER BY TableName, adminApprovalStatus;
+GO
+
+PRINT 'Đã cập nhật thành công database với trường adminApprovalStatus!';
+PRINT 'Logic mới:';
+PRINT '- adminApprovalStatus: PENDING (chờ duyệt) | APPROVED (đã duyệt) | REJECTED (từ chối)';
+PRINT '- isActive: 1 (host hiện) | 0 (host ẩn)';
+PRINT '- Hiển thị công khai khi: adminApprovalStatus = APPROVED AND isActive = 1';
 GO
