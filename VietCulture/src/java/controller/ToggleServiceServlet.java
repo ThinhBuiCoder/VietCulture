@@ -134,11 +134,15 @@ public class ToggleServiceServlet extends HttpServlet {
         }
         
         boolean oldStatus = experience.isActive();
-        experience.setActive(!oldStatus);
+        boolean newStatus = !oldStatus;
         
+        // ✅ SỬA LẠI: SỬ DỤNG PHƯƠNG THỨC updateExperience TRỰC TIẾP
+        experience.setActive(newStatus);
         boolean success = experienceDAO.updateExperience(experience);
         if (success) {
-            LOGGER.info("Experience " + experienceId + " status changed from " + oldStatus + " to " + !oldStatus);
+            LOGGER.info("Experience " + experienceId + " visibility changed from " + oldStatus + " to " + newStatus);
+        } else {
+            LOGGER.warning("Failed to toggle experience " + experienceId);
         }
         
         return success;
@@ -159,11 +163,15 @@ public class ToggleServiceServlet extends HttpServlet {
         }
         
         boolean oldStatus = accommodation.isActive();
-        accommodation.setActive(!oldStatus);
+        boolean newStatus = !oldStatus;
         
+        // ✅ SỬA LẠI: SỬ DỤNG PHƯƠNG THỨC updateAccommodation TRỰC TIẾP
+        accommodation.setActive(newStatus);
         boolean success = accommodationDAO.updateAccommodation(accommodation);
         if (success) {
-            LOGGER.info("Accommodation " + accommodationId + " status changed from " + oldStatus + " to " + !oldStatus);
+            LOGGER.info("Accommodation " + accommodationId + " visibility changed from " + oldStatus + " to " + newStatus);
+        } else {
+            LOGGER.warning("Failed to toggle accommodation " + accommodationId);
         }
         
         return success;

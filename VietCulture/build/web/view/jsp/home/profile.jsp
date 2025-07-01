@@ -3,6 +3,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
+<<<<<<< HEAD
 
     <head>
         <meta charset="UTF-8">
@@ -804,6 +805,8 @@
                                 </form>
                             </div>
 =======
+=======
+>>>>>>> ba330bc (add admin duyet va favorit)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1434,196 +1437,12 @@
                                 <fmt:formatDate value="${sessionScope.user.createdAt}" pattern="yyyy"/>
                             </span>
                             <span class="stat-label">Tham gia</span>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-<<<<<<< HEAD
-        <!-- Additional CSS for readonly email field -->
-
-
-        <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script>
-                                                // Password toggle functionality
-                                                function togglePassword(fieldId) {
-                                                    const field = document.getElementById(fieldId);
-                                                    const icon = document.getElementById(fieldId + 'Icon');
-
-                                                    if (field.type === 'password') {
-                                                        field.type = 'text';
-                                                        icon.classList.remove('fa-eye');
-                                                        icon.classList.add('fa-eye-slash');
-                                                    } else {
-                                                        field.type = 'password';
-                                                        icon.classList.remove('fa-eye-slash');
-                                                        icon.classList.add('fa-eye');
-                                                    }
-                                                }
-
-                                                // Preview avatar from header button
-                                                function updateAvatar(inputElement) {
-                                                    console.log('updateAvatar called from header button');
-                                                    if (inputElement.files && inputElement.files[0]) {
-                                                        const file = inputElement.files[0];
-                                                        console.log('File selected:', file.name, file.size, 'bytes');
-
-                                                        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                                                            'image/bmp', 'image/tiff', 'image/svg+xml'];
-
-                                                        if (validImageTypes.includes(file.type)) {
-                                                            // Check file size (10MB max)
-                                                            if (file.size > 10 * 1024 * 1024) {
-                                                                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                                                                inputElement.value = '';
-                                                                return;
-                                                            }
-
-                                                            const reader = new FileReader();
-                                                            reader.onload = function (e) {
-                                                                const profileAvatar = document.getElementById('profileAvatar');
-                                                                // Thêm timestamp để tránh cache
-                                                                profileAvatar.src = e.target.result;
-                                                                console.log('Avatar preview updated');
-
-                                                                // Đánh dấu rằng có file mới được chọn
-                                                                profileAvatar.setAttribute('data-new-upload', 'true');
-                                                            };
-                                                            reader.readAsDataURL(file);
-
-                                                            // Đồng bộ với form input
-                                                            const formInput = document.getElementById('avatarFile');
-                                                            if (formInput && inputElement.id !== 'avatarFile') {
-                                                                const dt = new DataTransfer();
-                                                                dt.items.add(file);
-                                                                formInput.files = dt.files;
-                                                                console.log('Form input synced');
-                                                            }
-                                                        } else {
-                                                            alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-                                                            inputElement.value = '';
-                                                        }
-                                                    }
-
-                                                }
-
-                                                // Preview avatar from form input
-                                                function previewAvatarInForm(inputElement) {
-                                                    console.log('previewAvatarInForm called from form input');
-                                                    if (inputElement.files && inputElement.files[0]) {
-                                                        const file = inputElement.files[0];
-                                                        console.log('File selected:', file.name, file.size, 'bytes');
-
-                                                        const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                                                            'image/bmp', 'image/tiff', 'image/svg+xml'];
-
-                                                        if (validImageTypes.includes(file.type)) {
-                                                            if (file.size > 10 * 1024 * 1024) {
-                                                                alert('File quá lớn! Vui lòng chọn file nhỏ hơn 10MB.');
-                                                                inputElement.value = '';
-                                                                return;
-                                                            }
-
-                                                            function reloadAvatarAfterUpload(newAvatarName) {
-                                                                if (newAvatarName) {
-                                                                    const profileAvatar = document.getElementById('profileAvatar');
-                                                                    const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf("/", 2));
-                                                                    const timestamp = new Date().getTime();
-
-                                                                    profileAvatar.src = `${contextPath}/view/assets/images/avatars/${newAvatarName}?t=${timestamp}`;
-                                                                                            profileAvatar.removeAttribute('data-new-upload');
-                                                                                            console.log('Avatar reloaded after upload:', newAvatarName);
-                                                                                        }
-                                                                                    }
-                                                                                    const reader = new FileReader();
-                                                                                    reader.onload = function (e) {
-                                                                                        const profileAvatar = document.getElementById('profileAvatar');
-                                                                                        profileAvatar.src = e.target.result;
-                                                                                        profileAvatar.setAttribute('data-new-upload', 'true');
-                                                                                        console.log('Avatar preview updated from form');
-                                                                                    };
-                                                                                    reader.readAsDataURL(file);
-
-                                                                                    // Đồng bộ với header input
-                                                                                    const headerInput = document.getElementById('avatarInput');
-                                                                                    if (headerInput && inputElement.id !== 'avatarInput') {
-                                                                                        const dt = new DataTransfer();
-                                                                                        dt.items.add(file);
-                                                                                        headerInput.files = dt.files;
-                                                                                        console.log('Header input synced');
-                                                                                    }
-                                                                                } else {
-                                                                                    alert('Vui lòng chọn file ảnh hợp lệ (.jpg, .jpeg, .png, .gif, .webp, .bmp, .tiff, .svg).');
-                                                                                    inputElement.value = '';
-                                                                                }
-                                                                            }
-                                                                        }
-
-                                                                        // Password confirmation validation
-                                                                        document.addEventListener('DOMContentLoaded', function () {
-                                                                            const confirmPasswordInput = document.getElementById('confirmPassword');
-                                                                            if (confirmPasswordInput) {
-                                                                                confirmPasswordInput.addEventListener('input', function () {
-                                                                                    const password = document.getElementById('newPassword').value;
-                                                                                    const confirmPassword = this.value;
-
-                                                                                    if (password !== confirmPassword) {
-                                                                                        this.setCustomValidity('Mật khẩu xác nhận không khớp');
-                                                                                    } else {
-                                                                                        this.setCustomValidity('');
-                                                                                    }
-                                                                                });
-                                                                            }
-
-                                                                            // Form validation
-                                                                            const forms = document.querySelectorAll('form');
-                                                                            forms.forEach(form => {
-                                                                                form.addEventListener('submit', function (e) {
-                                                                                    console.log('Form submitted:', form.action);
-
-                                                                                    // Check if this is the profile update form
-                                                                                    if (form.action.includes('/profile/update')) {
-                                                                                        const avatarFile = document.getElementById('avatarFile');
-                                                                                        if (avatarFile && avatarFile.files.length > 0) {
-                                                                                            console.log('Avatar file will be uploaded:', avatarFile.files[0].name);
-                                                                                        } else {
-                                                                                            console.log('No avatar file selected');
-                                                                                        }
-                                                                                    }
-
-                                                                                    if (!form.checkValidity()) {
-                                                                                        e.preventDefault();
-                                                                                        e.stopPropagation();
-                                                                                        console.log('Form validation failed');
-                                                                                    }
-                                                                                    form.classList.add('was-validated');
-                                                                                });
-                                                                            });
-
-                                                                            console.log('Profile page JavaScript initialized');
-                                                                        });
-                                                                        const successMessage = document.querySelector('.alert-success');
-                                                                        if (successMessage && successMessage.textContent.includes('thành công')) {
-                                                                            // Nếu có upload avatar mới, reload ảnh
-                                                                            const profileAvatar = document.getElementById('profileAvatar');
-                                                                            if (profileAvatar.hasAttribute('data-new-upload')) {
-                                                                                setTimeout(() => {
-                                                                                    // Force reload ảnh từ server với timestamp mới
-                                                                                    const currentSrc = profileAvatar.src;
-                                                                                    if (currentSrc.includes('/view/assets/images/avatars/')) {
-                                                                                        const timestamp = new Date().getTime();
-                                                                                        profileAvatar.src = currentSrc.split('?')[0] + '?t=' + timestamp;
-                                                                                        profileAvatar.removeAttribute('data-new-upload');
-                                                                                    }
-                                                                                }, 500);
-                                                                            }
-                                                                        }
-        </script>
-    </body>
-=======
         <!-- Host Business Info (if HOST) -->
         <c:if test="${sessionScope.user.role == 'HOST'}">
             <div class="host-info-section">
@@ -2183,5 +2002,4 @@
         });
     </script>
 </body>
->>>>>>> f936304b2ac538e93c06857b86ec5748682be34b
 </html>

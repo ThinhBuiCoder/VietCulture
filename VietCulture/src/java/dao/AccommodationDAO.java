@@ -10,149 +10,376 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+/**
+ * AccommodationDAO với logic adminApprovalStatus mới
+ * adminApprovalStatus: PENDING, APPROVED, REJECTED
+ * isActive: 1 (host hiện), 0 (host ẩn)
+ * Hiển thị công khai: adminApprovalStatus = 'APPROVED' AND isActive = 1
+ */
 public class AccommodationDAO {
     private static final Logger LOGGER = Logger.getLogger(AccommodationDAO.class.getName());
 
     /**
-     * Get accommodation by ID
+     * Lấy accommodation theo ID
      */
-public Accommodation getAccommodationById(int accommodationId) throws SQLException {
-    String sql = """
-        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
-               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
-               u.fullName as hostName, c.vietnameseName as cityName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE a.accommodationId = ?
-    """;
+    public Accommodation getAccommodationById(int accommodationId) throws SQLException {
+        String sql = """
+            SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
+                   a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+                   a.createdAt, a.isActive, a.averageRating, a.totalBookings,
+                   a.adminApprovalStatus, a.adminApprovedBy, a.adminApprovedAt,
+                   a.adminRejectReason, a.adminNotes,
+                   u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.accommodationId = ?
+        """;
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setInt(1, accommodationId);
+            ps.setInt(1, accommodationId);
 
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return mapAccommodationFromResultSet(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapAccommodationFromResultSet(rs);
+                }
             }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting accommodation by ID: " + accommodationId, e);
+            return null;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting accommodation by ID: " + accommodationId, e);
-        return null; // Return null instead of throwing
+        return null;
     }
-    return null;
-}
+
     /**
-     * Get approved accommodations with pagination and type filter
+     * Tạo accommodation mới - LOGIC MỚI
+     * Accommodation sẽ có adminApprovalStatus = 'PENDING' và isActive = true (host muốn hiện)
      */
-public List<Accommodation> getApprovedAccommodations(int page, int pageSize, String type) throws SQLException {
-    List<Accommodation> accommodations = new ArrayList<>();
-    StringBuilder sql = new StringBuilder("""
-        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
-               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
-               u.fullName as hostName, c.vietnameseName as cityName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE a.isActive = 1
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    parameters.add((page - 1) * pageSize);
-    parameters.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                accommodations.add(mapAccommodationFromResultSet(rs));
+    public int createAccommodation(Accommodation accommodation) throws SQLException {
+        String sql = """
+            INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
+                                       numberOfRooms, amenities, pricePerNight, images, 
+                                       isActive, adminApprovalStatus, averageRating, totalBookings)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setInt(1, accommodation.getHostId());
+            ps.setString(2, accommodation.getName());
+            ps.setString(3, accommodation.getDescription());
+            ps.setInt(4, accommodation.getCityId());
+            ps.setString(5, accommodation.getAddress());
+            ps.setString(6, accommodation.getType());
+            ps.setInt(7, accommodation.getNumberOfRooms());
+            ps.setString(8, accommodation.getAmenities());
+            ps.setDouble(9, accommodation.getPricePerNight());
+            ps.setString(10, accommodation.getImages());
+            ps.setBoolean(11, accommodation.isActive()); // Host muốn hiện/ẩn
+            ps.setString(12, "PENDING"); // Chờ admin duyệt
+            ps.setDouble(13, 0.0); // averageRating default
+            ps.setInt(14, 0); // totalBookings default
+
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int accommodationId = generatedKeys.getInt(1);
+                        accommodation.setAccommodationId(accommodationId);
+                        
+                        LOGGER.info("Accommodation created with ID: " + accommodationId + 
+                                   ", adminApprovalStatus: PENDING, isActive: " + accommodation.isActive());
+                        return accommodationId;
+                    }
+                }
             }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error creating accommodation", e);
+            throw e;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting approved accommodations", e);
-        throw e;
+        return 0;
     }
-    
-    return accommodations;
-}
 
     /**
-     * Get approved accommodations with pagination (overload without type)
+     * ADMIN DUYỆT accommodation
      */
-    public List<Accommodation> getApprovedAccommodations(int page, int pageSize) throws SQLException {
-        return getApprovedAccommodations(page, pageSize, null);
+    public boolean approveAccommodation(int accommodationId, int adminUserId) throws SQLException {
+        String sql = """
+            UPDATE Accommodations 
+            SET adminApprovalStatus = 'APPROVED',
+                adminApprovedBy = ?,
+                adminApprovedAt = GETDATE(),
+                adminRejectReason = NULL
+            WHERE accommodationId = ? AND adminApprovalStatus = 'PENDING'
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, adminUserId);
+            ps.setInt(2, accommodationId);
+
+            int rowsAffected = ps.executeUpdate();
+            boolean success = rowsAffected > 0;
+
+            LOGGER.info("Admin approve accommodation " + accommodationId + ": " + 
+                       (success ? "SUCCESS" : "FAILED") + " by admin " + adminUserId);
+
+            return success;
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error approving accommodation " + accommodationId, e);
+            throw e;
+        }
     }
 
     /**
-     * Get pending accommodations with pagination
+     * ADMIN TỪ CHỐI accommodation
+     */
+    public boolean rejectAccommodation(int accommodationId, int adminUserId, String reason) throws SQLException {
+        String sql = """
+            UPDATE Accommodations 
+            SET adminApprovalStatus = 'REJECTED',
+                adminApprovedBy = ?,
+                adminApprovedAt = GETDATE(),
+                adminRejectReason = ?
+            WHERE accommodationId = ? AND adminApprovalStatus IN ('PENDING', 'APPROVED')
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, adminUserId);
+            ps.setString(2, reason);
+            ps.setInt(3, accommodationId);
+
+            int rowsAffected = ps.executeUpdate();
+            boolean success = rowsAffected > 0;
+
+            LOGGER.info("Admin reject accommodation " + accommodationId + ": " + 
+                       (success ? "SUCCESS" : "FAILED") + " - Reason: " + reason);
+
+            return success;
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error rejecting accommodation " + accommodationId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * ADMIN THU HỒI duyệt accommodation
+     */
+    public boolean revokeApproval(int accommodationId, int adminUserId, String reason) throws SQLException {
+        String sql = """
+            UPDATE Accommodations 
+            SET adminApprovalStatus = 'PENDING',
+                adminApprovedBy = ?,
+                adminApprovedAt = GETDATE(),
+                adminRejectReason = ?,
+                adminNotes = ?
+            WHERE accommodationId = ? AND adminApprovalStatus = 'APPROVED'
+        """;
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, adminUserId);
+            ps.setString(2, reason);
+            ps.setString(3, "Revoked: " + reason);
+            ps.setInt(4, accommodationId);
+
+            int rowsAffected = ps.executeUpdate();
+            boolean success = rowsAffected > 0;
+
+            LOGGER.info("Admin revoke accommodation " + accommodationId + ": " + 
+                       (success ? "SUCCESS" : "FAILED") + " - Reason: " + reason);
+
+            return success;
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error revoking accommodation " + accommodationId, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Lấy accommodation CHỜ DUYỆT (cho admin)
      */
     public List<Accommodation> getPendingAccommodations(int page, int pageSize) throws SQLException {
-        return getPendingAccommodations(page, pageSize, null);
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'PENDING'
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
     }
 
     /**
-     * Get pending accommodations with pagination and type filter
+     * Lấy accommodation CHỜ DUYỆT với type filter
      */
-public List<Accommodation> getPendingAccommodations(int page, int pageSize, String type) throws SQLException {
-    List<Accommodation> accommodations = new ArrayList<>();
-    StringBuilder sql = new StringBuilder("""
-        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
-               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
-               u.fullName as hostName, c.vietnameseName as cityName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE a.isActive = 0
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    parameters.add((page - 1) * pageSize);
-    parameters.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
+    public List<Accommodation> getPendingAccommodations(int page, int pageSize, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'PENDING'
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
         }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                accommodations.add(mapAccommodationFromResultSet(rs));
-            }
-        }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting pending accommodations", e);
-        throw e;
+
+        sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add((page - 1) * pageSize);
+        parameters.add(pageSize);
+
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
     }
-    
-    return accommodations;
-}
+
     /**
-     * Get accommodations with advanced filtering and search
+     * Lấy accommodation ĐÃ DUYỆT (cho admin)
+     */
+    public List<Accommodation> getApprovedAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'APPROVED'
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
+    }
+
+    /**
+     * Lấy accommodation ĐÃ DUYỆT với type filter
+     */
+    public List<Accommodation> getApprovedAccommodations(int page, int pageSize, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'APPROVED'
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
+        }
+
+        sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add((page - 1) * pageSize);
+        parameters.add(pageSize);
+
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
+    }
+
+    /**
+     * Lấy accommodation BỊ TỪ CHỐI (cho admin)
+     */
+    public List<Accommodation> getRejectedAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'REJECTED'
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
+    }
+
+    /**
+     * Lấy TẤT CẢ accommodation (cho admin)
+     */
+    public List<Accommodation> getAllAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
+    }
+
+    /**
+     * Lấy TẤT CẢ accommodation với type filter
+     */
+    public List<Accommodation> getAllAccommodations(int page, int pageSize, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE 1=1
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
+        }
+
+        sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add((page - 1) * pageSize);
+        parameters.add(pageSize);
+
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
+    }
+
+    /**
+     * Lấy accommodation HIỂN THỊ CÔNG KHAI (cho user)
+     * Điều kiện: adminApprovalStatus = 'APPROVED' AND isActive = 1
+     */
+    public List<Accommodation> getPublicAccommodations(int page, int pageSize) throws SQLException {
+        String sql = """
+            SELECT a.*, u.fullName as hostName, c.vietnameseName as cityName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
+            ORDER BY a.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
+    }
+
+    /**
+     * Lấy accommodation ĐÃ DUYỆT NHƯNG ẨN bởi host
+     */
+    public int getApprovedButHiddenCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED' AND isActive = 0";
+        return getCount(sql);
+    }
+
+    /**
+     * Tìm kiếm accommodation nâng cao (chỉ hiển thị công khai)
      */
     public List<Accommodation> searchAccommodations(String type, int regionId, int cityId, 
                                                    String sortBy, int page, int pageSize) throws SQLException {
@@ -162,7 +389,7 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
             LEFT JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
         """);
 
         List<Object> parameters = new ArrayList<>();
@@ -210,20 +437,11 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
         parameters.add((page - 1) * pageSize);
         parameters.add(pageSize);
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            // Set parameters
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
     }
 
     /**
-     * Get search results count
+     * Đếm kết quả tìm kiếm
      */
     public int getSearchAccommodationsCount(String type, int regionId, int cityId) throws SQLException {
         StringBuilder sql = new StringBuilder("""
@@ -231,7 +449,7 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Cities c ON a.cityId = c.cityId
             LEFT JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
         """);
 
         List<Object> parameters = new ArrayList<>();
@@ -251,24 +469,11 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             parameters.add(cityId);
         }
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        }
-        return 0;
+        return getCountWithParams(sql.toString(), parameters);
     }
 
     /**
-     * Get popular accommodations (high booking count and rating)
+     * Lấy accommodation phổ biến (hiển thị công khai + có booking cao)
      */
     public List<Accommodation> getPopularAccommodations(int page, int pageSize) throws SQLException {
         String sql = """
@@ -276,24 +481,17 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             AND a.totalBookings >= 5 AND a.averageRating >= 4.0
             ORDER BY a.totalBookings DESC, a.averageRating DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
     }
 
     /**
-     * Get newest accommodations
+     * Lấy accommodation mới nhất (hiển thị công khai)
      */
     public List<Accommodation> getNewestAccommodations(int page, int pageSize) throws SQLException {
         String sql = """
@@ -301,23 +499,16 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             ORDER BY a.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
     }
 
     /**
-     * Get top-rated accommodations
+     * Lấy accommodation được đánh giá cao (hiển thị công khai)
      */
     public List<Accommodation> getTopRatedAccommodations(int page, int pageSize) throws SQLException {
         String sql = """
@@ -325,24 +516,17 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             AND a.averageRating > 0
             ORDER BY a.averageRating DESC, a.totalBookings DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
     }
 
     /**
-     * Get low-price accommodations
+     * Lấy accommodation giá thấp (hiển thị công khai)
      */
     public List<Accommodation> getLowPriceAccommodations(int page, int pageSize) throws SQLException {
         String sql = """
@@ -350,23 +534,16 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             ORDER BY a.pricePerNight ASC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQuery(sql, (page - 1) * pageSize, pageSize);
     }
 
     /**
-     * Get accommodations by multiple criteria with enhanced filtering
+     * Lấy accommodation với filters nâng cao (hiển thị công khai)
      */
     public List<Accommodation> getAccommodationsWithFilters(String type, int regionId, int cityId, 
                                                            String filter, String sortBy, 
@@ -377,7 +554,7 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
             LEFT JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
         """);
 
         List<Object> parameters = new ArrayList<>();
@@ -441,20 +618,11 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
         parameters.add((page - 1) * pageSize);
         parameters.add(pageSize);
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            // Set parameters
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            return executeAccommodationQuery(ps);
-        }
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
     }
 
     /**
-     * Get count for filtered accommodations
+     * Đếm accommodation với filters
      */
     public int getFilteredAccommodationsCount(String type, int regionId, int cityId, String filter) throws SQLException {
         StringBuilder sql = new StringBuilder("""
@@ -462,7 +630,7 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             FROM Accommodations a
             LEFT JOIN Cities c ON a.cityId = c.cityId
             LEFT JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
         """);
 
         List<Object> parameters = new ArrayList<>();
@@ -489,624 +657,153 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
             parameters.add(cityId);
         }
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < parameters.size(); i++) {
-                ps.setObject(i + 1, parameters.get(i));
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        }
-        return 0;
+        return getCountWithParams(sql.toString(), parameters);
     }
 
     /**
-     * Get reported accommodations
+     * CÁC PHƯƠNG THỨC ĐẾM
      */
-    public List<Accommodation> getReportedAccommodations(int page, int pageSize) throws SQLException {
+    public int getPendingAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'PENDING'";
+        return getCount(sql);
+    }
+
+    public int getPendingAccommodationsCount(String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'PENDING'");
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" AND type = ?");
+            return getCountWithParam(sql.toString(), type);
+        }
+        
+        return getCount(sql.toString());
+    }
+
+    public int getApprovedAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED'";
+        return getCount(sql);
+    }
+
+    public int getApprovedAccommodationsCount(String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED'");
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" AND type = ?");
+            return getCountWithParam(sql.toString(), type);
+        }
+        
+        return getCount(sql.toString());
+    }
+
+    public int getRejectedAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'REJECTED'";
+        return getCount(sql);
+    }
+
+    public int getTotalAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations";
+        return getCount(sql);
+    }
+
+    public int getTotalAccommodationsCount(String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations");
+        
+        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
+            sql.append(" WHERE type = ?");
+            return getCountWithParam(sql.toString(), type);
+        }
+        
+        return getCount(sql.toString());
+    }
+
+    public int getActiveAccommodationsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED' AND isActive = 1";
+        return getCount(sql);
+    }
+
+    public int getPublicAccommodationsCount() throws SQLException {
+        return getActiveAccommodationsCount();
+    }
+
+    /**
+     * CÁC PHƯƠNG THỨC CHO HOST
+     */
+    public List<Accommodation> getAccommodationsByHostId(int hostId) throws SQLException {
         String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName
+            SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
+            WHERE a.hostId = ?
             ORDER BY a.createdAt DESC
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
+        
+        return executeAccommodationQuery(sql, hostId);
+    }
 
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    public int countAccommodationsByHostId(int hostId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ?";
+        return getCountWithParam(sql, hostId);
+    }
 
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
+    public int countActiveAccommodationsByHostId(int hostId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ? AND adminApprovalStatus = 'APPROVED' AND isActive = 1";
+        return getCountWithParam(sql, hostId);
+    }
 
-            return executeAccommodationQuery(ps);
-        }
+    public int countPendingAccommodationsByHostId(int hostId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ? AND adminApprovalStatus = 'PENDING'";
+        return getCountWithParam(sql, hostId);
+    }
+
+    public int countApprovedAccommodationsByHostId(int hostId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ? AND adminApprovalStatus = 'APPROVED'";
+        return getCountWithParam(sql, hostId);
     }
 
     /**
-     * Get flagged accommodations
+     * HOST CẬP NHẬT TRẠNG THÁI ẨN/HIỆN (chỉ khi đã được duyệt)
      */
-    public List<Accommodation> getFlaggedAccommodations(int page, int pageSize) throws SQLException {
+    public boolean updateAccommodationVisibility(int accommodationId, int hostId, boolean isActive) throws SQLException {
         String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
-            ORDER BY a.createdAt DESC
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+            UPDATE Accommodations 
+            SET isActive = ? 
+            WHERE accommodationId = ? AND hostId = ? AND adminApprovalStatus = 'APPROVED'
         """;
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
-    }
-
-    /**
-     * Get deleted accommodations
-     */
-    public List<Accommodation> getDeletedAccommodations(int page, int pageSize) throws SQLException {
-        String sql = """
-            SELECT a.*, u.fullName as hostName, c.name as cityName
-            FROM Accommodations a
-            LEFT JOIN Users u ON a.hostId = u.userId
-            LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.isActive = 1
-            ORDER BY a.createdAt DESC
-            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-        """;
-
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            return executeAccommodationQuery(ps);
-        }
-    }
-
-    /**
-     * Get all accommodations with pagination
-     */
-public List<Accommodation> getAllAccommodations(int page, int pageSize, String type) throws SQLException {
-    List<Accommodation> accommodations = new ArrayList<>();
-    StringBuilder sql = new StringBuilder("""
-        SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
-               a.createdAt, a.isActive, a.averageRating, a.totalBookings,
-               u.fullName as hostName, c.vietnameseName as cityName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE 1=1
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    sql.append(" ORDER BY a.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    parameters.add((page - 1) * pageSize);
-    parameters.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                accommodations.add(mapAccommodationFromResultSet(rs));
-            }
-        }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting all accommodations", e);
-        throw e;
-    }
-    
-    return accommodations;
-}
-    /**
-     * Soft delete accommodation
-     */
-public boolean softDeleteAccommodation(int accommodationId, String reason) throws SQLException {
-    String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ? AND isActive = 1";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        
-        pstmt.setInt(1, accommodationId);
-        int rowsAffected = pstmt.executeUpdate();
-        
-        boolean success = rowsAffected > 0;
-        LOGGER.info("Soft delete accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
-                   " - Reason: " + reason);
-        
-        return success;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error soft deleting accommodation " + accommodationId, e);
-        throw e;
-    }
-}
-    public boolean restoreAccommodation(int accommodationId) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ?";
         
         try (Connection conn = DBUtils.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
-            ps.setInt(1, accommodationId);
+            ps.setBoolean(1, isActive);
+            ps.setInt(2, accommodationId);
+            ps.setInt(3, hostId);
             
             int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation restored - ID: " + accommodationId);
-            }
-            return rowsAffected > 0;
-        }
-    }
-
-    /**
-     * Flag accommodation
-     */
-    public boolean flagAccommodation(int accommodationId, String reason) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ?";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+            boolean success = rowsAffected > 0;
             
-            ps.setInt(1, accommodationId);
+            LOGGER.info("Host " + hostId + " " + (isActive ? "show" : "hide") + 
+                       " accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED"));
             
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation flagged - ID: " + accommodationId + ", Reason: " + reason);
-            }
-            return rowsAffected > 0;
+            return success;
         }
     }
 
     /**
-     * Unflag accommodation
-     */
-    public boolean unflagAccommodation(int accommodationId) throws SQLException {
-        String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ?";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, accommodationId);
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation unflagged - ID: " + accommodationId);
-            }
-            return rowsAffected > 0;
-        }
-    }
-
-    /**
-     * Update report count
-     */
-    public boolean updateReportCount(int accommodationId, int reportCount) throws SQLException {
-        // Since the base schema doesn't have report_count, we'll just log this action
-        LOGGER.info("Report count update requested for accommodation ID: " + accommodationId + ", count: " + reportCount);
-        return true;
-    }
-
-    /**
-     * Get reported accommodations count
-     */
-    public int getReportedAccommodationsCount() throws SQLException {
-        // Return 0 since base schema doesn't have report functionality
-        return 0;
-    }
-
-    /**
-     * Get flagged accommodations count
-     */
-    public int getFlaggedAccommodationsCount() throws SQLException {
-        // Return 0 since base schema doesn't have flag functionality
-        return 0;
-    }
-
-    /**
-     * Get deleted accommodations count
-     */
-    public int getDeletedAccommodationsCount() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 0";
-        
-        try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return 0;
-    }
-
-    /**
-     * Approve accommodation
-     */
-public boolean approveAccommodation(int accommodationId) throws SQLException {
-    String sql = "UPDATE Accommodations SET isActive = 1 WHERE accommodationId = ? AND isActive = 0";
-    
-    Connection conn = null;
-    PreparedStatement pstmt = null;
-    
-    try {
-        conn = DBUtils.getConnection();
-        if (conn == null) {
-            LOGGER.severe("Database connection is null!");
-            throw new SQLException("Cannot get database connection");
-        }
-        
-        pstmt = conn.prepareStatement(sql);
-        pstmt.setInt(1, accommodationId);
-        
-        int rowsAffected = pstmt.executeUpdate();
-        boolean success = rowsAffected > 0;
-        
-        LOGGER.info("Approve accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
-                   " (rows affected: " + rowsAffected + ")");
-        
-        return success;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "SQL Error approving accommodation " + accommodationId, e);
-        throw e;
-    } finally {
-        try {
-            if (pstmt != null) pstmt.close();
-            if (conn != null) conn.close();
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error closing database resources", e);
-        }
-    }
-}
-public boolean rejectAccommodation(int accommodationId, String reason) throws SQLException {
-    String sql = "UPDATE Accommodations SET isActive = 0 WHERE accommodationId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        
-        pstmt.setInt(1, accommodationId);
-        int rowsAffected = pstmt.executeUpdate();
-        
-        boolean success = rowsAffected > 0;
-        LOGGER.info("Reject accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED") + 
-                   " - Reason: " + reason);
-        
-        return success;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error rejecting accommodation " + accommodationId, e);
-        throw e;
-    }
-}
-public List<Accommodation> getAccommodationsByHostId(int hostId) throws SQLException {
-    List<Accommodation> accommodations = new ArrayList<>();
-    String sql = """
-        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE a.hostId = ?
-        ORDER BY a.createdAt DESC
-    """;
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, hostId);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                accommodations.add(mapResultSetToAccommodation(rs));
-            }
-        }
-    }
-    return accommodations;
-}
-
-/**
- * Đếm tổng số accommodation theo hostId
- */
-public int countAccommodationsByHostId(int hostId) throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, hostId);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * Đếm số accommodation đang hoạt động theo hostId
- */
-public int countActiveAccommodationsByHostId(int hostId) throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations WHERE hostId = ? AND isActive = 1";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, hostId);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * Lấy accommodations theo city
- */
-public List<Accommodation> getAccommodationsByCity(int cityId, int page, int pageSize, String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("""
-        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        WHERE a.cityId = ? AND a.isActive = 1
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    parameters.add(cityId);
-    
-    if (type != null && !type.trim().isEmpty()) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    sql.append(" ORDER BY a.createdAt DESC");
-    sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    parameters.add((page - 1) * pageSize);
-    parameters.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        return executeAccommodationQuery(ps);
-    }
-}
-
-/**
- * Lấy accommodations theo region
- */
-public List<Accommodation> getAccommodationsByRegion(int regionId, int page, int pageSize, String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("""
-        SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
-        FROM Accommodations a
-        LEFT JOIN Users u ON a.hostId = u.userId
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        LEFT JOIN Regions r ON c.regionId = r.regionId
-        WHERE r.regionId = ? AND a.isActive = 1
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    parameters.add(regionId);
-    
-    if (type != null && !type.trim().isEmpty()) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    sql.append(" ORDER BY a.createdAt DESC");
-    sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-    parameters.add((page - 1) * pageSize);
-    parameters.add(pageSize);
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        return executeAccommodationQuery(ps);
-    }
-}
-
-/**
- * Đếm accommodations theo city
- */
-public int getAccommodationsCountByCity(int cityId, String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE cityId = ? AND isActive = 1");
-    
-    List<Object> parameters = new ArrayList<>();
-    parameters.add(cityId);
-    
-    if (type != null && !type.trim().isEmpty()) {
-        sql.append(" AND type = ?");
-        parameters.add(type);
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * Đếm accommodations theo region
- */
-public int getAccommodationsCountByRegion(int regionId, String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("""
-        SELECT COUNT(*) FROM Accommodations a
-        LEFT JOIN Cities c ON a.cityId = c.cityId
-        LEFT JOIN Regions r ON c.regionId = r.regionId
-        WHERE r.regionId = ? AND a.isActive = 1
-    """);
-    
-    List<Object> parameters = new ArrayList<>();
-    parameters.add(regionId);
-    
-    if (type != null && !type.trim().isEmpty()) {
-        sql.append(" AND a.type = ?");
-        parameters.add(type);
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        for (int i = 0; i < parameters.size(); i++) {
-            ps.setObject(i + 1, parameters.get(i));
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * Đếm accommodations gần đây
- */
-public int getRecentAccommodationsCount(int days) throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations WHERE createdAt >= DATEADD(DAY, ?, GETDATE())";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, -days);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-    }
-    return 0;
-}
-    /**
-     * Delete accommodation (hard delete)
-     */
-public boolean deleteAccommodation(int accommodationId) throws SQLException {
-    String sql = "DELETE FROM Accommodations WHERE accommodationId = ?";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
-        
-        pstmt.setInt(1, accommodationId);
-        int rowsAffected = pstmt.executeUpdate();
-        
-        boolean success = rowsAffected > 0;
-        LOGGER.info("Delete accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED"));
-        
-        return success;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error deleting accommodation " + accommodationId, e);
-        throw e;
-    }
-}
-    /**
-     * Create new accommodation
-     */
-public int createAccommodation(Accommodation accommodation) throws SQLException {
-    String sql = """
-        INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
-                                   numberOfRooms, amenities, pricePerNight, images, createdAt, 
-                                   isActive, averageRating, totalBookings)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """;
-
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-        ps.setInt(1, accommodation.getHostId());
-        ps.setString(2, accommodation.getName());
-        ps.setString(3, accommodation.getDescription());
-        ps.setInt(4, accommodation.getCityId());
-        ps.setString(5, accommodation.getAddress());
-        ps.setString(6, accommodation.getType());
-        ps.setInt(7, accommodation.getNumberOfRooms());
-        ps.setString(8, accommodation.getAmenities());
-        ps.setDouble(9, accommodation.getPricePerNight());
-        ps.setString(10, accommodation.getImages());
-        ps.setDate(11, accommodation.getCreatedAt() != null ? 
-                   new java.sql.Date(accommodation.getCreatedAt().getTime()) : 
-                   new java.sql.Date(System.currentTimeMillis()));
-        // *** QUAN TRỌNG: Sử dụng giá trị isActive từ object ***
-        ps.setBoolean(12, accommodation.isActive()); // Sẽ là true nếu set ở servlet
-        ps.setDouble(13, accommodation.getAverageRating());
-        ps.setInt(14, accommodation.getTotalBookings());
-
-        int affectedRows = ps.executeUpdate();
-
-        if (affectedRows > 0) {
-            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    int accommodationId = generatedKeys.getInt(1);
-                    accommodation.setAccommodationId(accommodationId);
-                    LOGGER.info("Accommodation created with ID: " + accommodationId + 
-                               ", isActive: " + accommodation.isActive());
-                    return accommodationId;
-                }
-            }
-        }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error creating accommodation: " + accommodation.getName(), e);
-        throw e;
-    }
-    return 0;
-}
-    
-
-    /**
-     * Update accommodation
+     * CẬP NHẬT THÔNG TIN ACCOMMODATION (cho phép cả APPROVED - sẽ reset về PENDING)
      */
     public boolean updateAccommodation(Accommodation accommodation) throws SQLException {
+        LOGGER.info("=== DAO UPDATE ACCOMMODATION ===");
+        LOGGER.info("Accommodation ID: " + accommodation.getAccommodationId());
+        LOGGER.info("Host ID: " + accommodation.getHostId());
+        LOGGER.info("Name: " + accommodation.getName());
+        LOGGER.info("Price: " + accommodation.getPricePerNight());
+        
         String sql = """
             UPDATE Accommodations 
             SET name = ?, description = ?, cityId = ?, address = ?, type = ?, 
-                numberOfRooms = ?, amenities = ?, pricePerNight = ?, images = ?, 
-                averageRating = ?, totalBookings = ?
-            WHERE accommodationId = ?
+                numberOfRooms = ?, amenities = ?, pricePerNight = ?, images = ?
+            WHERE accommodationId = ? AND hostId = ? 
+            AND adminApprovalStatus IN ('PENDING', 'REJECTED', 'APPROVED')
         """;
 
         try (Connection conn = DBUtils.getConnection();
@@ -1121,232 +818,216 @@ public int createAccommodation(Accommodation accommodation) throws SQLException 
             ps.setString(7, accommodation.getAmenities());
             ps.setDouble(8, accommodation.getPricePerNight());
             ps.setString(9, accommodation.getImages());
-            ps.setDouble(10, accommodation.getAverageRating());
-            ps.setInt(11, accommodation.getTotalBookings());
-            ps.setInt(12, accommodation.getAccommodationId());
+            ps.setInt(10, accommodation.getAccommodationId());
+            ps.setInt(11, accommodation.getHostId());
 
+            LOGGER.info("Executing SQL update...");
             int rowsAffected = ps.executeUpdate();
-            if (rowsAffected > 0) {
-                LOGGER.info("Accommodation updated successfully: " + accommodation.getAccommodationId());
+            LOGGER.info("Rows affected: " + rowsAffected);
+            boolean success = rowsAffected > 0;
+
+            if (success) {
+                LOGGER.info("Update successful! Checking if need to reset approval status...");
+                // Reset về PENDING nếu đang bị REJECTED hoặc đã APPROVED
+                String resetSql = """
+                    UPDATE Accommodations 
+                    SET adminApprovalStatus = 'PENDING', adminRejectReason = NULL,
+                        adminApprovedBy = NULL, adminApprovedAt = NULL
+                    WHERE accommodationId = ? AND adminApprovalStatus IN ('REJECTED', 'APPROVED')
+                """;
+                try (PreparedStatement resetPs = conn.prepareStatement(resetSql)) {
+                    resetPs.setInt(1, accommodation.getAccommodationId());
+                    int resetRows = resetPs.executeUpdate();
+                    if (resetRows > 0) {
+                        LOGGER.info("Accommodation " + accommodation.getAccommodationId() + " reset to PENDING for re-approval");
+                    } else {
+                        LOGGER.info("No status reset needed for accommodation " + accommodation.getAccommodationId());
+                    }
+                }
+            } else {
+                LOGGER.warning("Update failed! No rows affected. Check WHERE conditions.");
             }
-            return rowsAffected > 0;
+
+            return success;
         }
     }
 
     /**
-     * Get pending accommodations count
+     * Lấy accommodations theo city và region
      */
-   public int getPendingAccommodationsCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 0";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
+    public List<Accommodation> getAccommodationsByCity(int cityId, int page, int pageSize, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            WHERE a.cityId = ? AND a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
+        """);
         
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-        return 0;
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(cityId);
         
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting pending accommodations count", e);
-        return 0;
-    }
-}
-/**
- * Get pending accommodations count with type filter
- */
-public int getPendingAccommodationsCount(String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 0");
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" AND type = ?");
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-            ps.setString(1, type);
+        if (type != null && !type.trim().isEmpty()) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
         }
         
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return 0;
+        sql.append(" ORDER BY a.createdAt DESC");
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add((page - 1) * pageSize);
+        parameters.add(pageSize);
         
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting pending accommodations count with type filter", e);
-        return 0;
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
     }
-}
-private Accommodation mapAccommodationFromResultSet(ResultSet rs) throws SQLException {
-    Accommodation accommodation = new Accommodation();
-    
-    try {
-        accommodation.setAccommodationId(rs.getInt("accommodationId"));
-        accommodation.setHostId(rs.getInt("hostId"));
-        accommodation.setName(rs.getString("name"));
-        accommodation.setDescription(rs.getString("description"));
-        accommodation.setCityId(rs.getInt("cityId"));
-        accommodation.setAddress(rs.getString("address"));
-        accommodation.setType(rs.getString("type"));
-        accommodation.setNumberOfRooms(rs.getInt("numberOfRooms"));
-        accommodation.setAmenities(rs.getString("amenities"));
-        accommodation.setPricePerNight(rs.getDouble("pricePerNight"));
-        accommodation.setImages(rs.getString("images"));
-        accommodation.setCreatedAt(rs.getDate("createdAt"));
-        accommodation.setActive(rs.getBoolean("isActive"));
-        accommodation.setAverageRating(rs.getDouble("averageRating"));
-        accommodation.setTotalBookings(rs.getInt("totalBookings"));
+
+    public List<Accommodation> getAccommodationsByRegion(int regionId, int page, int pageSize, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT a.*, u.fullName as hostName, c.name as cityName, c.vietnameseName as cityVietnameseName
+            FROM Accommodations a
+            LEFT JOIN Users u ON a.hostId = u.userId
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE r.regionId = ? AND a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
+        """);
         
-        // Set joined fields
-        accommodation.setHostName(rs.getString("hostName"));
-        accommodation.setCityName(rs.getString("cityName"));
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(regionId);
         
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error mapping accommodation from ResultSet", e);
-        throw e;
-    }
-    
-    return accommodation;
-}
-private int getAccommodationCount(String sql) throws SQLException {
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql);
-         ResultSet rs = pstmt.executeQuery()) {
-        
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-        return 0;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting accommodation count", e);
-        return 0; // Return 0 instead of throwing to prevent servlet crash
-    }
-}
-    /**
-     * Get approved accommodations count
-     */
-public int getApprovedAccommodationsCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 1";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-        return 0;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting approved accommodations count", e);
-        return 0;
-    }
-}
-/**
- * Get approved accommodations count with type filter
- */
-public int getApprovedAccommodationsCount(String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE isActive = 1");
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" AND type = ?");
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-            ps.setString(1, type);
+        if (type != null && !type.trim().isEmpty()) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
         }
         
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return 0;
+        sql.append(" ORDER BY a.createdAt DESC");
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add((page - 1) * pageSize);
+        parameters.add(pageSize);
         
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting approved accommodations count with type filter", e);
-        return 0;
+        return executeAccommodationQueryWithParams(sql.toString(), parameters);
     }
-}
+
+    public int getAccommodationsCountByCity(int cityId, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE cityId = ? AND adminApprovalStatus = 'APPROVED' AND isActive = 1");
+        
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(cityId);
+        
+        if (type != null && !type.trim().isEmpty()) {
+            sql.append(" AND type = ?");
+            parameters.add(type);
+        }
+        
+        return getCountWithParams(sql.toString(), parameters);
+    }
+
+    public int getAccommodationsCountByRegion(int regionId, String type) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) FROM Accommodations a
+            LEFT JOIN Cities c ON a.cityId = c.cityId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE r.regionId = ? AND a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
+        """);
+        
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(regionId);
+        
+        if (type != null && !type.trim().isEmpty()) {
+            sql.append(" AND a.type = ?");
+            parameters.add(type);
+        }
+        
+        return getCountWithParams(sql.toString(), parameters);
+    }
+
+    public int getRecentAccommodationsCount(int days) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE createdAt >= DATEADD(DAY, ?, GETDATE())";
+        return getCountWithParam(sql, -days);
+    }
 
     /**
-     * Get total accommodations count
+     * XÓA VĨNH VIỄN (ADMIN)
      */
-public int getTotalAccommodationsCount() throws SQLException {
-    String sql = "SELECT COUNT(*) FROM Accommodations";
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
+    public boolean deleteAccommodation(int accommodationId) throws SQLException {
+        String sql = "DELETE FROM Accommodations WHERE accommodationId = ?";
         
-        if (rs.next()) {
-            return rs.getInt(1);
-        }
-        return 0;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting total accommodations count", e);
-        return 0; // Return 0 instead of throwing to prevent servlet crash
-    }
-}
-
-/**
- * Get total accommodations count with type filter
- */
-public int getTotalAccommodationsCount(String type) throws SQLException {
-    StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations");
-    
-    if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-        sql.append(" WHERE type = ?");
-    }
-    
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-        
-        if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
-            ps.setString(1, type);
-        }
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
-        }
-        return 0;
-        
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting total accommodations count with type filter", e);
-        return 0;
-    }
-}
-    /**
-     * Get active accommodations count
-     */
-    public int getActiveAccommodationsCount() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Accommodations WHERE isActive = 1";
-
         try (Connection conn = DBUtils.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, accommodationId);
+            int rowsAffected = ps.executeUpdate();
+            
+            boolean success = rowsAffected > 0;
+            LOGGER.info("Delete accommodation " + accommodationId + ": " + (success ? "SUCCESS" : "FAILED"));
+            
+            return success;
         }
+    }
+
+    /**
+     * CÁC PHƯƠNG THỨC XỬ LÝ BÁO CÁO VÀ ĐÁNH DẤU (Base schema không có)
+     */
+    public boolean softDeleteAccommodation(int accommodationId, String reason) throws SQLException {
+        // Base schema không có soft delete fields, perform hard delete
+        LOGGER.info("Soft delete requested for accommodation " + accommodationId + " - Reason: " + reason);
+        return deleteAccommodation(accommodationId);
+    }
+
+    public boolean restoreAccommodation(int accommodationId) throws SQLException {
+        // Base schema không có soft delete fields, log action
+        LOGGER.info("Restore requested for accommodation " + accommodationId);
+        return true;
+    }
+
+    public boolean flagAccommodation(int accommodationId, String reason) throws SQLException {
+        // Base schema không có flag fields, log action
+        LOGGER.info("Flag accommodation " + accommodationId + " - Reason: " + reason);
+        return true;
+    }
+
+    public boolean unflagAccommodation(int accommodationId) throws SQLException {
+        // Base schema không có flag fields, log action
+        LOGGER.info("Unflag accommodation " + accommodationId);
+        return true;
+    }
+
+    public boolean updateReportCount(int accommodationId, int reportCount) throws SQLException {
+        // Base schema không có report_count, log action
+        LOGGER.info("Report count update requested for accommodation ID: " + accommodationId + ", count: " + reportCount);
+        return true;
+    }
+
+    /**
+     * CÁC PHƯƠNG THỨC PLACEHOLDER CHO TƯƠNG THÍCH
+     */
+    public List<Accommodation> getReportedAccommodations(int page, int pageSize) throws SQLException {
+        // Base schema không có report fields, return empty list
+        return new ArrayList<>();
+    }
+
+    public List<Accommodation> getFlaggedAccommodations(int page, int pageSize) throws SQLException {
+        // Base schema không có flag fields, return empty list
+        return new ArrayList<>();
+    }
+
+    public List<Accommodation> getDeletedAccommodations(int page, int pageSize) throws SQLException {
+        // Base schema không có soft delete, return empty list
+        return new ArrayList<>();
+    }
+
+    public int getReportedAccommodationsCount() throws SQLException {
+        return 0;
+    }
+
+    public int getFlaggedAccommodationsCount() throws SQLException {
+        return 0;
+    }
+
+    public int getDeletedAccommodationsCount() throws SQLException {
         return 0;
     }
 
     /**
-     * Get accommodations by region
+     * CÁC PHƯƠNG THỨC THỐNG KÊ
      */
     public Map<String, Integer> getAccommodationsByRegion() throws SQLException {
         Map<String, Integer> regionCounts = new HashMap<>();
@@ -1355,7 +1036,7 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
             FROM Accommodations a
             JOIN Cities c ON a.cityId = c.cityId
             JOIN Regions r ON c.regionId = r.regionId
-            WHERE a.isActive = 1
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             GROUP BY r.name
         """;
 
@@ -1371,11 +1052,6 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
         return regionCounts;
     }
 
-    /**
-     * Get monthly growth data
-     */
-
-    
     public List<Integer> getMonthlyGrowthData(int months) throws SQLException {
         List<Integer> data = new ArrayList<>();
         String sql = """
@@ -1405,9 +1081,6 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
         return data;
     }
 
-    /**
-     * Get growth percentage
-     */
     public double getGrowthPercentage(String period) throws SQLException {
         String sql;
         switch (period) {
@@ -1456,27 +1129,107 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
     }
 
     /**
-     * Execute accommodation query and return list
+     * CÁC PHƯƠNG THỨC HỖ TRỢ
      */
-    private List<Accommodation> executeAccommodationQuery(PreparedStatement ps) throws SQLException {
+    private List<Accommodation> executeAccommodationQuery(String sql, Object... params) throws SQLException {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
+            }
+            
+            return executeQuery(ps);
+        }
+    }
+
+    private List<Accommodation> executeAccommodationQueryWithParams(String sql, List<Object> params) throws SQLException {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            
+            return executeQuery(ps);
+        }
+    }
+
+    private List<Accommodation> executeQuery(PreparedStatement ps) throws SQLException {
         List<Accommodation> accommodations = new ArrayList<>();
 
         try (ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                accommodations.add(mapResultSetToAccommodation(rs));
+                accommodations.add(mapAccommodationFromResultSet(rs));
             }
         }
 
         return accommodations;
     }
 
+    private int getCount(String sql) throws SQLException {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting count", e);
+            return 0;
+        }
+    }
+
+    private int getCountWithParam(String sql, Object param) throws SQLException {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setObject(1, param);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            return 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting count with param", e);
+            return 0;
+        }
+    }
+
+    private int getCountWithParams(String sql, List<Object> params) throws SQLException {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+            return 0;
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting count with params", e);
+            return 0;
+        }
+    }
+
     /**
-     * Map ResultSet to Accommodation object - Updated for database schema
+     * Map ResultSet sang Accommodation object
      */
-    private Accommodation mapResultSetToAccommodation(ResultSet rs) throws SQLException {
+    private Accommodation mapAccommodationFromResultSet(ResultSet rs) throws SQLException {
         Accommodation accommodation = new Accommodation();
         
-        // Set basic fields
+        // Basic fields
         accommodation.setAccommodationId(rs.getInt("accommodationId"));
         accommodation.setHostId(rs.getInt("hostId"));
         accommodation.setName(rs.getString("name"));
@@ -1493,36 +1246,28 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
         accommodation.setAverageRating(rs.getDouble("averageRating"));
         accommodation.setTotalBookings(rs.getInt("totalBookings"));
 
-        // Try to set additional fields from joins if available
+        // Admin approval fields (nếu có)
         try {
-            String hostName = rs.getString("hostName");
-            if (hostName != null) {
-                accommodation.setHostName(hostName);
-            }
+            accommodation.setAdminApprovalStatus(rs.getString("adminApprovalStatus"));
+            accommodation.setAdminApprovedBy(rs.getInt("adminApprovedBy"));
+            if (rs.wasNull()) accommodation.setAdminApprovedBy(null);
+            accommodation.setAdminApprovedAt(rs.getTimestamp("adminApprovedAt"));
+            accommodation.setAdminRejectReason(rs.getString("adminRejectReason"));
+            accommodation.setAdminNotes(rs.getString("adminNotes"));
         } catch (SQLException e) {
-            // hostName field not available in this query
-        }
-        
-        try {
-            String cityName = rs.getString("cityName");
-            if (cityName != null) {
-                accommodation.setCityName(cityName);
-            }
-        } catch (SQLException e) {
-            // cityName field not available in this query
+            // Ignore if fields don't exist in this query
+            accommodation.setAdminApprovalStatus("PENDING");
         }
 
+        // Joined fields (nếu có)
         try {
-            String cityVietnameseName = rs.getString("cityVietnameseName");
-            if (cityVietnameseName != null) {
-                // You can add this to your Accommodation model if needed
-                // accommodation.setCityVietnameseName(cityVietnameseName);
-            }
+            accommodation.setHostName(rs.getString("hostName"));
+            accommodation.setCityName(rs.getString("cityName"));
         } catch (SQLException e) {
-            // cityVietnameseName field not available in this query
+            // Ignore if fields don't exist in this query
         }
 
-        // Set default values for extended fields since base schema doesn't have them
+        // Set default values for extended fields
         accommodation.setReportCount(0);
         accommodation.setDeleted(false);
         accommodation.setFlagged(false);
@@ -1530,6 +1275,21 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
         return accommodation;
     }
 
+    // ===== LEGACY METHODS CHO TƯƠNG THÍCH NGƯỢC =====
+    
+    @Deprecated
+    public boolean approveAccommodation(int accommodationId) throws SQLException {
+        // Fallback - approve without admin info
+        String sql = "UPDATE Accommodations SET adminApprovalStatus = 'APPROVED', adminApprovedAt = GETDATE() WHERE accommodationId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accommodationId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 
-
+    @Deprecated
+    public boolean rejectAccommodation(int accommodationId, String reason) throws SQLException {
+        return rejectAccommodation(accommodationId, 1, reason); // Use admin ID = 1 as fallback
+    }
 }

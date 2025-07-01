@@ -28,6 +28,13 @@ public class Accommodation {
     private boolean isFlagged = false;
     private String flagReason;
     private String thumbnailImage;
+
+    // ===== TRƯỜNG MỚI CHO ADMIN APPROVAL =====
+    private String adminApprovalStatus = "PENDING"; // PENDING, APPROVED, REJECTED
+    private Integer adminApprovedBy; // User ID của admin duyệt
+    private Date adminApprovedAt; // Thời gian duyệt
+    private String adminRejectReason; // Lý do từ chối
+    private String adminNotes; // Ghi chú của admin
     
     // Related objects
     private User host; // Updated to User instead of Host
@@ -43,7 +50,8 @@ public class Accommodation {
         this.bookings = new ArrayList<>();
         this.averageRating = 0.0;
         this.totalBookings = 0;
-        this.isActive = false; // Default to inactive until approved
+        this.isActive = true; // Host muốn hiện (mặc định)
+        this.adminApprovalStatus = "PENDING"; // Chờ admin duyệt
     }
 
     public Accommodation(int hostId, String name, String description, int cityId,
@@ -57,6 +65,126 @@ public class Accommodation {
         this.type = type;
         this.pricePerNight = pricePerNight;
         this.createdAt = new Date();
+    }
+
+    // ===== GETTERS VÀ SETTERS CHO ADMIN APPROVAL =====
+    
+    public String getAdminApprovalStatus() {
+        return adminApprovalStatus;
+    }
+    
+    public void setAdminApprovalStatus(String adminApprovalStatus) {
+        this.adminApprovalStatus = adminApprovalStatus;
+    }
+    
+    public Integer getAdminApprovedBy() {
+        return adminApprovedBy;
+    }
+    
+    public void setAdminApprovedBy(Integer adminApprovedBy) {
+        this.adminApprovedBy = adminApprovedBy;
+    }
+    
+    public Date getAdminApprovedAt() {
+        return adminApprovedAt;
+    }
+    
+    public void setAdminApprovedAt(Date adminApprovedAt) {
+        this.adminApprovedAt = adminApprovedAt;
+    }
+    
+    public String getAdminRejectReason() {
+        return adminRejectReason;
+    }
+    
+    public void setAdminRejectReason(String adminRejectReason) {
+        this.adminRejectReason = adminRejectReason;
+    }
+    
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+    
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
+    }
+
+    // ===== UTILITY METHODS =====
+    
+    /**
+     * Kiểm tra có được hiển thị công khai không
+     */
+    public boolean isPubliclyVisible() {
+        return "APPROVED".equals(adminApprovalStatus) && isActive;
+    }
+    
+    /**
+     * Kiểm tra admin đã duyệt chưa
+     */
+    public boolean isAdminApproved() {
+        return "APPROVED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra đang chờ admin duyệt
+     */
+    public boolean isPendingApproval() {
+        return "PENDING".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra admin đã từ chối
+     */
+    public boolean isAdminRejected() {
+        return "REJECTED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Lấy trạng thái hiển thị chi tiết cho host
+     */
+    public String getDetailedStatus() {
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "Chờ admin duyệt";
+            case "APPROVED":
+                return isActive ? "Đang hiển thị công khai" : "Đã ẩn bởi host";
+            case "REJECTED":
+                return "Bị admin từ chối" + (adminRejectReason != null ? " - " + adminRejectReason : "");
+            default:
+                return "Không xác định";
+        }
+    }
+    
+    /**
+     * Lấy CSS class cho trạng thái
+     */
+    public String getStatusCssClass() {
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "badge-warning";
+            case "APPROVED":
+                return isActive ? "badge-success" : "badge-secondary";
+            case "REJECTED":
+                return "badge-danger";
+            default:
+                return "badge-light";
+        }
+    }
+    
+    /**
+     * Kiểm tra host có thể chỉnh sửa không
+     */
+    public boolean canHostEdit() {
+        // Host có thể chỉnh sửa khi đang pending hoặc bị reject
+        return "PENDING".equals(adminApprovalStatus) || "REJECTED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra host có thể ẩn/hiện không  
+     */
+    public boolean canHostToggleVisibility() {
+        // Host chỉ có thể ẩn/hiện khi admin đã approve
+        return "APPROVED".equals(adminApprovalStatus);
     }
 
     // Getters and Setters
@@ -311,8 +439,17 @@ public class Accommodation {
         if (isDeleted) return "Đã xóa";
         if (isFlagged) return "Bị đánh dấu";
         if (reportCount > 0) return "Bị báo cáo";
-        if (!isActive) return "Chờ duyệt";
-        return "Hoạt động";
+        
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "Chờ duyệt";
+            case "APPROVED":
+                return isActive ? "Hoạt động" : "Đã ẩn";
+            case "REJECTED":
+                return "Bị từ chối";
+            default:
+                return "Không xác định";
+        }
     }
 
     // FIXED: Add location methods to resolve JSP error
@@ -369,17 +506,22 @@ public class Accommodation {
     }
 
     /**
-     * Get status text
+     * Get status text - SỬ DỤNG LOGIC MỚI
      */
     public String getStatusText() {
-        return isActive ? "Đã duyệt" : "Chờ duyệt";
+        return getDetailedStatus();
     }
 
     /**
-     * Get status for admin
+     * Get status for admin - SỬ DỤNG LOGIC MỚI
      */
     public int getIsActive() {
-        return isActive ? 1 : 0; // 1 for Approved, 0 for Pending
+        // Trả về trạng thái dựa trên adminApprovalStatus và isActive
+        if ("APPROVED".equals(adminApprovalStatus) && isActive) {
+            return 1; // Hiển thị công khai
+        } else {
+            return 0; // Không hiển thị công khai
+        }
     }
 
     /**
@@ -507,6 +649,7 @@ public class Accommodation {
                ", address='" + address + '\'' +
                ", pricePerNight=" + pricePerNight +
                ", isActive=" + isActive +
+               ", adminApprovalStatus='" + adminApprovalStatus + '\'' +
                ", averageRating=" + averageRating +
                ", totalBookings=" + totalBookings +
                '}';
