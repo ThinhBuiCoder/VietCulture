@@ -2,6 +2,8 @@ package controller;
 
 import dao.AccommodationDAO;
 import dao.RegionDAO;
+import dao.ReviewDAO;
+import dao.BookingDAO;
 import model.Accommodation;
 import model.Region;
 
@@ -25,6 +27,8 @@ public class AccommodationsServlet extends HttpServlet {
 
     private AccommodationDAO accommodationDAO;
     private RegionDAO regionDAO;
+    private ReviewDAO reviewDAO;
+    private BookingDAO bookingDAO;
 
     private static final int DEFAULT_PAGE_SIZE = 12;
 
@@ -34,6 +38,8 @@ public class AccommodationsServlet extends HttpServlet {
         try {
             this.accommodationDAO = new AccommodationDAO();
             this.regionDAO = new RegionDAO();
+            this.reviewDAO = new ReviewDAO();
+            this.bookingDAO = new BookingDAO();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize DAOs", e);
             throw new ServletException("Failed to initialize servlet", e);
@@ -97,6 +103,23 @@ public class AccommodationsServlet extends HttpServlet {
 
             // Set accommodation data
             request.setAttribute("accommodation", accommodation);
+
+            // Lấy danh sách review động cho lưu trú này
+            List<model.Review> reviews = reviewDAO.getReviewsByAccommodationId(accommodationId);
+            request.setAttribute("reviews", reviews);
+
+            // Kiểm tra booking để truyền biến hasBooked cho review
+            boolean hasBooked = false;
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            if (session != null && session.getAttribute("user") != null) {
+                model.User user = (model.User) session.getAttribute("user");
+                try {
+                    hasBooked = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodation.getAccommodationId()) > 0;
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Error checking booking for review", ex);
+                }
+            }
+            request.setAttribute("hasBooked", hasBooked);
 
             // Forward to detail page - Updated path to match project structure
             request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")

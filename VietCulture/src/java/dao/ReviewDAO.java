@@ -461,4 +461,64 @@ public class ReviewDAO {
         }
         return review;
     }
+
+    /**
+     * Lấy tất cả review hiển thị cho một experienceId
+     */
+    public List<Review> getReviewsByExperienceId(int experienceId) throws SQLException {
+        List<Review> reviews = new ArrayList<>();
+        String sql = """
+            SELECT r.reviewId, r.experienceId, r.accommodationId, r.travelerId,
+                   r.rating, r.comment, r.photos, r.createdAt, r.isVisible,
+                   u.fullName as travelerName, u.avatar as travelerAvatar,
+                   e.title as experienceName,
+                   a.name as accommodationName
+            FROM Reviews r
+            LEFT JOIN Users u ON r.travelerId = u.userId
+            LEFT JOIN Experiences e ON r.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON r.accommodationId = a.accommodationId
+            WHERE r.experienceId = ? AND r.isVisible = 1
+            ORDER BY r.createdAt DESC
+        """;
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, experienceId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Review review = mapReviewFromResultSet(rs);
+                    reviews.add(review);
+                }
+            }
+        }
+        return reviews;
+    }
+
+    /**
+     * Lấy tất cả review hiển thị cho một accommodationId
+     */
+    public List<Review> getReviewsByAccommodationId(int accommodationId) throws SQLException {
+        List<Review> reviews = new ArrayList<>();
+        String sql = """
+            SELECT r.reviewId, r.experienceId, r.accommodationId, r.travelerId,
+                   r.rating, r.comment, r.photos, r.createdAt, r.isVisible,
+                   u.fullName as travelerName, u.avatar as travelerAvatar,
+                   e.title as experienceName,
+                   a.name as accommodationName
+            FROM Reviews r
+            LEFT JOIN Users u ON r.travelerId = u.userId
+            LEFT JOIN Experiences e ON r.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON r.accommodationId = a.accommodationId
+            WHERE r.accommodationId = ? AND r.isVisible = 1
+            ORDER BY r.createdAt DESC
+        """;
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, accommodationId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Review review = mapReviewFromResultSet(rs);
+                    reviews.add(review);
+                }
+            }
+        }
+        return reviews;
+    }
 }

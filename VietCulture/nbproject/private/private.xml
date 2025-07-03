@@ -3,32 +3,7 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/booking-form.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/experiences.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/controller/FavoriteController.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/utils/DBUtils.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/favorites.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/dao/FavoriteDAO.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/model/Favorite.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/payos-payment.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/accommodation-detail.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/model/Experience.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/host/upgrade.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/traveler/upgrade-to-host.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/booking-success.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/dao/ExperienceDAO.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/controller/ProfileServlet.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/booking-fail.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/dao/UserDAO.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/admin/dashboard.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/accommodations.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/experience-detail.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/profile.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/register.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/service/FavoriteService.java</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/home.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/web/view/jsp/home/booking-confirm.jsp</file>
-            <file>file:/C:/Users/ASUS/Desktop/SWP/VietCulture/VietCulture/src/java/model/Accommodation.java</file>
+            <file>file:/D:/DOWNLOADS/Project_final/VietCulture/VietCulture/src/java/utils/DBUtils.java</file>
         </group>
     </open-files>
 </project-private>
