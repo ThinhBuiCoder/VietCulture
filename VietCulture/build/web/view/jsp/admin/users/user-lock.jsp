@@ -135,8 +135,21 @@
         <div class="lock-card">
             <!-- Header -->
             <div class="${user.active ? 'lock-header' : 'unlock-header'}">
-                <img src="${not empty user.avatar ? user.avatar : '/assets/images/default-avatar.png'}" 
-                     alt="Avatar" class="user-avatar">
+                <c:choose>
+                    <c:when test="${not empty user.avatar and user.avatar ne 'default-avatar.png'}">
+                        <img src="${pageContext.request.contextPath}/view/assets/images/avatars/${user.avatar}" 
+                             alt="Avatar" class="user-avatar"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="user-avatar bg-secondary d-none align-items-center justify-content-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
                 <h3 class="mb-2">
                     <c:choose>
                         <c:when test="${user.active}">
@@ -183,7 +196,7 @@
                             <strong>Cảnh báo:</strong> Việc khóa tài khoản sẽ ngăn người dùng đăng nhập và sử dụng các dịch vụ.
                         </div>
 
-                        <form id="lockUserForm" onsubmit="lockUser(event)">
+                        <form id="lockUserForm" action="${pageContext.request.contextPath}/admin/users/${user.userId}/lock" method="POST" onsubmit="lockUser(event)">
                             <input type="hidden" name="userId" value="${user.userId}">
                             
                             <div class="mb-4">
@@ -216,14 +229,19 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-3">
+                            <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-danger-gradient flex-fill">
                                     <i class="fas fa-lock me-2"></i>Khóa tài khoản
                                 </button>
                                 <a href="${pageContext.request.contextPath}/admin/users/${user.userId}" 
-                                   class="btn btn-outline-secondary flex-fill">
-                                    <i class="fas fa-times me-2"></i>Hủy bỏ
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i>Hủy
                                 </a>
+                            </div>
+                                        <i class="fas fa-lock me-1"></i>Test Simple Form Submit
+                                    </button>
+                                </form>
+                                <small class="text-muted d-block">↑ This form submits directly without JavaScript</small>
                             </div>
                         </form>
                     </c:when>
@@ -234,7 +252,7 @@
                             <strong>Thông tin:</strong> Việc mở khóa sẽ cho phép người dùng đăng nhập và sử dụng dịch vụ trở lại.
                         </div>
 
-                        <form id="unlockUserForm" onsubmit="unlockUser(event)">
+                        <form id="unlockUserForm" action="${pageContext.request.contextPath}/admin/users/${user.userId}/unlock" method="POST" onsubmit="unlockUser(event)">
                             <input type="hidden" name="userId" value="${user.userId}">
                             
                             <div class="mb-4">
@@ -375,17 +393,30 @@
 
         function lockUser(event) {
             event.preventDefault();
+            console.log('lockUser function called');
             
             const form = document.getElementById('lockUserForm');
+            if (!form) {
+                console.error('Lock form not found');
+                showAlert('danger', 'Không tìm thấy form khóa tài khoản');
+                return;
+            }
+            
             const formData = new FormData(form);
             const reason = formData.get('reason').trim();
+            
+            console.log('Form data:', {
+                userId: formData.get('userId'),
+                reason: reason,
+                action: form.action
+            });
             
             if (!reason) {
                 showAlert('warning', 'Vui lòng nhập lý do khóa tài khoản.');
                 return;
             }
             
-            const message = `Bạn có chắc chắn muốn khóa tài khoản của ${form.elements.fullName ? form.elements.fullName.value : 'người dùng này'}?\n\nLý do: ${reason}`;
+            const message = `Bạn có chắc chắn muốn khóa tài khoản này?\n\nLý do: ${reason}`;
             
             showConfirm(message, () => {
                 performLockAction(formData);
@@ -406,21 +437,53 @@
         }
 
         function performLockAction(formData) {
+            console.log('performLockAction called');
             loadingModal.show();
             
-            const userId = formData.get('userId');
+            const form = document.getElementById('lockUserForm');
             
-            fetch(`${contextPath}/admin/users/${userId}/lock`, {
+            console.log('Making fetch request to:', form.action);
+            console.log('FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+            
+            // Add timeout to fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            fetch(form.action, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: controller.signal
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response is not JSON format');
+                }
+                
+                return response.json();
+            })
             .then(data => {
+                clearTimeout(timeoutId);
                 loadingModal.hide();
+                console.log('Response data:', data);
                 
                 if (data.success) {
                     showAlert('success', data.message);
                     setTimeout(() => {
+                        const userId = document.querySelector('input[name="userId"]').value;
                         window.location.href = `${contextPath}/admin/users/${userId}`;
                     }, 2000);
                 } else {
@@ -428,28 +491,66 @@
                 }
             })
             .catch(error => {
+                clearTimeout(timeoutId);
                 loadingModal.hide();
-                console.error('Error:', error);
-                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
+                console.error('Lock user error:', error);
+                
+                if (error.name === 'AbortError') {
+                    showAlert('danger', 'Yêu cầu hết thời gian chờ. Vui lòng thử lại.');
+                } else {
+                    showAlert('danger', 'Có lỗi xảy ra: ' + error.message);
+                }
             });
         }
 
         function performUnlockAction(formData) {
+            console.log('performUnlockAction called');
             loadingModal.show();
             
-            const userId = formData.get('userId');
+            const form = document.getElementById('unlockUserForm');
             
-            fetch(`${contextPath}/admin/users/${userId}/unlock`, {
+            console.log('Making unlock request to:', form.action);
+            console.log('FormData entries:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+            
+            // Add timeout to fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            fetch(form.action, {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: controller.signal
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Unlock response status:', response.status);
+                console.log('Unlock response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Response is not JSON format');
+                }
+                
+                return response.json();
+            })
             .then(data => {
+                clearTimeout(timeoutId);
                 loadingModal.hide();
+                console.log('Unlock response data:', data);
                 
                 if (data.success) {
                     showAlert('success', data.message);
                     setTimeout(() => {
+                        const userId = document.querySelector('input[name="userId"]').value;
                         window.location.href = `${contextPath}/admin/users/${userId}`;
                     }, 2000);
                 } else {
@@ -457,9 +558,15 @@
                 }
             })
             .catch(error => {
+                clearTimeout(timeoutId);
                 loadingModal.hide();
-                console.error('Error:', error);
-                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
+                console.error('Unlock user error:', error);
+                
+                if (error.name === 'AbortError') {
+                    showAlert('danger', 'Yêu cầu hết thời gian chờ. Vui lòng thử lại.');
+                } else {
+                    showAlert('danger', 'Có lỗi xảy ra: ' + error.message);
+                }
             });
         }
 

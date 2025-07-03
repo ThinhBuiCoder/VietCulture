@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 public class User {
-
     private int userId;
     private String email;
     private String password;
@@ -34,6 +33,7 @@ public class User {
     private boolean emailVerified;
     private String verificationToken;
     private Date tokenExpiry;
+    private String lockReason; // Reason why account was locked
 
     // Related objects
     private List<Booking> bookings; // For TRAVELER role
@@ -65,268 +65,111 @@ public class User {
     }
 
     // Getters and Setters
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public Date getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(Date dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getPreferences() {
-        return preferences;
-    }
-
-    public void setPreferences(String preferences) {
-        this.preferences = preferences;
-    }
-
-    public int getTotalBookings() {
-        return totalBookings;
-    }
-
-    public void setTotalBookings(int totalBookings) {
-        this.totalBookings = totalBookings;
-    }
-
-    public String getBusinessName() {
-        return businessName;
-    }
-
-    public void setBusinessName(String businessName) {
-        this.businessName = businessName;
-    }
-
-    public String getBusinessType() {
-        return businessType;
-    }
-
-    public void setBusinessType(String businessType) {
-        this.businessType = businessType;
-    }
-
-    public String getBusinessAddress() {
-        return businessAddress;
-    }
-
-    public void setBusinessAddress(String businessAddress) {
-        this.businessAddress = businessAddress;
-    }
-
-    public String getBusinessDescription() {
-        return businessDescription;
-    }
-
-    public void setBusinessDescription(String businessDescription) {
-        this.businessDescription = businessDescription;
-    }
-
-    public String getTaxId() {
-        return taxId;
-    }
-
-    public void setTaxId(String taxId) {
-        this.taxId = taxId;
-    }
-
-    public String getSkills() {
-        return skills;
-    }
-
-    public void setSkills(String skills) {
-        this.skills = skills;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public double getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(double averageRating) {
-        this.averageRating = averageRating;
-    }
-
-    public int getTotalExperiences() {
-        return totalExperiences;
-    }
-
-    public void setTotalExperiences(int totalExperiences) {
-        this.totalExperiences = totalExperiences;
-    }
-
-    public double getTotalRevenue() {
-        return totalRevenue;
-    }
-
-    public void setTotalRevenue(double totalRevenue) {
-        this.totalRevenue = totalRevenue;
-    }
-
-    public String getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(String permissions) {
-        this.permissions = permissions;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-
-    public String getVerificationToken() {
-        return verificationToken;
-    }
-
-    public void setVerificationToken(String verificationToken) {
-        this.verificationToken = verificationToken;
-    }
-
-    public Date getTokenExpiry() {
-        return tokenExpiry;
-    }
-
-    public void setTokenExpiry(Date tokenExpiry) {
-        this.tokenExpiry = tokenExpiry;
-    }
-
-    public List<Booking> getBookings() {
-        return bookings;
-    }
-
-    public void setBookings(List<Booking> bookings) {
-        this.bookings = bookings;
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(List<Review> reviews) {
-        this.reviews = reviews;
-    }
-
-    public List<AdminAction> getAdminActions() {
-        return adminActions;
-    }
-
-    public void setAdminActions(List<AdminAction> adminActions) {
-        this.adminActions = adminActions;
-    }
-
-    public List<Experience> getExperiences() {
-        return experiences;
-    }
-
-    public void setExperiences(List<Experience> experiences) {
-        this.experiences = experiences;
-    }
-
-    public List<Accommodation> getAccommodations() {
-        return accommodations;
-    }
-
-    public void setAccommodations(List<Accommodation> accommodations) {
-        this.accommodations = accommodations;
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public Date getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public String getPreferences() { return preferences; }
+    public void setPreferences(String preferences) { this.preferences = preferences; }
+
+    public int getTotalBookings() { return totalBookings; }
+    public void setTotalBookings(int totalBookings) { this.totalBookings = totalBookings; }
+
+    public String getBusinessName() { return businessName; }
+    public void setBusinessName(String businessName) { this.businessName = businessName; }
+
+    public String getBusinessType() { return businessType; }
+    public void setBusinessType(String businessType) { this.businessType = businessType; }
+
+    public String getBusinessAddress() { return businessAddress; }
+    public void setBusinessAddress(String businessAddress) { this.businessAddress = businessAddress; }
+
+    public String getBusinessDescription() { return businessDescription; }
+    public void setBusinessDescription(String businessDescription) { this.businessDescription = businessDescription; }
+
+    public String getTaxId() { return taxId; }
+    public void setTaxId(String taxId) { this.taxId = taxId; }
+
+    public String getSkills() { return skills; }
+    public void setSkills(String skills) { this.skills = skills; }
+
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
+
+    public double getAverageRating() { return averageRating; }
+    public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+
+    public int getTotalExperiences() { return totalExperiences; }
+    public void setTotalExperiences(int totalExperiences) { this.totalExperiences = totalExperiences; }
+
+    public double getTotalRevenue() { return totalRevenue; }
+    public void setTotalRevenue(double totalRevenue) { this.totalRevenue = totalRevenue; }
+
+    public String getPermissions() { return permissions; }
+    public void setPermissions(String permissions) { this.permissions = permissions; }
+
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+
+    public String getVerificationToken() { return verificationToken; }
+    public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
+
+    public Date getTokenExpiry() { return tokenExpiry; }
+    public void setTokenExpiry(Date tokenExpiry) { this.tokenExpiry = tokenExpiry; }
+
+    public String getLockReason() { return lockReason; }
+    public void setLockReason(String lockReason) { this.lockReason = lockReason; }
+
+    public List<Booking> getBookings() { return bookings; }
+    public void setBookings(List<Booking> bookings) { this.bookings = bookings; }
+
+    public List<Review> getReviews() { return reviews; }
+    public void setReviews(List<Review> reviews) { this.reviews = reviews; }
+
+    public List<AdminAction> getAdminActions() { return adminActions; }
+    public void setAdminActions(List<AdminAction> adminActions) { this.adminActions = adminActions; }
+
+    public List<Experience> getExperiences() { return experiences; }
+    public void setExperiences(List<Experience> experiences) { this.experiences = experiences; }
+
+    public List<Accommodation> getAccommodations() { return accommodations; }
+    public void setAccommodations(List<Accommodation> accommodations) { this.accommodations = accommodations; }
+
+    // Method needed by ReviewServlet - ADDED THIS
+    public boolean isAdmin() {
+        return "ADMIN".equals(role);
     }
 
     // Helper methods for TRAVELER role
@@ -547,22 +390,22 @@ public class User {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("User{")
-                .append("userId=").append(userId)
-                .append(", email='").append(email).append('\'')
-                .append(", fullName='").append(fullName).append('\'')
-                .append(", role='").append(role).append('\'');
-
+          .append("userId=").append(userId)
+          .append(", email='").append(email).append('\'')
+          .append(", fullName='").append(fullName).append('\'')
+          .append(", role='").append(role).append('\'');
+        
         if ("TRAVELER".equals(role)) {
             sb.append(", totalBookings=").append(totalBookings)
-                    .append(", preferences='").append(preferences).append('\'')
-                    .append(", level='").append(getTravelerLevel()).append('\'');
+              .append(", preferences='").append(preferences).append('\'')
+              .append(", level='").append(getTravelerLevel()).append('\'');
         } else if ("HOST".equals(role)) {
             sb.append(", businessName='").append(businessName).append('\'')
-                    .append(", businessType='").append(businessType).append('\'')
-                    .append(", region='").append(region).append('\'')
-                    .append(", averageRating=").append(averageRating)
-                    .append(", totalExperiences=").append(totalExperiences)
-                    .append(", totalRevenue=").append(totalRevenue);
+              .append(", businessType='").append(businessType).append('\'')
+              .append(", region='").append(region).append('\'')
+              .append(", averageRating=").append(averageRating)
+              .append(", totalExperiences=").append(totalExperiences)
+              .append(", totalRevenue=").append(totalRevenue);
         } else if ("ADMIN".equals(role)) {
             sb.append(", permissions='").append(permissions).append('\'');
         }
@@ -572,7 +415,6 @@ public class User {
 
     // Inner class for admin actions
     public static class AdminAction {
-
         private String action;
         private String description;
         private String targetType; // USER, EXPERIENCE, ACCOMMODATION, etc.
@@ -592,47 +434,19 @@ public class User {
         }
 
         // Getters and setters
-        public String getAction() {
-            return action;
-        }
+        public String getAction() { return action; }
+        public void setAction(String action) { this.action = action; }
 
-        public void setAction(String action) {
-            this.action = action;
-        }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
 
-        public String getDescription() {
-            return description;
-        }
+        public String getTargetType() { return targetType; }
+        public void setTargetType(String targetType) { this.targetType = targetType; }
 
-        public void setDescription(String description) {
-            this.description = description;
-        }
+        public int getTargetId() { return targetId; }
+        public void setTargetId(int targetId) { this.targetId = targetId; }
 
-        public String getTargetType() {
-            return targetType;
-        }
-
-        public void setTargetType(String targetType) {
-            this.targetType = targetType;
-        }
-
-        public int getTargetId() {
-            return targetId;
-        }
-
-        public void setTargetId(int targetId) {
-            this.targetId = targetId;
-        }
-
-        public Date getTimestamp() {
-            return timestamp;
-        }
-
-        public void setTimestamp(Date timestamp) {
-            this.timestamp = timestamp;
-        }
-    }
-      public boolean isAdmin() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        public Date getTimestamp() { return timestamp; }
+        public void setTimestamp(Date timestamp) { this.timestamp = timestamp; }
     }
 }

@@ -792,3 +792,24 @@ PRINT '- adminApprovalStatus: PENDING (chờ duyệt) | APPROVED (đã duyệt) 
 PRINT '- isActive: 1 (host hiện) | 0 (host ẩn)';
 PRINT '- Hiển thị công khai khi: adminApprovalStatus = APPROVED AND isActive = 1';
 GO
+USE dataviet;
+
+-- Check if lockReason column already exists
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Users' AND COLUMN_NAME = 'lockReason')
+BEGIN
+    ALTER TABLE Users 
+    ADD lockReason NVARCHAR(500) NULL;
+    
+    PRINT 'lockReason column added successfully to Users table';
+END
+ELSE
+BEGIN
+    PRINT 'lockReason column already exists in Users table';
+END;
+
+-- Update existing locked users with a default reason (optional)
+UPDATE Users 
+SET lockReason = 'Tài khoản bị khóa bởi admin (lý do không xác định)'
+WHERE isActive = 0 AND lockReason IS NULL;
+
+PRINT 'lockReason column setup completed';

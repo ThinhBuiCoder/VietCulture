@@ -50,59 +50,64 @@ public class UserDAO {
     /**
      * Get user by ID
      */
-public User getUserById(int userId) throws SQLException {
-    String sql = """
-        SELECT userId, email, fullName, role, phone, createdAt, 
-               businessName, averageRating, totalExperiences
-        FROM Users 
-        WHERE userId = ?
-    """;
+    public User getUserById(int userId) throws SQLException {
+        String sql = """
+            SELECT userId, email, password, fullName, phone, dateOfBirth, gender, 
+                   avatar, bio, createdAt, isActive, role, preferences, totalBookings,
+                   businessName, businessType, businessAddress, businessDescription,
+                   taxId, skills, region, averageRating, totalExperiences, totalRevenue,
+                   permissions, emailVerified, verificationToken, tokenExpiry
+            FROM Users 
+            WHERE userId = ?
+        """;
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setInt(1, userId);
+            ps.setInt(1, userId);
 
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return mapBasicUserFromResultSet(rs);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapUserFromResultSet(rs);
+                }
             }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting user by ID: " + userId, e);
+            // Return null instead of throwing to prevent servlet crash
+            return null;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error getting user by ID: " + userId, e);
-        // Return null instead of throwing to prevent servlet crash
         return null;
     }
-    return null;
-}
-private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
-    User user = new User();
-    
-    try {
-        user.setUserId(rs.getInt("userId"));
-        user.setEmail(rs.getString("email"));
-        user.setFullName(rs.getString("fullName"));
-        user.setRole(rs.getString("role"));
+
+    private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
+        User user = new User();
         
-        // Handle optional fields safely
         try {
-            user.setPhone(rs.getString("phone"));
-            user.setCreatedAt(rs.getDate("createdAt"));
-            user.setBusinessName(rs.getString("businessName"));
-            user.setAverageRating(rs.getDouble("averageRating"));
-            user.setTotalExperiences(rs.getInt("totalExperiences"));
+            user.setUserId(rs.getInt("userId"));
+            user.setEmail(rs.getString("email"));
+            user.setFullName(rs.getString("fullName"));
+            user.setRole(rs.getString("role"));
+            
+            // Handle optional fields safely
+            try {
+                user.setPhone(rs.getString("phone"));
+                user.setCreatedAt(rs.getDate("createdAt"));
+                user.setBusinessName(rs.getString("businessName"));
+                user.setAverageRating(rs.getDouble("averageRating"));
+                user.setTotalExperiences(rs.getInt("totalExperiences"));
+            } catch (SQLException e) {
+                // Optional fields may not exist or be null, that's OK
+                LOGGER.log(Level.FINE, "Optional user field not found: " + e.getMessage());
+            }
+            
         } catch (SQLException e) {
-            // Optional fields may not exist or be null, that's OK
-            LOGGER.log(Level.FINE, "Optional user field not found: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error mapping basic user from ResultSet", e);
+            throw e;
         }
         
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error mapping basic user from ResultSet", e);
-        throw e;
+        return user;
     }
-    
-    return user;
-}
+
     /**
      * Create new user
      */
@@ -801,6 +806,7 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
      * Lock user account
      */
     public boolean lockUser(int userId, String reason) throws SQLException {
+        // For now, just update isActive status
         return updateUserStatus(userId, false);
     }
 
@@ -1203,93 +1209,96 @@ private User mapBasicUserFromResultSet(ResultSet rs) throws SQLException {
     public int getRecentHostsCount(int days) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-public boolean canBecomeHost(int userId) throws SQLException {
-    String sql = """
-        SELECT role, emailVerified, isActive 
-        FROM Users 
-        WHERE userId = ?
-    """;
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    public boolean canBecomeHost(int userId) throws SQLException {
+        String sql = """
+            SELECT role, emailVerified, isActive 
+            FROM Users 
+            WHERE userId = ?
+        """;
 
-        ps.setInt(1, userId);
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                String role = rs.getString("role");
-                boolean emailVerified = rs.getBoolean("emailVerified");
-                boolean isActive = rs.getBoolean("isActive");
-                
-                return "TRAVELER".equals(role) && emailVerified && isActive;
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    boolean emailVerified = rs.getBoolean("emailVerified");
+                    boolean isActive = rs.getBoolean("isActive");
+                    
+                    return "TRAVELER".equals(role) && emailVerified && isActive;
+                }
             }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error checking if user can become host: " + userId, e);
+            throw e;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error checking if user can become host: " + userId, e);
-        throw e;
+        return false;
     }
-    return false;
-}
 
-public boolean upgradeUserToHost(int userId) throws SQLException {
-    String sql = """
-        UPDATE Users 
-        SET role = 'HOST',
-            averageRating = 0,
-            totalExperiences = 0,
-            totalRevenue = 0
-        WHERE userId = ? AND role = 'TRAVELER' AND emailVerified = 1 AND isActive = 1
-    """;
+    public boolean upgradeUserToHost(int userId) throws SQLException {
+        String sql = """
+            UPDATE Users 
+            SET role = 'HOST',
+                averageRating = 0,
+                totalExperiences = 0,
+                totalRevenue = 0
+            WHERE userId = ? AND role = 'TRAVELER' AND emailVerified = 1 AND isActive = 1
+        """;
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        ps.setInt(1, userId);
+            ps.setInt(1, userId);
 
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            LOGGER.info("User upgraded to HOST - ID: " + userId);
-            return true;
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("User upgraded to HOST - ID: " + userId);
+                return true;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error upgrading user to host: " + userId, e);
+            throw e;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error upgrading user to host: " + userId, e);
-        throw e;
+        return false;
     }
-    return false;
-}
-public boolean updateHostBusinessInfo(int userId, String businessName, String businessType, 
-                                    String businessAddress, String businessDescription, 
-                                    String taxId, String skills, String region) throws SQLException {
-    String sql = """
-        UPDATE Users 
-        SET businessName = ?, businessType = ?, businessAddress = ?, 
-            businessDescription = ?, taxId = ?, skills = ?, region = ?
-        WHERE userId = ? AND role = 'HOST'
-    """;
 
-    try (Connection conn = DBUtils.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
+    public boolean updateHostBusinessInfo(int userId, String businessName, String businessType, 
+                                        String businessAddress, String businessDescription, 
+                                        String taxId, String skills, String region) throws SQLException {
+        String sql = """
+            UPDATE Users 
+            SET businessName = ?, businessType = ?, businessAddress = ?, 
+                businessDescription = ?, taxId = ?, skills = ?, region = ?
+            WHERE userId = ? AND role = 'HOST'
+        """;
 
-        ps.setString(1, businessName);
-        ps.setString(2, businessType);
-        ps.setString(3, businessAddress);
-        ps.setString(4, businessDescription);
-        ps.setString(5, taxId);
-        ps.setString(6, skills);
-        ps.setString(7, region);
-        ps.setInt(8, userId);
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        int rowsAffected = ps.executeUpdate();
-        if (rowsAffected > 0) {
-            LOGGER.info("Host business info updated - ID: " + userId);
-            return true;
+            ps.setString(1, businessName);
+            ps.setString(2, businessType);
+            ps.setString(3, businessAddress);
+            ps.setString(4, businessDescription);
+            ps.setString(5, taxId);
+            ps.setString(6, skills);
+            ps.setString(7, region);
+            ps.setInt(8, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0) {
+                LOGGER.info("Host business info updated - ID: " + userId);
+                return true;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating host business info: " + userId, e);
+            throw e;
         }
-    } catch (SQLException e) {
-        LOGGER.log(Level.SEVERE, "Error updating host business info: " + userId, e);
-        throw e;
+        return false;
     }
-    return false;
-}
+
     /**
      * Inner class for user statistics
      */

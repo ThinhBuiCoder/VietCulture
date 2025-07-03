@@ -143,8 +143,21 @@
         <div class="permissions-card">
             <!-- Header -->
             <div class="permissions-header">
-                <img src="${not empty user.avatar ? user.avatar : '/assets/images/default-avatar.png'}" 
-                     alt="Avatar" class="user-avatar">
+                <c:choose>
+                    <c:when test="${not empty user.avatar and user.avatar ne 'default-avatar.png'}">
+                        <img src="${pageContext.request.contextPath}/view/assets/images/avatars/${user.avatar}" 
+                             alt="Avatar" class="user-avatar"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="user-avatar bg-secondary d-none align-items-center justify-content-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
                 <h3 class="mb-2">
                     <i class="fas fa-user-shield me-2"></i>Quản lý phân quyền
                 </h3>
@@ -361,7 +374,8 @@
         let loadingModal;
         let confirmModal;
         let currentSelectedRole = '${user.role}';
-
+        
+        // Role permissions configuration
         const rolePermissions = {
             'TRAVELER': [
                 { name: 'Xem danh sách trải nghiệm', enabled: true, required: true },
