@@ -1,12 +1,27 @@
+
+# 👉 Bỏ qua toàn bộ file biên dịch, thư mục build và dist
+*.class
+*.war
+*.jar
+*.log
+
+# 👉 Loại bỏ thư mục build/dist của VietCulture và demo
+/VietCulture/build/
 /VietCulture/dist/
-VietCulture/nbproject/private/
-VietCulture/nbproject/private/
-VietCulture/nbproject/private/
-/VietCulture/demoPayOS/nbproject/private/
-/VietCulture/demoPayOS/build/
-/VietCulture/demoPayOS/dist/
-/VietCulture/demo/nbproject/private/
 /VietCulture/demo/build/
 /VietCulture/demo/dist/
-/Viet/nbproject/private/
+/VietCulture/demoPayOS/build/
+/VietCulture/demoPayOS/dist/
 /Viet/dist/
+
+# 👉 Loại bỏ các file cấu hình riêng tư của NetBeans
+/VietCulture/nbproject/private/
+/VietCulture/demo/nbproject/private/
+/VietCulture/demoPayOS/nbproject/private/
+/Viet/nbproject/private/
+
+# 👉 Loại bỏ folder IntelliJ/VSCode nếu có
+.vscode/
+.idea/
+*.iml
+.nb-gradle/
