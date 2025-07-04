@@ -504,4 +504,73 @@ public class BookingDAO {
     public void deleteBooking(int bookingId) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+
+    /**
+     * Kiểm tra số booking của user cho một experience nhất định
+     */
+    public int getTotalBookingsByUserAndExperience(int userId, int experienceId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Kiểm tra số booking của user cho một accommodation nhất định
+     */
+    public int getTotalBookingsByUserAndAccommodation(int userId, int accommodationId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND accommodationId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, accommodationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get all bookings by host (no pagination)
+     */
+    public List<Booking> getAllBookingsByHost(int hostId) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName,
+                   u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            LEFT JOIN Users u ON b.travelerId = u.userId
+            WHERE (e.hostId = ? OR a.hostId = ?)
+            ORDER BY b.createdAt DESC
+        """;
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    if (rs.getString("travelerName") != null) {
+                        booking.setTravelerName(rs.getString("travelerName"));
+                        booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    }
+                    bookings.add(booking);
+                }
+            }
+        }
+        return bookings;
+    }
 }

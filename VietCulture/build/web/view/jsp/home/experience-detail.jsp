@@ -855,8 +855,13 @@
         }
 
         .review-rating {
+            direction: rtl;
+            unicode-bidi: bidi-override;
+        }
+
+        .review-rating i {
             color: #FFD700;
-            margin-left: auto;
+            font-size: 1.3rem;
         }
 
         /* Location Map */
@@ -1032,6 +1037,10 @@
             font-size: 3rem;
             margin-bottom: 10px;
         }
+
+        .review-rating {
+            direction: ltr !important;
+        }
     </style>
 </head>
 <body>
@@ -1075,6 +1084,11 @@
                                     <li>
                                         <a class="dropdown-item" href="${pageContext.request.contextPath}/host/dashboard">
                                             <i class="ri-dashboard-line"></i> Quản Lý Host
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/host/bookings/manage">
+                                            <i class="ri-calendar-check-line"></i> Quản Lý Booking
                                         </a>
                                     </li>
                                 </c:if>
@@ -1207,7 +1221,7 @@
                         <i class="ri-heart-line"></i>
                         <span>Lưu</span>
                     </a>
-                    <a href="#reviews" class="action-btn">
+                    <a href="#" class="action-btn" onclick="openReviewModal(); return false;">
                         <i class="ri-chat-3-line"></i>
                         <span>Đánh giá</span>
                     </a>
@@ -1433,112 +1447,27 @@
                         <i class="ri-star-line"></i>
                         Đánh giá từ khách hàng
                     </h3>
-                    
                     <c:choose>
-                        <c:when test="${experience.averageRating > 0}">
-                            <div class="rating-overview">
-                                <div class="rating-score">
-                                    <div class="rating-number">
-                                        <fmt:formatNumber value="${experience.averageRating}" maxFractionDigits="1" />
+                        <c:when test="${not empty reviews}">
+                            <c:forEach var="review" items="${reviews}">
+                                <div class="review-item">
+                                    <div class="review-header">
+                                        <img src="${review.travelerAvatar != null ? review.travelerAvatar : '/view/assets/images/avatars/1.png'}" alt="Reviewer" class="reviewer-avatar">
+                                        <div class="reviewer-info">
+                                            <h6>${review.travelerName}</h6>
+                                            <div class="review-date">
+                                                <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy" />
+                                            </div>
+                                        </div>
+                                        <div class="review-rating">
+                                            <c:forEach begin="1" end="5" var="i">
+                                                <i class="${i <= review.rating ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                                            </c:forEach>
+                                        </div>
                                     </div>
-                                    <div class="rating-stars">
-                                        <c:forEach begin="1" end="5" var="i">
-                                            <c:choose>
-                                                <c:when test="${i <= experience.averageRating}">
-                                                    <i class="ri-star-fill"></i>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <i class="ri-star-line"></i>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </c:forEach>
-                                    </div>
-                                    <div class="text-muted">${experience.totalBookings} đánh giá</div>
+                                    <p>${review.comment}</p>
                                 </div>
-                                
-                                <div class="rating-breakdown">
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">5 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 75%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">75%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">4 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 18%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">18%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">3 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 5%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">5%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">2 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 1%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">1%</span>
-                                    </div>
-                                    <div class="rating-bar">
-                                        <span class="rating-bar-label">1 sao</span>
-                                        <div class="progress flex-fill">
-                                            <div class="progress-bar" style="width: 1%"></div>
-                                        </div>
-                                        <span class="text-muted ms-2">1%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Sample Reviews -->
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                         alt="Reviewer" class="reviewer-avatar">
-                                    <div class="reviewer-info">
-                                        <h6>Nguyễn Thị C</h6>
-                                        <div class="review-date">Tháng 6, 2024</div>
-                                    </div>
-                                    <div class="review-rating">
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                    </div>
-                                </div>
-                                <p>Trải nghiệm tuyệt vời! Hướng dẫn viên rất nhiệt tình và am hiểu về văn hóa địa phương. Tôi đã học được rất nhiều điều thú vị và có những kỷ niệm đáng nhớ.</p>
-                            </div>
-
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                         alt="Reviewer" class="reviewer-avatar">
-                                    <div class="reviewer-info">
-                                        <h6>Lê Văn D</h6>
-                                        <div class="review-date">Tháng 5, 2024</div>
-                                    </div>
-                                    <div class="review-rating">
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-fill"></i>
-                                        <i class="ri-star-line"></i>
-                                    </div>
-                                </div>
-                                <p>Hoạt động được tổ chức rất chuyên nghiệp. Lịch trình hợp lý, không bị vội vàng. Rất phù hợp cho gia đình có trẻ em. Sẽ giới thiệu cho bạn bè.</p>
-                            </div>
-
-                            <div class="text-center mt-4">
-                                <button class="btn btn-outline-primary">
-                                    <i class="ri-more-line me-2"></i>Xem thêm đánh giá
-                                </button>
-                            </div>
+                            </c:forEach>
                         </c:when>
                         <c:otherwise>
                             <div class="text-center py-5">
@@ -2404,6 +2333,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Call updateUnreadMessageCount on page load
         
+    </script>
+    <!-- Modal Review -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reviewModalLabel">Đánh giá trải nghiệm</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+          </div>
+          <div class="modal-body">
+            <jsp:include page="/view/jsp/common/review.jsp" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+    function openReviewModal() {
+        var modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        modal.show();
+    }
+    </script>
+    <script>
+    function goToBooking() {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+        if (modal) modal.hide();
+        setTimeout(function() {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style = '';
+            var bookingSection = document.getElementById('booking');
+            if (bookingSection) {
+                bookingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 350);
+    }
     </script>
 </body>
 </html>

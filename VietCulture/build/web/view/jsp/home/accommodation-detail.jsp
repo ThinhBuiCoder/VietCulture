@@ -933,6 +933,11 @@
                                                 <i class="ri-dashboard-line"></i> Quản Lý Host
                                             </a>
                                         </li>
+                                        <li>
+                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/bookings/manage">
+                                                <i class="ri-calendar-check-line"></i> Quản Lý Booking
+                                            </a>
+                                        </li>
                                     </c:if>
 
                                     <li>
@@ -1045,18 +1050,18 @@
                     </div>
 
                     <div class="action-buttons">
-                        <a href="#" class="action-btn" onclick="shareAccommodation()">
+                        <a href="#" class="action-btn" onclick="event.preventDefault(); shareAccommodation();">
                             <i class="ri-share-line"></i>
                             <span>Chia sẻ</span>
                         </a>
-                        <a href="#" class="action-btn" onclick="saveAccommodation()">
+                        <a href="#" class="action-btn" onclick="event.preventDefault(); saveAccommodation();">
                             <i class="ri-heart-line"></i>
                             <span>Lưu</span>
                         </a>
-                        <a href="#reviews" class="action-btn">
-                            <i class="ri-chat-3-line"></i>
+                        <button class="action-btn" type="button" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                            <i class="ri-star-line"></i>
                             <span>Đánh giá</span>
-                        </a>
+                        </button>
                         <a href="#location" class="action-btn">
                             <i class="ri-map-pin-line"></i>
                             <span>Vị trí</span>
@@ -1226,112 +1231,27 @@
                             <i class="ri-star-line"></i>
                             Đánh giá từ khách hàng
                         </h3>
-
                         <c:choose>
-                            <c:when test="${accommodation.averageRating > 0}">
-                                <div class="rating-overview">
-                                    <div class="rating-score">
-                                        <div class="rating-number">
-                                            <fmt:formatNumber value="${accommodation.averageRating}" maxFractionDigits="1" />
+                            <c:when test="${not empty reviews}">
+                                <c:forEach var="review" items="${reviews}">
+                                    <div class="review-item">
+                                        <div class="review-header">
+                                            <img src="${review.travelerAvatar != null ? review.travelerAvatar : '/view/assets/images/avatars/1.png'}" alt="Reviewer" class="reviewer-avatar">
+                                            <div class="reviewer-info">
+                                                <h6>${review.travelerName}</h6>
+                                                <div class="review-date">
+                                                    <fmt:formatDate value="${review.createdAt}" pattern="dd/MM/yyyy" />
+                                                </div>
+                                            </div>
+                                            <div class="review-rating">
+                                                <c:forEach begin="1" end="5" var="i">
+                                                    <i class="${i <= review.rating ? 'ri-star-fill' : 'ri-star-line'}"></i>
+                                                </c:forEach>
+                                            </div>
                                         </div>
-                                        <div class="rating-stars">
-                                            <c:forEach begin="1" end="5" var="i">
-                                                <c:choose>
-                                                    <c:when test="${i <= accommodation.averageRating}">
-                                                        <i class="ri-star-fill"></i>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <i class="ri-star-line"></i>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </c:forEach>
-                                        </div>
-                                        <div class="text-muted">${accommodation.totalBookings} đánh giá</div>
+                                        <p>${review.comment}</p>
                                     </div>
-
-                                    <div class="rating-breakdown">
-                                        <div class="rating-bar">
-                                            <span class="rating-bar-label">5 sao</span>
-                                            <div class="progress flex-fill">
-                                                <div class="progress-bar" style="width: 70%"></div>
-                                            </div>
-                                            <span class="text-muted ms-2">70%</span>
-                                        </div>
-                                        <div class="rating-bar">
-                                            <span class="rating-bar-label">4 sao</span>
-                                            <div class="progress flex-fill">
-                                                <div class="progress-bar" style="width: 20%"></div>
-                                            </div>
-                                            <span class="text-muted ms-2">20%</span>
-                                        </div>
-                                        <div class="rating-bar">
-                                            <span class="rating-bar-label">3 sao</span>
-                                            <div class="progress flex-fill">
-                                                <div class="progress-bar" style="width: 7%"></div>
-                                            </div>
-                                            <span class="text-muted ms-2">7%</span>
-                                        </div>
-                                        <div class="rating-bar">
-                                            <span class="rating-bar-label">2 sao</span>
-                                            <div class="progress flex-fill">
-                                                <div class="progress-bar" style="width: 2%"></div>
-                                            </div>
-                                            <span class="text-muted ms-2">2%</span>
-                                        </div>
-                                        <div class="rating-bar">
-                                            <span class="rating-bar-label">1 sao</span>
-                                            <div class="progress flex-fill">
-                                                <div class="progress-bar" style="width: 1%"></div>
-                                            </div>
-                                            <span class="text-muted ms-2">1%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Sample Reviews -->
-                                <div class="review-item">
-                                    <div class="review-header">
-                                        <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                             alt="Reviewer" class="reviewer-avatar">
-                                        <div class="reviewer-info">
-                                            <h6>Nguyễn Văn A</h6>
-                                            <div class="review-date">Tháng 5, 2024</div>
-                                        </div>
-                                        <div class="review-rating">
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                        </div>
-                                    </div>
-                                    <p>Chỗ ở rất tuyệt vời! Sạch sẽ, thoải mái và chủ nhà rất thân thiện. Vị trí thuận tiện để tham quan các điểm du lịch. Tôi sẽ quay lại lần sau.</p>
-                                </div>
-
-                                <div class="review-item">
-                                    <div class="review-header">
-                                        <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" 
-                                             alt="Reviewer" class="reviewer-avatar">
-                                        <div class="reviewer-info">
-                                            <h6>Trần Thị B</h6>
-                                            <div class="review-date">Tháng 4, 2024</div>
-                                        </div>
-                                        <div class="review-rating">
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-fill"></i>
-                                            <i class="ri-star-line"></i>
-                                        </div>
-                                    </div>
-                                    <p>Không gian ấm cúng, có cảm giác như ở nhà. Chủ nhà rất nhiệt tình hướng dẫn các địa điểm tham quan và quán ăn ngon. Giá cả hợp lý.</p>
-                                </div>
-
-                                <div class="text-center mt-4">
-                                    <button class="btn btn-outline-primary">
-                                        <i class="ri-more-line me-2"></i>Xem thêm đánh giá
-                                    </button>
-                                </div>
+                                </c:forEach>
                             </c:when>
                             <c:otherwise>
                                 <div class="text-center py-5">
@@ -1615,7 +1535,8 @@
                                 const checkOutInput = document.getElementById('checkOut');
                                 const guestsSelect = document.getElementById('guests');
                                 const bookingSummary = document.getElementById('bookingSummary');
-                                const pricePerNight = ${accommodation.pricePerNight};
+                                let pricePerNight = Number('${accommodation.pricePerNight}');
+                                if (isNaN(pricePerNight)) pricePerNight = 0;
 
                                 // Set minimum date to today
                                 const today = new Date().toISOString().split('T')[0];
@@ -1814,5 +1735,19 @@
 
                                 images.forEach(img => imageObserver.observe(img));
         </script>
+        <!-- Modal chứa form đánh giá đặt ngay sau action-buttons -->
+        <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="reviewModalLabel">Đánh giá chỗ lưu trú</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+              </div>
+              <div class="modal-body">
+                <jsp:include page="/view/jsp/common/review.jsp" />
+              </div>
+            </div>
+          </div>
+        </div>
     </body>
 </html>

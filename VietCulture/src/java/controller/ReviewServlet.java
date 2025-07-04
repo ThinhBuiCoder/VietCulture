@@ -1,6 +1,7 @@
 package controller;
 
 import dao.ReviewDAO;
+import dao.BookingDAO;
 import model.Review;
 import model.User;
 import com.google.gson.Gson;
@@ -16,11 +17,14 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.annotation.MultipartConfig;
 
+@MultipartConfig
 @WebServlet(name = "ReviewServlet", urlPatterns = {"/review/*", "/submitReview"})
 public class ReviewServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(ReviewServlet.class.getName());
     private final ReviewDAO reviewDAO = new ReviewDAO();
+    private final BookingDAO bookingDAO = new BookingDAO();
     private final Gson gson = new Gson();
 
     @Override
@@ -60,16 +64,16 @@ public class ReviewServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-
-        if (user == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(gson.toJson(new ServerResponse(false, "Vui lòng đăng nhập để đánh giá")));
-            return;
-        }
-
         try {
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("user");
+
+            if (user == null) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write(gson.toJson(new ServerResponse(false, "Vui lòng đăng nhập để đánh giá")));
+                return;
+            }
+
             // Parse request parameters
             Integer experienceId = parseIntegerParameter(request, "experienceId");
             Integer accommodationId = parseIntegerParameter(request, "accommodationId");
@@ -90,6 +94,20 @@ public class ReviewServlet extends HttpServlet {
                 return;
             }
 
+            // ===== KIỂM TRA BOOKING TRƯỚC KHI CHO PHÉP ĐÁNH GIÁ =====
+            boolean hasBooking = false;
+            if (experienceId != null) {
+                hasBooking = bookingDAO.getTotalBookingsByUserAndExperience(user.getUserId(), experienceId) > 0;
+            } else if (accommodationId != null) {
+                hasBooking = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodationId) > 0;
+            }
+            if (!hasBooking) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write(gson.toJson(new ServerResponse(false, "Bạn cần đặt trước khi đánh giá!")));
+                return;
+            }
+            // ===== HẾT KIỂM TRA BOOKING =====
+
             // Create review object
             Review review = new Review();
             review.setExperienceId(experienceId);
@@ -98,7 +116,7 @@ public class ReviewServlet extends HttpServlet {
             review.setRating(rating);
             review.setComment(comment);
             review.setPhotos(photos);
-            review.setCreatedAt(new Date());
+            review.setCreatedAt(new java.util.Date());
             review.setVisible(true);
 
             // Save to database
@@ -118,6 +136,10 @@ public class ReviewServlet extends HttpServlet {
             LOGGER.log(Level.SEVERE, "Database error during review creation", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write(gson.toJson(new ServerResponse(false, "Lỗi cơ sở dữ liệu")));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in review submission", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write(gson.toJson(new ServerResponse(false, "Lỗi không xác định: " + e.getMessage())));
         }
     }
 
