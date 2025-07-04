@@ -4,6 +4,8 @@ import dao.ExperienceDAO;
 import dao.RegionDAO;
 import dao.CityDAO;
 import dao.CategoryDAO;
+import dao.BookingDAO;
+import dao.ReviewDAO;
 import model.Experience;
 import model.Region;
 import model.City;
@@ -34,6 +36,8 @@ public class ExperiencesServlet extends HttpServlet {
     private RegionDAO regionDAO;
     private CityDAO cityDAO;
     private CategoryDAO categoryDAO;
+    private BookingDAO bookingDAO;
+    private ReviewDAO reviewDAO;
 
     @Override
     public void init() throws ServletException {
@@ -43,6 +47,8 @@ public class ExperiencesServlet extends HttpServlet {
             regionDAO = new RegionDAO();
             cityDAO = new CityDAO();
             categoryDAO = new CategoryDAO();
+            bookingDAO = new BookingDAO();
+            reviewDAO = new ReviewDAO();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize DAOs", e);
             throw new ServletException("Failed to initialize servlet", e);
@@ -113,6 +119,23 @@ public class ExperiencesServlet extends HttpServlet {
 
             // Set experience data
             request.setAttribute("experience", experience);
+
+            // Lấy danh sách review động cho trải nghiệm này
+            List<model.Review> reviews = reviewDAO.getReviewsByExperienceId(experienceId);
+            request.setAttribute("reviews", reviews);
+
+            // Kiểm tra booking để truyền biến hasBooked cho review
+            boolean hasBooked = false;
+            jakarta.servlet.http.HttpSession session = request.getSession(false);
+            if (session != null && session.getAttribute("user") != null) {
+                model.User user = (model.User) session.getAttribute("user");
+                try {
+                    hasBooked = bookingDAO.getTotalBookingsByUserAndExperience(user.getUserId(), experience.getExperienceId()) > 0;
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Error checking booking for review", ex);
+                }
+            }
+            request.setAttribute("hasBooked", hasBooked);
 
             // Log access
             LOGGER.info("Experience detail accessed - ID: " + experienceId

@@ -762,6 +762,7 @@ public class BookingDAO {
     }
 
     /**
+<<<<<<< HEAD
      * Check if booking exists and is pending
      */
     public boolean isPendingBooking(int bookingId) throws SQLException {
@@ -780,3 +781,38 @@ public class BookingDAO {
         return false;
     }
 }
+=======
+     * Kiểm tra số booking của user cho một experience nhất định
+     */
+    public int getTotalBookingsByUserAndExperience(int userId, int experienceId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Kiểm tra số booking của user cho một accommodation nhất định
+     */
+    public int getTotalBookingsByUserAndAccommodation(int userId, int accommodationId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND accommodationId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, accommodationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+}
+>>>>>>> 723a1e4b1bf821e41f6ddab3c60ad275e22095e7
