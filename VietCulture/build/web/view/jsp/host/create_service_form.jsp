@@ -392,10 +392,12 @@
                 </label>
                 <select class="form-select" id="type" name="type" required>
                     <option value="">Chọn loại trải nghiệm</option>
-                    <option value="Food">Ẩm thực</option>
-                    <option value="Culture">Văn hóa</option>
-                    <option value="Adventure">Phiêu lưu</option>
-                    <option value="History">Lịch sử</option>
+                    <option value="Ẩm thực">Ẩm thực</option>
+                    <option value="Văn hóa">Văn hóa</option>
+                    <option value="Thiên nhiên">Thiên nhiên</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Phiêu lưu">Phiêu lưu</option>
+                    <option value="Lịch sử">Lịch sử</option>
                 </select>
             </div>
 

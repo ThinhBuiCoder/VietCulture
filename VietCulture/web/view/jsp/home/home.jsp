@@ -1175,10 +1175,10 @@
                 <h1 class="animate__animated animate__fadeInUp">Khám Phá Việt Nam Cùng Người Dân Địa Phương</h1>
                 <p class="animate__animated animate__fadeInUp animate__delay-1s">Trải nghiệm du lịch độc đáo, lưu trú thoải mái và kết nối với văn hóa bản địa</p>
                 <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                    <a href="#experiences" class="btn btn-primary">
+                    <a href="/Travel/experiences" class="btn btn-primary">
                         <i class="ri-search-line"></i> Khám Phá Trải Nghiệm
                     </a>
-                    <a href="#accommodations" class="btn btn-outline-primary">
+                    <a href="/Travel/accommodations" class="btn btn-outline-primary">
                         <i class="ri-home-line"></i> Tìm Nơi Lưu Trú
                     </a>
                 </div>
@@ -1214,7 +1214,7 @@
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Food">
                                 <!-- Hình ảnh ẩm thực Việt Nam -->
-                                <img src="https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&dpr=1" alt="Food" class="category-icon">
+                                <img src="https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2023/9/29/1247753/Am-Thuc-Viet-Nam.jpeg" alt="Food" class="category-icon">
                                 <h5>Ẩm Thực</h5>
                                 <p>Khám phá nền ẩm thực địa phương & học nấu ăn</p>
                             </div>
@@ -1223,7 +1223,7 @@
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Culture">
                                 <!-- Hình ảnh văn hóa truyền thống -->
-                                <img src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80" alt="Culture" class="category-icon">
+                                <img src="http://files.auditnews.vn/2023/03/02/van-hoa.png" alt="Culture" class="category-icon">
                                 <h5>Văn Hóa</h5>
                                 <p>Trải nghiệm văn hóa & lễ hội địa phương</p>
                             </div>
@@ -1232,7 +1232,7 @@
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Adventure">
                                 <!-- Hình ảnh phiêu lưu -->
-                                <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80" alt="Adventure" class="category-icon">
+                                <img src="https://img.thuthuatphanmem.vn/uploads/2018/10/26/nhung-anh-dep-ve-viet-nam_055420259.jpg" alt="Adventure" class="category-icon">
                                 <h5>Phiêu Lưu</h5>
                                 <p>Khám phá thiên nhiên & hoạt động thể thao</p>
                             </div>
@@ -1638,48 +1638,54 @@
             </c:forEach>
 
                             // Handle region selection for experiences
-                            document.getElementById('regionSelect').addEventListener('change', function () {
-                                const citySelect = document.getElementById('citySelect');
-                                const selectedRegionId = this.value;
+                            const regionSelect = document.getElementById('regionSelect');
+                            if (regionSelect) {
+                                regionSelect.addEventListener('change', function () {
+                                    const citySelect = document.getElementById('citySelect');
+                                    const selectedRegionId = this.value;
 
-                                // Clear previous options
-                                citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+                                    // Clear previous options
+                                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
 
-                                // If valid region is selected
-                                if (citiesData[selectedRegionId]) {
-                                    citySelect.disabled = false;
-                                    citiesData[selectedRegionId].forEach(city => {
-                                        const option = document.createElement('option');
-                                        option.value = city.id;
-                                        option.textContent = city.vietnameseName;
-                                        citySelect.appendChild(option);
-                                    });
-                                } else {
-                                    citySelect.disabled = true;
-                                }
-                            });
+                                    // If valid region is selected
+                                    if (citiesData[selectedRegionId]) {
+                                        citySelect.disabled = false;
+                                        citiesData[selectedRegionId].forEach(city => {
+                                            const option = document.createElement('option');
+                                            option.value = city.id;
+                                            option.textContent = city.vietnameseName;
+                                            citySelect.appendChild(option);
+                                        });
+                                    } else {
+                                        citySelect.disabled = true;
+                                    }
+                                });
+                            }
 
                             // Handle region selection for accommodations
-                            document.getElementById('accommodationRegionSelect').addEventListener('change', function () {
-                                const citySelect = document.getElementById('accommodationCitySelect');
-                                const selectedRegionId = this.value;
+                            const accommodationRegionSelect = document.getElementById('accommodationRegionSelect');
+                            if (accommodationRegionSelect) {
+                                accommodationRegionSelect.addEventListener('change', function () {
+                                    const citySelect = document.getElementById('accommodationCitySelect');
+                                    const selectedRegionId = this.value;
 
-                                // Clear previous options
-                                citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+                                    // Clear previous options
+                                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
 
-                                // If valid region is selected
-                                if (citiesData[selectedRegionId]) {
-                                    citySelect.disabled = false;
-                                    citiesData[selectedRegionId].forEach(city => {
-                                        const option = document.createElement('option');
-                                        option.value = city.id;
-                                        option.textContent = city.vietnameseName;
-                                        citySelect.appendChild(option);
-                                    });
-                                } else {
-                                    citySelect.disabled = true;
-                                }
-                            });
+                                    // If valid region is selected
+                                    if (citiesData[selectedRegionId]) {
+                                        citySelect.disabled = false;
+                                        citiesData[selectedRegionId].forEach(city => {
+                                            const option = document.createElement('option');
+                                            option.value = city.id;
+                                            option.textContent = city.vietnameseName;
+                                            citySelect.appendChild(option);
+                                        });
+                                    } else {
+                                        citySelect.disabled = true;
+                                    }
+                                });
+                            }
 
                             // Increase guests function for experiences
                             function increaseGuests() {
@@ -1719,23 +1725,24 @@
 
                             // Filter by region function (used in Regions section)
                             function filterByRegion(regionName) {
-                                // Find region ID by name
                                 let regionId = '';
-            <c:forEach var="region" items="${regions}">
-                                if ('${region.name}' === regionName) {
-                                    regionId = '${region.regionId}';
+                                // Nếu có biến regions từ backend
+                                <c:if test="${not empty regions}">
+                                    <c:forEach var="region" items="${regions}">
+                                        if ('${region.name}' === regionName) {
+                                            regionId = '${region.regionId}';
+                                        }
+                                    </c:forEach>
+                                </c:if>
+                                // Nếu không có regions (dùng mặc định)
+                                if (!regionId) {
+                                    if (regionName === 'North') regionId = '1';
+                                    else if (regionName === 'Central') regionId = '2';
+                                    else if (regionName === 'South') regionId = '3';
                                 }
-            </c:forEach>
-
-                                // Set region in the experiences form
-                                document.getElementById('regionSelect').value = regionId;
-
-                                // Trigger change event to update city options
-                                document.getElementById('regionSelect').dispatchEvent(new Event('change'));
-
-                                // Scroll to experiences section and switch to experiences tab
-                                document.getElementById('experiences-tab').click();
-                                document.getElementById('experiences').scrollIntoView({behavior: 'smooth'});
+                                if (regionId) {
+                                    window.location.href = '${pageContext.request.contextPath}/experiences?region=' + regionId;
+                                }
                             }
 
                             // Copy experience function
@@ -1837,35 +1844,27 @@
 
                                 // Category filter functionality
                                 document.querySelectorAll('.category-item').forEach(category => {
-                                    category.addEventListener('click', function () {
+                                    category.addEventListener('click', function (event) {
+                                        event.preventDefault(); // Ngăn hành vi mặc định
                                         const categoryValue = this.getAttribute('data-category');
-
-                                        // Find category ID by name
                                         let categoryId = '';
             <c:forEach var="category" items="${categories}">
                                         if ('${category.name}' === categoryValue) {
                                             categoryId = '${category.categoryId}';
                                         }
             </c:forEach>
-
-                                        const categorySelect = document.getElementById('categorySelect');
-
-                                        // Set category in the form
-                                        if (categoryId) {
-                                            categorySelect.value = categoryId;
-                                        } else {
-                                            // Fallback for default categories
-                                            for (let i = 0; i < categorySelect.options.length; i++) {
-                                                if (categorySelect.options[i].text.includes(this.querySelector('h5').textContent)) {
-                                                    categorySelect.selectedIndex = i;
-                                                    break;
-                                                }
-                                            }
+                                        // Nếu không có categories từ backend (danh mục mặc định)
+                                        if (!categoryId) {
+                                            if (categoryValue === 'Food') categoryId = '1';
+                                            else if (categoryValue === 'Culture') categoryId = '2';
+                                            else if (categoryValue === 'Adventure') categoryId = '3';
+                                            else if (categoryValue === 'History') categoryId = '4';
                                         }
-
-                                        // Switch to experiences tab and scroll there
-                                        document.getElementById('experiences-tab').click();
-                                        document.getElementById('experiences').scrollIntoView({behavior: 'smooth'});
+                                        if (categoryId) {
+                                            window.location.href = '${pageContext.request.contextPath}/experiences?category=' + categoryId;
+                                        } else {
+                                            console.log('Không tìm thấy categoryId cho', categoryValue);
+                                        }
                                     });
                                 });
                             });

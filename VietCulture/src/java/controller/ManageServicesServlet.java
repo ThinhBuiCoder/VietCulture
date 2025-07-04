@@ -34,11 +34,6 @@ import java.sql.SQLException;
   
     "/host/services/delete/*"
 })
-@jakarta.servlet.annotation.MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 10,      // 10MB  
-    maxRequestSize = 1024 * 1024 * 50    // 50MB
-)
 public class ManageServicesServlet extends HttpServlet {
     
     private static final Logger LOGGER = Logger.getLogger(ManageServicesServlet.class.getName());
@@ -127,11 +122,6 @@ public class ManageServicesServlet extends HttpServlet {
         String pathInfo = request.getPathInfo();
         String servletPath = request.getServletPath();
         
-        LOGGER.info("=== DEBUG DOPOST ===");
-        LOGGER.info("Servlet Path: " + servletPath);
-        LOGGER.info("Path Info: " + pathInfo);
-        LOGGER.info("Request URI: " + request.getRequestURI());
-        
         try {
             if (!isHostAuthenticated(request)) {
                 response.sendRedirect(request.getContextPath() + "/Travel/login");
@@ -140,44 +130,24 @@ public class ManageServicesServlet extends HttpServlet {
 
             User currentUser = getCurrentUser(request);
             
-            // ✅ THÊM DEBUG CHI TIẾT HỘN
-            LOGGER.info("Processing POST request - checking routing...");
-            LOGGER.info("servletPath equals '/host/services/edit': " + "/host/services/edit".equals(servletPath));
-            LOGGER.info("pathInfo not null: " + (pathInfo != null));
-            LOGGER.info("pathInfo starts with '/': " + (pathInfo != null && pathInfo.startsWith("/")));
-            
             // Xử lý POST requests dựa trên servlet path và path info
             if ("/host/services/edit".equals(servletPath) && pathInfo != null && pathInfo.startsWith("/")) {
-                LOGGER.info("Handling /host/services/edit with pathInfo: " + pathInfo);
                 handleUpdateService(request, response, currentUser, pathInfo);
             }
             else if ("/host/experiences/edit".equals(servletPath)) {
-                LOGGER.info("Handling /host/experiences/edit with pathInfo: " + pathInfo);
                 handleUpdateExperienceService(request, response, currentUser, pathInfo);
             }
             else if ("/host/accommodations/edit".equals(servletPath)) {
-                LOGGER.info("Handling /host/accommodations/edit with pathInfo: " + pathInfo);
                 handleUpdateAccommodationService(request, response, currentUser, pathInfo);
             }
             else if (pathInfo != null) {
                 if (pathInfo.startsWith("/edit/")) {
-                    LOGGER.info("Handling edit with pathInfo: " + pathInfo);
                     handleUpdateService(request, response, currentUser, pathInfo);
                 } else if (pathInfo.startsWith("/toggle/")) {
-                    LOGGER.info("Handling toggle with pathInfo: " + pathInfo);
                     handleToggleService(request, response, currentUser, pathInfo);
                 } else if (pathInfo.startsWith("/delete/")) {
-                    LOGGER.info("Handling delete with pathInfo: " + pathInfo);
                     handleDeleteService(request, response, currentUser, pathInfo);
-                } else {
-                    LOGGER.warning("Unhandled pathInfo: " + pathInfo);
-                    setErrorMessage(request, "URL không được hỗ trợ: " + pathInfo);
-                    response.sendRedirect(request.getContextPath() + "/host/services/manage");
                 }
-            } else {
-                LOGGER.warning("No pathInfo provided for servlet: " + servletPath);
-                setErrorMessage(request, "Thiếu thông tin URL");
-                response.sendRedirect(request.getContextPath() + "/host/services/manage");
             }
 
         } catch (Exception e) {
@@ -387,41 +357,22 @@ public class ManageServicesServlet extends HttpServlet {
     private void handleUpdateService(HttpServletRequest request, HttpServletResponse response, User user, String pathInfo)
             throws ServletException, IOException, SQLException {
         
-        LOGGER.info("=== DEBUG HANDLE UPDATE SERVICE ===");
-        LOGGER.info("Path Info: " + pathInfo);
-        
         String[] pathParts = pathInfo.split("/");
-        LOGGER.info("Path parts: " + java.util.Arrays.toString(pathParts));
-        LOGGER.info("Path parts length: " + pathParts.length);
-        
         if (pathParts.length < 3) {
-            LOGGER.warning("Invalid path parts length: " + pathParts.length);
             setErrorMessage(request, "Invalid URL format for update");
             response.sendRedirect(request.getContextPath() + "/host/services/manage");
             return;
         }
         
         String serviceType = pathParts[1];
-        int serviceId;
-        try {
-            serviceId = Integer.parseInt(pathParts[2]);
-        } catch (NumberFormatException e) {
-            LOGGER.warning("Invalid service ID: " + pathParts[2]);
-            setErrorMessage(request, "ID dịch vụ không hợp lệ");
-            response.sendRedirect(request.getContextPath() + "/host/services/manage");
-            return;
-        }
-        
-        LOGGER.info("Service Type: " + serviceType + ", Service ID: " + serviceId);
+        int serviceId = Integer.parseInt(pathParts[2]);
         
         boolean success = updateServiceByType(request, user, serviceType, serviceId);
         
         if (success) {
-            setSuccessMessage(request, "Cập nhật dịch vụ thành công! Do đã được duyệt trước đó, dịch vụ sẽ chuyển về trạng thái 'Chờ duyệt' để admin xem xét lại.");
-            LOGGER.info("Update successful for " + serviceType + " ID: " + serviceId);
+            setSuccessMessage(request, "Cập nhật dịch vụ thành công!");
         } else {
             setErrorMessage(request, "Không thể cập nhật dịch vụ.");
-            LOGGER.warning("Update failed for " + serviceType + " ID: " + serviceId);
         }
         
         response.sendRedirect(request.getContextPath() + "/host/services/manage");
@@ -667,274 +618,52 @@ private void handleToggleService(HttpServletRequest request, HttpServletResponse
 
     // Helper methods
     private boolean updateExperience(HttpServletRequest request, User user, int experienceId) throws SQLException {
-        LOGGER.info("=== UPDATE EXPERIENCE ===");
-        LOGGER.info("Experience ID: " + experienceId);
-        LOGGER.info("User ID: " + user.getUserId());
-        
         Experience experience = experienceDAO.getExperienceById(experienceId);
-        if (experience == null) {
-            LOGGER.warning("Experience not found: " + experienceId);
-            return false;
-        }
-        if (experience.getHostId() != user.getUserId()) {
-            LOGGER.warning("Access denied - Experience belongs to host " + experience.getHostId() + ", user is " + user.getUserId());
+        if (experience == null || experience.getHostId() != user.getUserId()) {
             return false;
         }
         
-        // Log all parameters for debugging
-        LOGGER.info("=== FORM PARAMETERS ===");
-        LOGGER.info("Request method: " + request.getMethod());
-        LOGGER.info("Content type: " + request.getContentType());
-        LOGGER.info("Character encoding: " + request.getCharacterEncoding());
+        // Update fields
+        experience.setTitle(request.getParameter("title"));
+        experience.setDescription(request.getParameter("description"));
+        experience.setLocation(request.getParameter("location"));
+        experience.setPrice(Double.parseDouble(request.getParameter("price")));
+        experience.setCityId(Integer.parseInt(request.getParameter("cityId")));
+        experience.setType(request.getParameter("type"));
+        experience.setMaxGroupSize(Integer.parseInt(request.getParameter("groupSize")));
+        // Add other fields as needed
         
-        java.util.Enumeration<String> paramNames = request.getParameterNames();
-        int paramCount = 0;
-        while (paramNames.hasMoreElements()) {
-            String paramName = paramNames.nextElement();
-            String paramValue = request.getParameter(paramName);
-            LOGGER.info("PARAM [" + paramName + "] = [" + paramValue + "] (length: " + (paramValue != null ? paramValue.length() : "null") + ")");
-            paramCount++;
-        }
-        LOGGER.info("Total parameters received: " + paramCount);
-        
-        // ✅ UPDATE WITH MULTIPART SUPPORT
-        String title = getMultipartParameter(request, "title");
-        LOGGER.info("RAW TITLE PARAM: [" + title + "] (length: " + (title != null ? title.length() : "null") + ")");
-        if (title != null && !title.trim().isEmpty()) {
-            String trimmedTitle = title.trim();
-            LOGGER.info("TRIMMED TITLE: [" + trimmedTitle + "] (length: " + trimmedTitle.length() + ")");
-            experience.setTitle(trimmedTitle);
-            LOGGER.info("EXPERIENCE TITLE SET TO: [" + experience.getTitle() + "]");
-        }
-        
-        String description = getMultipartParameter(request, "description");
-        if (description != null && !description.trim().isEmpty()) {
-            experience.setDescription(description.trim());
-            LOGGER.info("Set description: " + description.trim());
-        }
-        
-        String location = getMultipartParameter(request, "location");
-        if (location != null && !location.trim().isEmpty()) {
-            experience.setLocation(location.trim());
-            LOGGER.info("Set location: " + location.trim());
-        }
-        
-        String priceStr = getMultipartParameter(request, "price");
-        if (priceStr != null && !priceStr.trim().isEmpty()) {
-            double price = Double.parseDouble(priceStr.trim());
-            experience.setPrice(price);
-            LOGGER.info("Set price: " + price);
-        }
-        
-        String cityIdStr = getMultipartParameter(request, "cityId");
-        if (cityIdStr != null && !cityIdStr.trim().isEmpty()) {
-            int cityId = Integer.parseInt(cityIdStr.trim());
-            experience.setCityId(cityId);
-            LOGGER.info("Set cityId: " + cityId);
-        }
-        
-        String type = getMultipartParameter(request, "type");
-        if (type != null && !type.trim().isEmpty()) {
-            experience.setType(type.trim());
-            LOGGER.info("Set type: " + type.trim());
-        }
-        
-        String groupSizeStr = getMultipartParameter(request, "groupSize");
-        if (groupSizeStr != null && !groupSizeStr.trim().isEmpty()) {
-            int groupSize = Integer.parseInt(groupSizeStr.trim());
-            experience.setMaxGroupSize(groupSize);
-            LOGGER.info("Set maxGroupSize: " + groupSize);
-        }
-        
-        // Duration - convert từ hours sang Time object
-        String durationStr = getMultipartParameter(request, "duration");
-        if (durationStr != null && !durationStr.trim().isEmpty()) {
-            int hours = Integer.parseInt(durationStr.trim());
-            experience.setDuration(new java.sql.Time(hours * 60 * 60 * 1000L)); // hours to milliseconds
-            LOGGER.info("Set duration: " + hours + " hours");
-        }
-        
-        // Additional fields
-        String language = getMultipartParameter(request, "languages");
-        if (language != null && !language.trim().isEmpty()) {
-            experience.setLanguage(language.trim());
-            LOGGER.info("Set language: " + language.trim());
-        }
-        
-        String difficulty = getMultipartParameter(request, "difficulty");
-        if (difficulty != null && !difficulty.trim().isEmpty()) {
-            experience.setDifficulty(difficulty.trim());
-            LOGGER.info("Set difficulty: " + difficulty.trim());
-        }
-        
-        String included = getMultipartParameter(request, "included");
-        if (included != null && !included.trim().isEmpty()) {
-            experience.setIncludedItems(included.trim());
-            LOGGER.info("Set includedItems: " + included.trim());
-        }
-        
-        String requirements = getMultipartParameter(request, "requirements");
-        if (requirements != null && !requirements.trim().isEmpty()) {
-            experience.setRequirements(requirements.trim());
-            LOGGER.info("Set requirements: " + requirements.trim());
-        }
-        
-        // ✅ XỬ LÝ IMAGES FIELD
-        // Đảm bảo images không null (giữ nguyên nếu không có upload mới)
-        if (experience.getImages() == null) {
-            experience.setImages("");
-            LOGGER.info("Set images to empty string");
-        }
-        LOGGER.info("Experience before update - Images: " + experience.getImages());
-        
-        boolean result = experienceDAO.updateExperience(experience);
-        LOGGER.info("Update experience result: " + result);
-        
-        // ✅ VERIFY DATA SAVED TO DB
-        if (result) {
-            Experience updatedExperience = experienceDAO.getExperienceById(experienceId);
-            LOGGER.info("Verification - Updated title: " + updatedExperience.getTitle());
-            LOGGER.info("Verification - Updated price: " + updatedExperience.getPrice());
-        }
-        
-        return result;
+        return experienceDAO.updateExperience(experience);
     }
     
     private boolean updateAccommodation(HttpServletRequest request, User user, int accommodationId) throws SQLException {
-        LOGGER.info("=== UPDATE ACCOMMODATION ===");
-        LOGGER.info("Accommodation ID: " + accommodationId);
-        LOGGER.info("User ID: " + user.getUserId());
-        
         Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
-        if (accommodation == null) {
-            LOGGER.warning("Accommodation not found: " + accommodationId);
-            return false;
-        }
-        if (accommodation.getHostId() != user.getUserId()) {
-            LOGGER.warning("Access denied - Accommodation belongs to host " + accommodation.getHostId() + ", user is " + user.getUserId());
+        if (accommodation == null || accommodation.getHostId() != user.getUserId()) {
             return false;
         }
         
-        // Log all parameters for debugging
-        LOGGER.info("=== ACCOMMODATION FORM PARAMETERS ===");
-        java.util.Enumeration<String> paramNames = request.getParameterNames();
-        while (paramNames.hasMoreElements()) {
-            String paramName = paramNames.nextElement();
-            String paramValue = request.getParameter(paramName);
-            LOGGER.info(paramName + " = " + paramValue);
-        }
+        // Update fields
+        accommodation.setName(request.getParameter("title"));
+        accommodation.setDescription(request.getParameter("description"));
+        accommodation.setPricePerNight(Double.parseDouble(request.getParameter("price")));
+        accommodation.setCityId(Integer.parseInt(request.getParameter("cityId")));
+        accommodation.setType(request.getParameter("accommodationType"));
+        // Add other fields as needed
         
-        // ✅ UPDATE WITH MULTIPART SUPPORT
-        String title = getMultipartParameter(request, "title");
-        if (title != null && !title.trim().isEmpty()) {
-            accommodation.setName(title.trim());
-            LOGGER.info("Set name: " + title.trim());
-        }
-        
-        String description = getMultipartParameter(request, "description");
-        if (description != null && !description.trim().isEmpty()) {
-            accommodation.setDescription(description.trim());
-            LOGGER.info("Set description: " + description.trim());
-        }
-        
-        String priceStr = getMultipartParameter(request, "price");
-        if (priceStr != null && !priceStr.trim().isEmpty()) {
-            double price = Double.parseDouble(priceStr.trim());
-            accommodation.setPricePerNight(price);
-            LOGGER.info("Set pricePerNight: " + price);
-        }
-        
-        String cityIdStr = getMultipartParameter(request, "cityId");
-        if (cityIdStr != null && !cityIdStr.trim().isEmpty()) {
-            int cityId = Integer.parseInt(cityIdStr.trim());
-            accommodation.setCityId(cityId);
-            LOGGER.info("Set cityId: " + cityId);
-        }
-        
-        // Type field
-        String type = getMultipartParameter(request, "accommodationType");
-        if (type != null && !type.trim().isEmpty()) {
-            accommodation.setType(type.trim());
-            LOGGER.info("Set type: " + type.trim());
-        }
-        
-        // Address field
-        String address = getMultipartParameter(request, "address");
-        if (address != null && !address.trim().isEmpty()) {
-            accommodation.setAddress(address.trim());
-            LOGGER.info("Set address: " + address.trim());
-        }
-        
-        // Number of rooms
-        String roomsStr = getMultipartParameter(request, "numberOfRooms");
-        if (roomsStr != null && !roomsStr.trim().isEmpty()) {
-            int rooms = Integer.parseInt(roomsStr.trim());
-            accommodation.setNumberOfRooms(rooms);
-            LOGGER.info("Set numberOfRooms: " + rooms);
-        }
-        
-        // Amenities
-        String amenities = getMultipartParameter(request, "amenities");
-        if (amenities != null && !amenities.trim().isEmpty()) {
-            accommodation.setAmenities(amenities.trim());
-            LOGGER.info("Set amenities: " + amenities.trim());
-        }
-        
-        // ✅ XỬ LÝ IMAGES FIELD
-        if (accommodation.getImages() == null) {
-            accommodation.setImages("");
-            LOGGER.info("Set images to empty string");
-        }
-        LOGGER.info("Accommodation before update - Images: " + accommodation.getImages());
-        
-        boolean result = accommodationDAO.updateAccommodation(accommodation);
-        LOGGER.info("Update accommodation result: " + result);
-        
-        // ✅ VERIFY DATA SAVED TO DB
-        if (result) {
-            Accommodation updatedAccommodation = accommodationDAO.getAccommodationById(accommodationId);
-            LOGGER.info("Verification - Updated name: " + updatedAccommodation.getName());
-            LOGGER.info("Verification - Updated price: " + updatedAccommodation.getPricePerNight());
-        }
-        
-        return result;
+        return accommodationDAO.updateAccommodation(accommodation);
     }
 
     private List<Experience> filterExperiences(List<Experience> experiences, String status) {
         if ("all".equals(status)) return experiences;
-        
         return experiences.stream()
-                .filter(e -> {
-                    switch (status) {
-                        case "active":
-                            return e.isActive() && "APPROVED".equals(e.getAdminApprovalStatus());
-                        case "inactive":
-                            return !e.isActive();
-                        case "pending":
-                            return "PENDING".equals(e.getAdminApprovalStatus()) || "REJECTED".equals(e.getAdminApprovalStatus());
-                        default:
-                            return true;
-                    }
-                })
+                .filter(e -> "active".equals(status) ? e.isActive() : !e.isActive())
                 .collect(java.util.stream.Collectors.toList());
     }
     
     private List<Accommodation> filterAccommodations(List<Accommodation> accommodations, String status) {
         if ("all".equals(status)) return accommodations;
-        
         return accommodations.stream()
-                .filter(a -> {
-                    switch (status) {
-                        case "active":
-                            return a.isActive() && "APPROVED".equals(a.getAdminApprovalStatus());
-                        case "inactive":
-                            return !a.isActive();
-                        case "pending":
-                            return "PENDING".equals(a.getAdminApprovalStatus()) || "REJECTED".equals(a.getAdminApprovalStatus());
-                        default:
-                            return true;
-                    }
-                })
+                .filter(a -> "active".equals(status) ? a.isActive() : !a.isActive())
                 .collect(java.util.stream.Collectors.toList());
     }
     
@@ -1009,30 +738,5 @@ private void handleToggleService(HttpServletRequest request, HttpServletResponse
             throws ServletException, IOException {
         request.setAttribute("error", errorMessage);
         request.getRequestDispatcher("/view/jsp/error.jsp").forward(request, response);
-    }
-    
-    /**
-     * ✅ HELPER METHOD TO GET PARAMETER FROM MULTIPART REQUEST
-     */
-    private String getMultipartParameter(HttpServletRequest request, String paramName) {
-        try {
-            // Try multipart first
-            if (request.getContentType() != null && request.getContentType().startsWith("multipart/form-data")) {
-                jakarta.servlet.http.Part part = request.getPart(paramName);
-                if (part != null) {
-                    java.io.InputStream inputStream = part.getInputStream();
-                    java.util.Scanner scanner = new java.util.Scanner(inputStream, "UTF-8").useDelimiter("\\A");
-                    String value = scanner.hasNext() ? scanner.next() : null;
-                    scanner.close();
-                    inputStream.close();
-                    return value;
-                }
-            }
-            // Fallback to regular parameter
-            return request.getParameter(paramName);
-        } catch (Exception e) {
-            LOGGER.warning("Error getting multipart parameter " + paramName + ": " + e.getMessage());
-            return request.getParameter(paramName); // Fallback
-        }
     }
 }

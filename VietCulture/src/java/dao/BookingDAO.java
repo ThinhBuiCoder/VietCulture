@@ -154,6 +154,244 @@ public class BookingDAO {
         }
     }
 
+    // ========== EXPERIENCE BOOKING VALIDATION METHODS ==========
+    
+    /**
+     * Kiểm tra xem trải nghiệm còn slot trống không
+     * @param experienceId ID của trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ (morning/afternoon/evening)
+     * @param requestedPeople Số người yêu cầu
+     * @return true nếu còn đủ slot
+     */
+    public boolean isExperienceSlotAvailable(int experienceId, Date bookingDate, String timeSlot, int requestedPeople) throws SQLException {
+        // Lấy thông tin trải nghiệm
+        ExperienceDAO experienceDAO = new ExperienceDAO();
+        Experience experience = experienceDAO.getExperienceById(experienceId);
+        
+        if (experience == null || !experience.isActive()) {
+            return false;
+        }
+        
+        int maxGroupSize = experience.getMaxGroupSize();
+        
+        // Đếm số người đã đặt trong cùng ngày và khung giờ
+        String sql = """
+            SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ? 
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int bookedPeople = rs.getInt("bookedPeople");
+                    int availableSlots = maxGroupSize - bookedPeople;
+                    
+                    LOGGER.info("Experience " + experienceId + " - Date: " + bookingDate + 
+                               " - TimeSlot: " + timeSlot + " - Booked: " + bookedPeople + 
+                               " - Max: " + maxGroupSize + " - Available: " + availableSlots);
+                    
+                    return availableSlots >= requestedPeople;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Kiểm tra người dùng đã đặt trải nghiệm nào trong cùng ngày và khung giờ chưa
+     * @param userId ID người dùng
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @param excludeBookingId ID booking cần loại trừ (khi update)
+     * @return true nếu đã có booking trùng lặp
+     */
+    public boolean hasConflictingExperienceBooking(int userId, Date bookingDate, String timeSlot, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) as conflictCount
+            FROM Bookings b
+            INNER JOIN Experiences e ON b.experienceId = e.experienceId
+            WHERE b.travelerId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """);
+        
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            ps.setInt(1, userId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+            
+            if (excludeBookingId != null) {
+                ps.setInt(4, excludeBookingId);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int conflictCount = rs.getInt("conflictCount");
+                    LOGGER.info("User " + userId + " conflict check - Date: " + bookingDate + 
+                               " - TimeSlot: " + timeSlot + " - Conflicts: " + conflictCount);
+                    return conflictCount > 0;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Kiểm tra người dùng đã đặt trải nghiệm này trong cùng ngày chưa (bất kể khung giờ)
+     * @param userId ID người dùng
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param excludeBookingId ID booking cần loại trừ
+     * @return true nếu đã đặt trải nghiệm này trong ngày
+     */
+    public boolean hasDuplicateExperienceBooking(int userId, int experienceId, Date bookingDate, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) as duplicateCount
+            FROM Bookings b
+            WHERE b.travelerId = ?
+            AND b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """);
+        
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            ps.setDate(3, new java.sql.Date(bookingDate.getTime()));
+            
+            if (excludeBookingId != null) {
+                ps.setInt(4, excludeBookingId);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int duplicateCount = rs.getInt("duplicateCount");
+                    LOGGER.info("User " + userId + " duplicate check - Experience: " + experienceId + 
+                               " - Date: " + bookingDate + " - Duplicates: " + duplicateCount);
+                    return duplicateCount > 0;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Lấy danh sách booking trải nghiệm theo ngày và khung giờ
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @return Danh sách booking
+     */
+    public List<Booking> getExperienceBookingsByDateAndTimeSlot(int experienceId, Date bookingDate, String timeSlot) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+        
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            INNER JOIN Experiences e ON b.experienceId = e.experienceId
+            INNER JOIN Users u ON b.travelerId = u.userId
+            WHERE b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+            ORDER BY b.createdAt ASC
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    booking.setTravelerName(rs.getString("travelerName"));
+                    booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    bookings.add(booking);
+                }
+            }
+        }
+        
+        return bookings;
+    }
+    
+    /**
+     * Lấy thống kê slot đã đặt cho trải nghiệm theo ngày
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @return Map với key là timeSlot và value là số người đã đặt
+     */
+    public Map<String, Integer> getExperienceBookingStatsByDate(int experienceId, Date bookingDate) throws SQLException {
+        Map<String, Integer> stats = new HashMap<>();
+        
+        String sql = """
+            SELECT JSON_VALUE(b.contactInfo, '$.timeSlot') as timeSlot,
+                   SUM(b.numberOfPeople) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+            GROUP BY JSON_VALUE(b.contactInfo, '$.timeSlot')
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String timeSlot = rs.getString("timeSlot");
+                    int bookedPeople = rs.getInt("bookedPeople");
+                    if (timeSlot != null) {
+                        stats.put(timeSlot, bookedPeople);
+                    }
+                }
+            }
+        }
+        
+        // Đảm bảo có tất cả time slots với giá trị 0 nếu chưa có booking
+        stats.putIfAbsent("morning", 0);
+        stats.putIfAbsent("afternoon", 0);
+        stats.putIfAbsent("evening", 0);
+        
+        return stats;
+    }
+
     /**
      * Get bookings by host (for host dashboard)
      */
@@ -501,7 +739,44 @@ public class BookingDAO {
         };
     }
 
-    public void deleteBooking(int bookingId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    /**
+     * Delete booking by ID (for cleaning up failed payments)
+     */
+    public boolean deleteBooking(int bookingId) throws SQLException {
+        String sql = "DELETE FROM Bookings WHERE bookingId = ? AND status = 'PENDING'";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+
+            int rowsAffected = ps.executeUpdate();
+
+            if (rowsAffected > 0) {
+                LOGGER.info("Deleted pending booking: " + bookingId);
+                return true;
+            } else {
+                LOGGER.warning("No pending booking found to delete with ID: " + bookingId);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Check if booking exists and is pending
+     */
+    public boolean isPendingBooking(int bookingId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE bookingId = ? AND status = 'PENDING'";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 }

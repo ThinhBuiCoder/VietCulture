@@ -41,21 +41,16 @@
             object-fit: cover;
             border-radius: 8px;
         }
-        
-        /* Status card backgrounds theo adminApprovalStatus */
+        /* FIXED: Trạng thái pending (isActive = 0) */
         .status-pending {
             background-color: #fff3cd;
             border-color: #ffeaa7;
         }
+        /* FIXED: Trạng thái approved (isActive = 1) */
         .status-approved {
             background-color: #d1edff;
             border-color: #bee5eb;
         }
-        .status-rejected {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-        
         .host-info {
             background-color: #f8f9fa;
             border-radius: 8px;
@@ -92,37 +87,6 @@
         .difficulty-easy { color: #28a745; }
         .difficulty-moderate { color: #ffc107; }
         .difficulty-challenging { color: #dc3545; }
-        
-        /* Status indicators */
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.85em;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-weight: 500;
-        }
-        .status-pending-indicator {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        .status-approved-indicator {
-            background-color: #d1edff;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        .status-rejected-indicator {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .host-hidden-indicator {
-            background-color: #e2e3e5;
-            color: #383d41;
-            border: 1px solid #d6d8db;
-        }
     </style>
 </head>
 <body>
@@ -153,7 +117,6 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item ${currentFilter eq 'pending' ? 'active' : ''}" href="?filter=pending&contentType=${currentContentType}">Chờ duyệt</a></li>
                                 <li><a class="dropdown-item ${currentFilter eq 'approved' ? 'active' : ''}" href="?filter=approved&contentType=${currentContentType}">Đã duyệt</a></li>
-                                <li><a class="dropdown-item ${currentFilter eq 'rejected' ? 'active' : ''}" href="?filter=rejected&contentType=${currentContentType}">Bị từ chối</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item ${currentFilter eq 'all' ? 'active' : ''}" href="?filter=all&contentType=${currentContentType}">Tất cả</a></li>
                             </ul>
@@ -176,7 +139,6 @@
                 <div class="filter-buttons d-md-none mb-3">
                     <a href="?" class="btn btn-sm ${empty currentFilter or currentFilter eq 'pending' ? 'btn-primary' : 'btn-outline-primary'}">Chờ duyệt</a>
                     <a href="?filter=approved" class="btn btn-sm ${currentFilter eq 'approved' ? 'btn-success' : 'btn-outline-success'}">Đã duyệt</a>
-                    <a href="?filter=rejected" class="btn btn-sm ${currentFilter eq 'rejected' ? 'btn-danger' : 'btn-outline-danger'}">Bị từ chối</a>
                     <a href="?filter=all" class="btn btn-sm ${currentFilter eq 'all' ? 'btn-info' : 'btn-outline-info'}">Tất cả</a>
                     <br>
                     <a href="?contentType=all" class="btn btn-sm ${currentContentType eq 'all' ? 'btn-secondary' : 'btn-outline-secondary'}">Tất cả nội dung</a>
@@ -212,10 +174,10 @@
                         <div class="card text-center stats-card h-100">
                             <div class="card-body">
                                 <div class="text-danger mb-2">
-                                    <i class="fas fa-times-circle fa-2x"></i>
+                                    <i class="fas fa-map-marked-alt fa-2x"></i>
                                 </div>
-                                <h5 class="card-title text-danger">${stats.totalRejected}</h5>
-                                <p class="card-text mb-0 small">Bị từ chối</p>
+                                <h5 class="card-title text-danger">${stats.experiencePending}</h5>
+                                <p class="card-text mb-0 small">Exp chờ</p>
                             </div>
                         </div>
                     </div>
@@ -223,10 +185,10 @@
                         <div class="card text-center stats-card h-100">
                             <div class="card-body">
                                 <div class="text-info mb-2">
-                                    <i class="fas fa-map-marked-alt fa-2x"></i>
+                                    <i class="fas fa-home fa-2x"></i>
                                 </div>
-                                <h5 class="card-title text-info">${stats.experienceTotal}</h5>
-                                <p class="card-text mb-0 small">Tổng Exp</p>
+                                <h5 class="card-title text-info">${stats.accommodationPending}</h5>
+                                <p class="card-text mb-0 small">Acc chờ</p>
                             </div>
                         </div>
                     </div>
@@ -234,10 +196,10 @@
                         <div class="card text-center stats-card h-100">
                             <div class="card-body">
                                 <div class="text-primary mb-2">
-                                    <i class="fas fa-home fa-2x"></i>
+                                    <i class="fas fa-chart-line fa-2x"></i>
                                 </div>
-                                <h5 class="card-title text-primary">${stats.accommodationTotal}</h5>
-                                <p class="card-text mb-0 small">Tổng Acc</p>
+                                <h5 class="card-title text-primary">${stats.experienceTotal}</h5>
+                                <p class="card-text mb-0 small">Tổng Exp</p>
                             </div>
                         </div>
                     </div>
@@ -245,10 +207,10 @@
                         <div class="card text-center stats-card h-100">
                             <div class="card-body">
                                 <div class="text-secondary mb-2">
-                                    <i class="fas fa-eye-slash fa-2x"></i>
+                                    <i class="fas fa-building fa-2x"></i>
                                 </div>
-                                <h5 class="card-title text-secondary">${stats.experienceHidden + stats.accommodationHidden}</h5>
-                                <p class="card-text mb-0 small">Host ẩn</p>
+                                <h5 class="card-title text-secondary">${stats.accommodationTotal}</h5>
+                                <p class="card-text mb-0 small">Tổng Acc</p>
                             </div>
                         </div>
                     </div>
@@ -259,39 +221,25 @@
                     <c:if test="${not empty contentItems}">
                         <c:forEach var="item" items="${contentItems}">
                             <div class="col-lg-6 col-xl-4 mb-4">
-                                <!-- Card với class theo adminApprovalStatus -->
+                                <!-- FIXED: Áp dụng class theo trạng thái isActive -->
                                 <div class="card content-card h-100 
-                                    <c:choose>
-                                        <c:when test="${item.adminApprovalStatus eq 'PENDING'}">status-pending</c:when>
-                                        <c:when test="${item.adminApprovalStatus eq 'APPROVED'}">status-approved</c:when>
-                                        <c:when test="${item.adminApprovalStatus eq 'REJECTED'}">status-rejected</c:when>
-                                        <c:otherwise>status-pending</c:otherwise>
-                                    </c:choose>">
+                                    ${not item.active ? 'status-pending' : 'status-approved'}">
                                     
                                     <!-- Content Image -->
                                     <div class="position-relative">
                                         <c:choose>
                                             <c:when test="${not empty item.images}">
                                                 <c:set var="imageArray" value="${fn:split(item.images, ',')}" />
-                                                <c:choose>
-                                                    <c:when test="${not empty imageArray[0]}">
-                                                        <c:set var="firstImage" value="${fn:trim(imageArray[0])}" />
-                                                        <img loading="lazy" 
-                                                             src="${pageContext.request.contextPath}/view/assets/images/${item.type}s/${firstImage}" 
-                                                             class="card-img-top content-image" 
-                                                             alt="${fn:escapeXml(item.title)}"
-                                                             data-lightbox="content-${item.id}"
-                                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                        <div class="card-img-top content-image bg-light d-flex align-items-center justify-content-center" style="display: none;">
-                                                            <i class="fas fa-image fa-3x text-muted"></i>
-                                                        </div>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <div class="card-img-top content-image bg-light d-flex align-items-center justify-content-center">
-                                                            <i class="fas fa-image fa-3x text-muted"></i>
-                                                        </div>
-                                                    </c:otherwise>
-                                                </c:choose>
+                                                <c:set var="firstImage" value="${fn:trim(imageArray[0])}" />
+                                                <img loading="lazy" 
+                                                     src="${pageContext.request.contextPath}/assets/images/${item.type}s/${firstImage}" 
+                                                     class="card-img-top content-image" 
+                                                     alt="${fn:escapeXml(item.title)}"
+                                                     data-lightbox="content-${item.id}"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                <div class="card-img-top content-image bg-light d-flex align-items-center justify-content-center" style="display: none;">
+                                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                                </div>
                                             </c:when>
                                             <c:otherwise>
                                                 <div class="card-img-top content-image bg-light d-flex align-items-center justify-content-center">
@@ -316,37 +264,14 @@
                                             </c:choose>
                                         </div>
                                         
-                                        <!-- Status Badge theo adminApprovalStatus -->
+                                        <!-- FIXED: Status Badge theo isActive -->
                                         <div class="position-absolute top-0 end-0 m-2">
                                             <c:choose>
-                                                <c:when test="${item.adminApprovalStatus eq 'PENDING'}">
-                                                    <span class="badge bg-warning text-dark">
-                                                        <i class="fas fa-clock me-1"></i>Chờ duyệt
-                                                    </span>
-                                                </c:when>
-                                                <c:when test="${item.adminApprovalStatus eq 'APPROVED'}">
-                                                    <c:choose>
-                                                        <c:when test="${item.active}">
-                                                            <span class="badge bg-success">
-                                                                <i class="fas fa-check me-1"></i>Đang hiển thị
-                                                            </span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="badge bg-secondary">
-                                                                <i class="fas fa-eye-slash me-1"></i>Host ẩn
-                                                            </span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </c:when>
-                                                <c:when test="${item.adminApprovalStatus eq 'REJECTED'}">
-                                                    <span class="badge bg-danger">
-                                                        <i class="fas fa-times me-1"></i>Bị từ chối
-                                                    </span>
+                                                <c:when test="${item.active}">
+                                                    <span class="badge bg-success">Đã duyệt</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="badge bg-secondary">
-                                                        <i class="fas fa-question me-1"></i>Không rõ
-                                                    </span>
+                                                    <span class="badge bg-warning">Chờ duyệt</span>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -364,42 +289,6 @@
                                                 , ${fn:escapeXml(item.cityName)}
                                             </c:if>
                                         </p>
-                                        
-                                        <!-- Status Indicator chi tiết -->
-                                        <div class="mb-2">
-                                            <c:choose>
-                                                <c:when test="${item.adminApprovalStatus eq 'PENDING'}">
-                                                    <span class="status-indicator status-pending-indicator">
-                                                        <i class="fas fa-clock"></i>Chờ admin duyệt
-                                                    </span>
-                                                </c:when>
-                                                <c:when test="${item.adminApprovalStatus eq 'APPROVED'}">
-                                                    <c:choose>
-                                                        <c:when test="${item.active}">
-                                                            <span class="status-indicator status-approved-indicator">
-                                                                <i class="fas fa-check-circle"></i>Đang hiển thị công khai
-                                                            </span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="status-indicator host-hidden-indicator">
-                                                                <i class="fas fa-eye-slash"></i>Đã duyệt nhưng host ẩn
-                                                            </span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </c:when>
-                                                <c:when test="${item.adminApprovalStatus eq 'REJECTED'}">
-                                                    <span class="status-indicator status-rejected-indicator">
-                                                        <i class="fas fa-times-circle"></i>Bị admin từ chối
-                                                    </span>
-                                                    <c:if test="${not empty item.adminRejectReason}">
-                                                        <small class="d-block text-danger mt-1">
-                                                            <i class="fas fa-exclamation-triangle me-1"></i>
-                                                            ${fn:escapeXml(item.adminRejectReason)}
-                                                        </small>
-                                                    </c:if>
-                                                </c:when>
-                                            </c:choose>
-                                        </div>
                                         
                                         <!-- Description -->
                                         <p class="card-text">
@@ -425,7 +314,7 @@
                                             
                                             <!-- Experience specific details -->
                                             <c:if test="${item.type eq 'experience'}">
-                                                <c:set var="exp" value="${item.content}" />
+                                                <c:set var="exp" value="${item.experience}" />
                                                 <div class="col-6">
                                                     <small class="text-muted">
                                                         <i class="fas fa-users me-1"></i>
@@ -465,7 +354,7 @@
                                             
                                             <!-- Accommodation specific details -->
                                             <c:if test="${item.type eq 'accommodation'}">
-                                                <c:set var="acc" value="${item.content}" />
+                                                <c:set var="acc" value="${item.accommodation}" />
                                                 <div class="col-6">
                                                     <small class="text-muted">
                                                         <i class="fas fa-bed me-1"></i>
@@ -512,7 +401,7 @@
                                         
                                         <!-- Additional Experience Info -->
                                         <c:if test="${item.type eq 'experience'}">
-                                            <c:set var="exp" value="${item.content}" />
+                                            <c:set var="exp" value="${item.experience}" />
                                             <c:if test="${not empty exp.language}">
                                                 <p class="mb-1">
                                                     <small>
@@ -541,7 +430,7 @@
                                         
                                         <!-- Additional Accommodation Info -->
                                         <c:if test="${item.type eq 'accommodation'}">
-                                            <c:set var="acc" value="${item.content}" />
+                                            <c:set var="acc" value="${item.accommodation}" />
                                             <c:if test="${not empty acc.amenities}">
                                                 <p class="mb-1">
                                                     <small>
@@ -560,17 +449,6 @@
                                             </c:if>
                                         </c:if>
                                         
-                                        <!-- Admin Status Info -->
-                                        <c:if test="${item.adminApprovalStatus eq 'APPROVED' and not empty item.adminApprovedAt}">
-                                            <p class="mb-1">
-                                                <small class="text-success">
-                                                    <i class="fas fa-check me-1"></i>
-                                                    <strong>Đã duyệt:</strong> 
-                                                    <fmt:formatDate value="${item.adminApprovedAt}" pattern="dd/MM/yyyy HH:mm"/>
-                                                </small>
-                                            </p>
-                                        </c:if>
-                                        
                                         <!-- Created Date -->
                                         <p class="text-muted mb-0">
                                             <small>
@@ -580,9 +458,9 @@
                                         </p>
                                     </div>
                                     
-                                    <!-- Actions theo adminApprovalStatus -->
-                                    <!-- Actions for PENDING (adminApprovalStatus = 'PENDING') -->
-                                    <c:if test="${item.adminApprovalStatus eq 'PENDING'}">
+                                    <!-- FIXED: Actions theo trạng thái isActive -->
+                                    <!-- Actions for Pending (isActive = false, chờ duyệt) -->
+                                    <c:if test="${not item.active}">
                                         <div class="approval-actions">
                                             <div class="d-flex gap-2 mb-2">
                                                 <button type="button" 
@@ -598,7 +476,7 @@
                                             </div>
                                             
                                             <div class="d-flex gap-2">
-                                                <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
+                                                <a href="${pageContext.request.contextPath}/admin/content/${item.type}/${item.id}" 
                                                    class="btn btn-outline-primary btn-sm flex-fill">
                                                     <i class="fas fa-eye me-1"></i>Chi tiết
                                                 </a>
@@ -613,58 +491,19 @@
                                         </div>
                                     </c:if>
                                     
-                                    <!-- Actions for APPROVED (adminApprovalStatus = 'APPROVED') -->
-                                    <c:if test="${item.adminApprovalStatus eq 'APPROVED'}">
+                                    <!-- Actions for Approved (isActive = true, đã duyệt) -->
+                                    <c:if test="${item.active}">
                                         <div class="approval-actions">
-                                            <div class="d-flex gap-2 mb-2">
+                                            <div class="d-flex gap-2">
                                                 <button type="button" 
                                                         class="btn btn-warning btn-sm flex-fill" 
                                                         onclick="revokeApproval('${item.type}', ${item.id}, '${fn:escapeXml(item.title)}')">
                                                     <i class="fas fa-undo me-1"></i>Thu hồi duyệt
                                                 </button>
-                                                <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
+                                                <a href="${pageContext.request.contextPath}/admin/content/${item.type}/${item.id}" 
                                                    class="btn btn-outline-primary btn-sm">
                                                     <i class="fas fa-eye me-1"></i>Chi tiết
                                                 </a>
-                                            </div>
-                                            <c:if test="${not empty item.images}">
-                                                <button type="button" 
-                                                        class="btn btn-outline-info btn-sm w-100" 
-                                                        onclick="showAllImages('${item.type}', ${item.id}, '${fn:escapeXml(item.images)}')">
-                                                    <i class="fas fa-images me-1"></i>Xem hình ảnh
-                                                </button>
-                                            </c:if>
-                                        </div>
-                                    </c:if>
-                                    
-                                    <!-- Actions for REJECTED (adminApprovalStatus = 'REJECTED') -->
-                                    <c:if test="${item.adminApprovalStatus eq 'REJECTED'}">
-                                        <div class="approval-actions">
-                                            <div class="d-flex gap-2 mb-2">
-                                                <button type="button" 
-                                                        class="btn btn-success btn-sm flex-fill" 
-                                                        onclick="approveContent('${item.type}', ${item.id})">
-                                                    <i class="fas fa-check me-1"></i>Duyệt lại
-                                                </button>
-                                                <button type="button" 
-                                                        class="btn btn-outline-danger btn-sm flex-fill" 
-                                                        onclick="deleteContent('${item.type}', ${item.id}, '${fn:escapeXml(item.title)}')">
-                                                    <i class="fas fa-trash me-1"></i>Xóa vĩnh viễn
-                                                </button>
-                                            </div>
-                                            
-                                            <div class="d-flex gap-2">
-                                                <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
-                                                   class="btn btn-outline-primary btn-sm flex-fill">
-                                                    <i class="fas fa-eye me-1"></i>Chi tiết
-                                                </a>
-                                                <c:if test="${not empty item.images}">
-                                                    <button type="button" 
-                                                            class="btn btn-outline-info btn-sm flex-fill" 
-                                                            onclick="showAllImages('${item.type}', ${item.id}, '${fn:escapeXml(item.images)}')">
-                                                        <i class="fas fa-images me-1"></i>Hình ảnh
-                                                    </button>
-                                                </c:if>
                                             </div>
                                         </div>
                                     </c:if>
@@ -686,9 +525,6 @@
                                         </c:when>
                                         <c:when test="${currentFilter eq 'approved'}">
                                             Chưa có nội dung nào được duyệt.
-                                        </c:when>
-                                        <c:when test="${currentFilter eq 'rejected'}">
-                                            Chưa có nội dung nào bị từ chối.
                                         </c:when>
                                         <c:otherwise>
                                             Chưa có nội dung nào trong hệ thống.
@@ -748,42 +584,20 @@
                         <div class="mb-3">
                             <label class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
                             <textarea class="form-control" name="reason" rows="4" required placeholder="Nhập lý do từ chối..."></textarea>
-                            <div class="form-text">Host sẽ nhận được thông báo về lý do từ chối và có thể chỉnh sửa để gửi lại</div>
+                            <div class="form-text">Host sẽ nhận được thông báo về lý do từ chối</div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="allowResubmit" id="allowResubmit" checked>
+                                <label class="form-check-label" for="allowResubmit">
+                                    Cho phép host chỉnh sửa và gửi lại
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                         <button type="submit" class="btn btn-danger">Từ chối</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Xóa vĩnh viễn</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="deleteForm" method="POST">
-                    <div class="modal-body">
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác!
-                        </div>
-                        <p>Bạn có chắc chắn muốn xóa vĩnh viễn nội dung <strong id="deleteContentName"></strong>?</p>
-                        <ul class="text-muted small">
-                            <li>Nội dung sẽ bị xóa hoàn toàn khỏi hệ thống</li>
-                            <li>Tất cả dữ liệu liên quan sẽ bị mất</li>
-                            <li>Host không thể khôi phục nội dung này</li>
-                        </ul>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger">Xóa vĩnh viễn</button>
                     </div>
                 </form>
             </div>
@@ -820,7 +634,7 @@
                         <p>Bạn có chắc chắn muốn thu hồi duyệt cho nội dung <strong id="revokeContentName"></strong>?</p>
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            Nội dung sẽ bị ẩn khỏi website và quay về trạng thái chờ duyệt.
+                            Nội dung sẽ bị ẩn khỏi website và các booking hiện tại có thể bị ảnh hưởng.
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Lý do thu hồi <span class="text-danger">*</span></label>
@@ -846,27 +660,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
     
     <script>
-        // DOM Ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Configure lightbox
-    if (typeof lightbox !== 'undefined') {
-        lightbox.option({
-            'resizeDuration': 200,
-            'wrapAround': true,
-            'albumLabel': 'Hình %1 / %2'
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configure lightbox
+            if (typeof lightbox !== 'undefined') {
+                lightbox.option({
+                    'resizeDuration': 200,
+                    'wrapAround': true,
+                    'albumLabel': 'Hình %1 / %2'
+                });
+            } else {
+                console.error('Lightbox is not loaded');
+            }
+
+            // Initialize tooltips
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipTriggerList.forEach(tooltipTriggerEl => {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
-    }
 
-    // Initialize tooltips
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    tooltipTriggerList.forEach(tooltipTriggerEl => {
-        new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
-
-// Global variables
-let currentContentType = '';
-let currentContentId = 0;
+        // Global variables for modal management
+        let currentContentType = '';
+        let currentContentId = 0;
 
 function approveContent(contentType, contentId) {
     if (confirm('Bạn có chắc chắn muốn duyệt nội dung này?')) {
@@ -875,7 +691,8 @@ function approveContent(contentType, contentId) {
         loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
         loadingBtn.disabled = true;
 
-        const url = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/approve';
+        const url = '${pageContext.request.contextPath}/admin/content/' + contentType + '/' + contentId + '/approve';
+        console.log('Sending request to:', url); // Debug log
 
         fetch(url, {
             method: 'POST',
@@ -885,18 +702,32 @@ function approveContent(contentType, contentId) {
             }
         })
         .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers.get('content-type'));
+            
+            // Kiểm tra status code trước
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+            
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
+                // Nếu không phải JSON, đọc text để debug
                 return response.text().then(text => {
-                    throw new Error(`Expected JSON, but received: ${contentType || 'unknown'}`);
+                    console.error('Expected JSON but received:', contentType, 'Content:', text);
+                    throw new Error(`Expected JSON, but received: ${contentType || 'unknown'} - Content: ${text.substring(0, 100)}`);
                 });
             }
-            return response.json();
+            
+            return response.json(); // Parse JSON nếu content-type đúng
         })
         .then(data => {
+            console.log('Response data:', data); // Debug log
+            
+            if (typeof data !== 'object' || data.success === undefined) {
+                throw new Error('Invalid response structure: ' + JSON.stringify(data));
+            }
+            
             if (data.success) {
                 showToast('Nội dung đã được duyệt thành công!', 'success');
                 setTimeout(() => location.reload(), 1500);
@@ -914,340 +745,367 @@ function approveContent(contentType, contentId) {
         });
     }
 }
-
-function rejectContent(contentType, contentId, contentName) {
-    currentContentType = contentType;
-    currentContentId = contentId;
-    document.getElementById('rejectContentName').textContent = DOMPurify.sanitize(contentName);
-    document.getElementById('rejectForm').action = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/reject';
-    new bootstrap.Modal(document.getElementById('rejectModal')).show();
-}
-
-function revokeApproval(contentType, contentId, contentName) {
-    currentContentType = contentType;
-    currentContentId = contentId;
-    document.getElementById('revokeContentName').textContent = DOMPurify.sanitize(contentName);
-    document.getElementById('revokeForm').action = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/revoke';
-    new bootstrap.Modal(document.getElementById('revokeModal')).show();
-}
-
-function deleteContent(contentType, contentId, contentName) {
-    currentContentType = contentType;
-    currentContentId = contentId;
-    document.getElementById('deleteContentName').textContent = DOMPurify.sanitize(contentName);
-    document.getElementById('deleteForm').action = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/delete';
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
-function approveAll() {
-    const contentType = '${currentContentType}' || 'all';
-    let confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ nội dung đang chờ?';
-    
-    if (contentType === 'experience') {
-        confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ experiences đang chờ?';
-    } else if (contentType === 'accommodation') {
-        confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ accommodations đang chờ?';
-    }
-
-    if (confirm(confirmMessage)) {
-        const loadingBtn = event.target;
-        const originalContent = loadingBtn.innerHTML;
-        loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
-        loadingBtn.disabled = true;
-
-        const url = '${pageContext.request.contextPath}/admin/content/approval/approve-all' + 
-                   (contentType !== 'all' ? '?contentType=' + contentType : '');
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                const count = data.data?.count || 0;
-                const total = data.data?.total || 0;
-                showToast('Đã duyệt ' + count + '/' + total + ' nội dung thành công!', 'success');
-                setTimeout(() => location.reload(), 2000);
-            } else {
-                showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể duyệt tất cả'), 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('Có lỗi xảy ra: ' + error.message, 'error');
-        })
-        .finally(() => {
-            loadingBtn.innerHTML = originalContent;
-            loadingBtn.disabled = false;
-        });
-    }
-}
-
-function exportPending() {
-    const loadingBtn = event.target;
-    const originalContent = loadingBtn.innerHTML;
-    loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xuất...';
-    loadingBtn.disabled = true;
-
-    fetch('${pageContext.request.contextPath}/admin/content/approval/export-pending', {
-        method: 'GET'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
+        function rejectContent(contentType, contentId, contentName) {
+            currentContentType = contentType;
+            currentContentId = contentId;
+            document.getElementById('rejectContentName').textContent = DOMPurify.sanitize(contentName);
+            document.getElementById('rejectForm').action = '${pageContext.request.contextPath}/admin/content/' + contentType + '/' + contentId + '/reject';
+            new bootstrap.Modal(document.getElementById('rejectModal')).show();
         }
-        return response.blob();
-    })
-    .then(blob => {
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = 'pending-content.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Tệp CSV đã được tải xuống!', 'success');
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Có lỗi xảy ra khi xuất CSV: ' + error.message, 'error');
-    })
-    .finally(() => {
-        loadingBtn.innerHTML = originalContent;
-        loadingBtn.disabled = false;
-    });
-}
 
-function showAllImages(contentType, contentId, imagesString) {
-    const gallery = document.getElementById('imageGallery');
-    gallery.innerHTML = '';
-    
-    if (imagesString && imagesString.trim() !== '') {
-        const images = imagesString.split(',').map(img => img.trim()).filter(img => img !== '');
-        
-        if (images.length > 0) {
-            images.forEach((image, index) => {
-                const col = document.createElement('div');
-                col.className = 'col-md-4 col-6 mb-2';
-                col.innerHTML = 
-                    '<img loading="lazy" src="${pageContext.request.contextPath}/view/assets/images/' + contentType + 's/' + encodeURIComponent(image) + '" ' +
-                    'class="img-fluid rounded shadow-sm" ' +
-                    'style="height: 150px; width: 100%; object-fit: cover; cursor: pointer;" ' +
-                    'data-lightbox="gallery-' + contentType + '-' + contentId + '" ' +
-                    'data-title="Hình ' + (index + 1) + '" ' +
-                    'onerror="this.parentElement.style.display=\'none\'">';
-                gallery.appendChild(col);
+        function revokeApproval(contentType, contentId, contentName) {
+            currentContentType = contentType;
+            currentContentId = contentId;
+            document.getElementById('revokeContentName').textContent = DOMPurify.sanitize(contentName);
+            document.getElementById('revokeForm').action = '${pageContext.request.contextPath}/admin/content/' + contentType + '/' + contentId + '/revoke';
+            new bootstrap.Modal(document.getElementById('revokeModal')).show();
+        }
+
+        function approveAll() {
+            const contentType = '${currentContentType}' || 'all';
+            let confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ nội dung đang chờ?';
+            
+            if (contentType === 'experience') {
+                confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ experiences đang chờ?';
+            } else if (contentType === 'accommodation') {
+                confirmMessage = 'Bạn có chắc chắn muốn duyệt TẤT CẢ accommodations đang chờ?';
+            }
+
+            if (confirm(confirmMessage)) {
+                const loadingBtn = event.target;
+                const originalContent = loadingBtn.innerHTML;
+                loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
+                loadingBtn.disabled = true;
+
+                const url = '${pageContext.request.contextPath}/admin/content/approve-all' + 
+                           (contentType !== 'all' ? '?contentType=' + contentType : '');
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    console.log('Response status:', response.status, 'Headers:', response.headers.get('content-type'));
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(`Network response was not ok: ${response.statusText} (${response.status}) - Response: ${text}`);
+                        });
+                    }
+                    const contentTypeHeader = response.headers.get('content-type');
+                    if (!contentTypeHeader || !contentTypeHeader.includes('application/json')) {
+                        return response.text().then(text => {
+                            throw new Error(`Expected JSON, but received: ${contentTypeHeader || 'none'} - Response: ${text}`);
+                        });
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    if (!text) {
+                        throw new Error('Empty response received');
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        throw new Error('Invalid JSON format: ' + text);
+                    }
+                })
+                .then(data => {
+                    if (data.success === undefined) {
+                        throw new Error('Invalid response structure');
+                    }
+                    if (data.success) {
+                        const count = data.data?.count || 0;
+                        const total = data.data?.total || 0;
+                        showToast('Đã duyệt ' + count + '/' + total + ' nội dung thành công!', 'success');
+                        setTimeout(() => location.reload(), 2000);
+                    } else {
+                        showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể duyệt tất cả'), 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Có lỗi xảy ra: ' + error.message, 'error');
+                })
+                .finally(() => {
+                    loadingBtn.innerHTML = originalContent;
+                    loadingBtn.disabled = false;
+                });
+            }
+        }
+
+        function exportPending() {
+            const loadingBtn = event.target;
+            const originalContent = loadingBtn.innerHTML;
+            loadingBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xuất...';
+            loadingBtn.disabled = true;
+
+            fetch('${pageContext.request.contextPath}/admin/content/export-pending', {
+                method: 'GET'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = 'pending-content.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast('Tệp CSV đã được tải xuống!', 'success');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra khi xuất CSV: ' + error.message, 'error');
+            })
+            .finally(() => {
+                loadingBtn.innerHTML = originalContent;
+                loadingBtn.disabled = false;
             });
-        } else {
-            gallery.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Không có hình ảnh hợp lệ</p></div>';
         }
-    } else {
-        gallery.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Không có hình ảnh</p></div>';
-    }
-    
-    new bootstrap.Modal(document.getElementById('imageGalleryModal')).show();
+
+        function showAllImages(contentType, contentId, imagesString) {
+            const gallery = document.getElementById('imageGallery');
+            gallery.innerHTML = '';
+            
+            if (imagesString && imagesString.trim() !== '') {
+                const images = imagesString.split(',').map(img => img.trim()).filter(img => img !== '');
+                const fragment = document.createDocumentFragment();
+                
+                if (images.length > 0) {
+                    images.forEach((image, index) => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4 col-6 mb-2';
+                        col.innerHTML = 
+                            '<img loading="lazy" src="${pageContext.request.contextPath}/assets/images/' + contentType + 's/' + encodeURIComponent(image) + '" ' +
+                            'class="img-fluid rounded shadow-sm" ' +
+                            'style="height: 150px; width: 100%; object-fit: cover; cursor: pointer;" ' +
+                            'data-lightbox="gallery-' + contentType + '-' + contentId + '" ' +
+                            'data-title="Hình ' + (index + 1) + '" ' +
+                            'onerror="this.parentElement.style.display=\'none\'">';
+                        fragment.appendChild(col);
+                    });
+                    gallery.appendChild(fragment);
+                } else {
+                    gallery.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Không có hình ảnh hợp lệ</p></div>';
+                }
+            } else {
+                gallery.innerHTML = '<div class="col-12 text-center"><p class="text-muted">Không có hình ảnh</p></div>';
+            }
+            
+            new bootstrap.Modal(document.getElementById('imageGalleryModal')).show();
+        }
+
+        function showToast(message, type) {
+            type = type || 'info';
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'error' ? 'bg-danger' : 
+                           type === 'success' ? 'bg-success' : 
+                           type === 'warning' ? 'bg-warning' : 'bg-info';
+            
+            toast.className = 'toast align-items-center text-white ' + bgClass + ' border-0';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = 
+                '<div class="d-flex">' +
+                    '<div class="toast-body">' + DOMPurify.sanitize(message) + '</div>' +
+                    '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+                '</div>';
+            
+            toastContainer.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+
+        // Handle form submissions
+        document.getElementById('rejectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status, 'Headers:', response.headers.get('content-type'));
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`Network response was not ok: ${response.statusText} (${response.status}) - Response: ${text}`);
+                    });
+                }
+                const contentTypeHeader = response.headers.get('content-type');
+                if (!contentTypeHeader || !contentTypeHeader.includes('application/json')) {
+                    return response.text().then(text => {
+                        throw new Error(`Expected JSON, but received: ${contentTypeHeader || 'none'} - Response: ${text}`);
+                    });
+                }
+                return response.text();
+            })
+            .then(text => {
+                if (!text) {
+                    throw new Error('Empty response received');
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid JSON format: ' + text);
+                }
+            })
+            .then(data => {
+                if (data.success === undefined) {
+                    throw new Error('Invalid response structure');
+                }
+                if (data.success) {
+                    showToast('Nội dung đã bị từ chối!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể từ chối nội dung'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra: ' + error.message, 'error');
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+            });
+        });
+
+        document.getElementById('revokeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
+            submitBtn.disabled = true;
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                console.log('Response status:', response.status, 'Headers:', response.headers.get('content-type'));
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`Network response was not ok: ${response.statusText} (${response.status}) - Response: ${text}`);
+                    });
+                }
+                const contentTypeHeader = response.headers.get('content-type');
+                if (!contentTypeHeader || !contentTypeHeader.includes('application/json')) {
+                    return response.text().then(text => {
+                        throw new Error(`Expected JSON, but received: ${contentTypeHeader || 'none'} - Response: ${text}`);
+                    });
+                }
+                return response.text();
+            })
+            .then(text => {
+                if (!text) {
+                    throw new Error('Empty response received');
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid JSON format: ' + text);
+                }
+            })
+            .then(data => {
+                if (data.success === undefined) {
+                    throw new Error('Invalid response structure');
+                }
+                if (data.success) {
+                    showToast('Đã thu hồi duyệt nội dung!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('revokeModal')).hide();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể thu hồi duyệt'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra: ' + error.message, 'error');
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+            });
+        });
+
+        // Reset form when modal is hidden
+        document.getElementById('rejectModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('rejectForm').reset();
+            document.getElementById('rejectContentName').textContent = '';
+        });
+
+        document.getElementById('revokeModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('revokeForm').reset();
+            document.getElementById('revokeContentName').textContent = '';
+        });
+
+        // Auto-refresh every 5 minutes if on pending filter
+        if ('${currentFilter}' === 'pending' || '${currentFilter}' === '') {
+            setInterval(function() {
+                if (document.visibilityState === 'visible') {
+                    location.reload();
+                }
+            }, 300000); // 5 minutes
+        }
+
+        // Enhanced keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'a' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                const approveBtn = document.querySelector('button[onclick*="approveAll"]');
+                if (approveBtn) approveBtn.click();
+            }
+            
+            if (e.ctrlKey && e.key === 'e' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                const exportBtn = document.querySelector('button[onclick*="exportPending"]');
+                if (exportBtn) exportBtn.click();
+            }
+        });
+    </script>
+    <script>
+function testDirectApprove() {
+    console.log('Testing direct approve...');
+    fetch('${pageContext.request.contextPath}/admin/content/experience/1/approve', {
+        method: 'POST'
+    })
+    .then(response => response.text())
+    .then(text => console.log('Direct test result:', text))
+    .catch(error => console.error('Direct test error:', error));
 }
-
-function showToast(message, type) {
-    type = type || 'info';
-    const toastContainer = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    
-    const bgClass = type === 'error' ? 'bg-danger' : 
-                   type === 'success' ? 'bg-success' : 
-                   type === 'warning' ? 'bg-warning' : 'bg-info';
-    
-    toast.className = 'toast align-items-center text-white ' + bgClass + ' border-0';
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'assertive');
-    toast.setAttribute('aria-atomic', 'true');
-    
-    toast.innerHTML = 
-        '<div class="d-flex">' +
-            '<div class="toast-body">' + DOMPurify.sanitize(message) + '</div>' +
-            '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
-        '</div>';
-    
-    toastContainer.appendChild(toast);
-    const bsToast = new bootstrap.Toast(toast);
-    bsToast.show();
-    
-    toast.addEventListener('hidden.bs.toast', function() {
-        toast.remove();
-    });
-}
-
-// Form submissions
-document.getElementById('rejectForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
-    submitBtn.disabled = true;
-    
-    const formData = new FormData(this);
-    
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showToast('Nội dung đã bị từ chối!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể từ chối nội dung'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Có lỗi xảy ra: ' + error.message, 'error');
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalContent;
-        submitBtn.disabled = false;
-    });
-});
-
-document.getElementById('revokeForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
-    submitBtn.disabled = true;
-    
-    const formData = new FormData(this);
-    
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showToast('Đã thu hồi duyệt nội dung!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('revokeModal')).hide();
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể thu hồi duyệt'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Có lỗi xảy ra: ' + error.message, 'error');
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalContent;
-        submitBtn.disabled = false;
-    });
-});
-
-document.getElementById('deleteForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xóa...';
-    submitBtn.disabled = true;
-    
-    fetch(this.action, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText} (${response.status})`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showToast('Nội dung đã được xóa vĩnh viễn!', 'success');
-            bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('Có lỗi xảy ra: ' + (data.message || 'Không thể xóa nội dung'), 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showToast('Có lỗi xảy ra: ' + error.message, 'error');
-    })
-    .finally(() => {
-        submitBtn.innerHTML = originalContent;
-        submitBtn.disabled = false;
-    });
-});
-
-// Reset form when modal is hidden
-document.getElementById('rejectModal').addEventListener('hidden.bs.modal', function() {
-    document.getElementById('rejectForm').reset();
-    document.getElementById('rejectContentName').textContent = '';
-});
-
-document.getElementById('revokeModal').addEventListener('hidden.bs.modal', function() {
-    document.getElementById('revokeForm').reset();
-    document.getElementById('revokeContentName').textContent = '';
-});
-
-document.getElementById('deleteModal').addEventListener('hidden.bs.modal', function() {
-    document.getElementById('deleteForm').reset();
-    document.getElementById('deleteContentName').textContent = '';
-});
-
-// Auto-refresh every 5 minutes if on pending filter
-if ('${currentFilter}' === 'pending' || '${currentFilter}' === '') {
-    setInterval(function() {
-        if (document.visibilityState === 'visible') {
-            location.reload();
-        }
-    }, 300000); // 5 minutes
-}
-
-// Enhanced keyboard navigation
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.key === 'a' && !e.target.matches('input, textarea')) {
-        e.preventDefault();
-        const approveBtn = document.querySelector('button[onclick*="approveAll"]');
-        if (approveBtn) approveBtn.click();
-    }
-    
-    if (e.ctrlKey && e.key === 'e' && !e.target.matches('input, textarea')) {
-        e.preventDefault();
-        const exportBtn = document.querySelector('button[onclick*="exportPending"]');
-        if (exportBtn) exportBtn.click();
-    }
-});
-       </script>
+// Gọi ngay: testDirectApprove()
+</script>
 </body>
 </html>

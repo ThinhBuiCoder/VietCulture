@@ -475,7 +475,6 @@
                                 <option value="all" ${selectedStatus == 'all' ? 'selected' : ''}>Tất Cả</option>
                                 <option value="active" ${selectedStatus == 'active' ? 'selected' : ''}>Đang Hiện</option>
                                 <option value="inactive" ${selectedStatus == 'inactive' ? 'selected' : ''}>Đang Ẩn</option>
-                                <option value="pending" ${selectedStatus == 'pending' ? 'selected' : ''}>Chờ Duyệt</option>
                             </select>
                         </div>
                         <div class="col-md-3 filter-group">
@@ -515,17 +514,8 @@
                                     <c:choose>
                                         <c:when test="${not empty experience.images}">
                                             <c:set var="firstImage" value="${fn:split(experience.images, ',')[0]}" />
-                                            <c:choose>
-                                                <c:when test="${not empty firstImage}">
-                                                    <img src="${pageContext.request.contextPath}/images/experiences/${fn:trim(firstImage)}" 
-                                                         alt="${experience.title}" class="service-image">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <div class="service-image d-flex align-items-center justify-content-center bg-light">
-                                                        <i class="ri-image-line text-muted" style="font-size: 2rem;"></i>
-                                                    </div>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <img src="${pageContext.request.contextPath}/${firstImage}" 
+                                                 alt="${experience.title}" class="service-image">
                                         </c:when>
                                         <c:otherwise>
                                             <div class="service-image d-flex align-items-center justify-content-center bg-light">
@@ -538,20 +528,9 @@
                                 <div class="service-content">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h5 class="service-title">${experience.title}</h5>
-                                        <span class="service-status 
+                                        <span class="service-status ${experience.active ? 'status-active' : 'status-inactive'}">
                                             <c:choose>
-                                                <c:when test="${experience.adminApprovalStatus == 'PENDING' || experience.adminApprovalStatus == 'REJECTED'}">status-pending</c:when>
-                                                <c:when test="${experience.active && experience.adminApprovalStatus == 'APPROVED'}">status-active</c:when>
-                                                <c:otherwise>status-inactive</c:otherwise>
-                                            </c:choose>">
-                                            <c:choose>
-                                                <c:when test="${experience.adminApprovalStatus == 'PENDING'}">
-                                                    <i class="ri-time-line"></i> Chờ Duyệt
-                                                </c:when>
-                                                <c:when test="${experience.adminApprovalStatus == 'REJECTED'}">
-                                                    <i class="ri-close-circle-line"></i> Bị Từ Chối
-                                                </c:when>
-                                                <c:when test="${experience.active && experience.adminApprovalStatus == 'APPROVED'}">
+                                                <c:when test="${experience.active}">
                                                     <i class="ri-eye-line"></i> Đang Hiện
                                                 </c:when>
                                                 <c:otherwise>
@@ -645,17 +624,8 @@
                                     <c:choose>
                                         <c:when test="${not empty accommodation.images}">
                                             <c:set var="firstImage" value="${fn:split(accommodation.images, ',')[0]}" />
-                                            <c:choose>
-                                                <c:when test="${not empty firstImage}">
-                                                    <img src="${pageContext.request.contextPath}/images/accommodations/${fn:trim(firstImage)}" 
-                                                         alt="${accommodation.name}" class="service-image">
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <div class="service-image d-flex align-items-center justify-content-center bg-light">
-                                                        <i class="ri-image-line text-muted" style="font-size: 2rem;"></i>
-                                                    </div>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <img src="${pageContext.request.contextPath}/${firstImage}" 
+                                                 alt="${accommodation.name}" class="service-image">
                                         </c:when>
                                         <c:otherwise>
                                             <div class="service-image d-flex align-items-center justify-content-center bg-light">
@@ -668,20 +638,9 @@
                                 <div class="service-content">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <h5 class="service-title">${accommodation.name}</h5>
-                                        <span class="service-status 
+                                        <span class="service-status ${accommodation.active ? 'status-active' : 'status-inactive'}">
                                             <c:choose>
-                                                <c:when test="${accommodation.adminApprovalStatus == 'PENDING' || accommodation.adminApprovalStatus == 'REJECTED'}">status-pending</c:when>
-                                                <c:when test="${accommodation.active && accommodation.adminApprovalStatus == 'APPROVED'}">status-active</c:when>
-                                                <c:otherwise>status-inactive</c:otherwise>
-                                            </c:choose>">
-                                            <c:choose>
-                                                <c:when test="${accommodation.adminApprovalStatus == 'PENDING'}">
-                                                    <i class="ri-time-line"></i> Chờ Duyệt
-                                                </c:when>
-                                                <c:when test="${accommodation.adminApprovalStatus == 'REJECTED'}">
-                                                    <i class="ri-close-circle-line"></i> Bị Từ Chối
-                                                </c:when>
-                                                <c:when test="${accommodation.active && accommodation.adminApprovalStatus == 'APPROVED'}">
+                                                <c:when test="${accommodation.active}">
                                                     <i class="ri-eye-line"></i> Đang Hiện
                                                 </c:when>
                                                 <c:otherwise>

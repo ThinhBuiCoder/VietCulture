@@ -597,21 +597,6 @@
                         </div>
                     </div>
 
-                    <!-- QR Code Section -->
-                    <div class="qr-section">
-                        <h3 class="section-title">
-                            <i class="ri-qr-code-line"></i>
-                            Hoặc quét mã QR
-                        </h3>
-
-                        <div class="qr-code">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?data=${paymentUrl}&size=200x200" 
-                                 alt="QR code thanh toán" />
-                        </div>
-
-                        <p>Sử dụng ứng dụng ngân hàng hoặc ví điện tử để quét mã QR và thanh toán</p>
-                    </div>
-
                     <!-- Important Notes -->
                     <div class="important-notes">
                         <h4>

@@ -34,8 +34,8 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 /**
- * Enhanced BookingServlet with improved Accommodation handling
- * Maintains all existing Experience functionality while enhancing Accommodation support
+ * Enhanced BookingServlet with comprehensive Experience booking validation
+ * Includes all accommodation functionality while adding robust experience validation
  */
 @WebServlet({"/booking", "/booking/*"})
 public class BookingServlet extends HttpServlet {
@@ -49,6 +49,9 @@ public class BookingServlet extends HttpServlet {
     private static final String BOOKING_FAIL_PAGE = "/view/jsp/home/booking-fail.jsp";
     private static final String PAYOS_PAYMENT_PAGE = "/view/jsp/home/payos-payment.jsp";
 
+    // Experience booking constraints
+    private static final int MAX_ADVANCE_BOOKING_DAYS = 60;
+    
     private BookingDAO bookingDAO;
     private ExperienceDAO experienceDAO;
     private AccommodationDAO accommodationDAO;
@@ -177,7 +180,7 @@ public class BookingServlet extends HttpServlet {
         // Priority 2: Service ID parameters
         String experienceId = request.getParameter("experienceId");
         String accommodationId = request.getParameter("accommodationId");
-        
+
         if (experienceId != null && !experienceId.trim().isEmpty()) {
             return "experience";
         }
@@ -189,10 +192,10 @@ public class BookingServlet extends HttpServlet {
         String checkIn = request.getParameter("checkIn");
         String checkOut = request.getParameter("checkOut");
         String guests = request.getParameter("guests");
-        
-        if ((checkIn != null && !checkIn.trim().isEmpty()) ||
-            (checkOut != null && !checkOut.trim().isEmpty()) ||
-            (guests != null && !guests.trim().isEmpty())) {
+
+        if ((checkIn != null && !checkIn.trim().isEmpty())
+                || (checkOut != null && !checkOut.trim().isEmpty())
+                || (guests != null && !guests.trim().isEmpty())) {
             return "accommodation";
         }
 
@@ -200,10 +203,10 @@ public class BookingServlet extends HttpServlet {
         String timeSlot = request.getParameter("timeSlot");
         String participants = request.getParameter("participants");
         String bookingDate = request.getParameter("bookingDate");
-        
-        if ((timeSlot != null && !timeSlot.trim().isEmpty()) ||
-            (participants != null && !participants.trim().isEmpty()) ||
-            (bookingDate != null && !bookingDate.trim().isEmpty())) {
+
+        if ((timeSlot != null && !timeSlot.trim().isEmpty())
+                || (participants != null && !participants.trim().isEmpty())
+                || (bookingDate != null && !bookingDate.trim().isEmpty())) {
             return "experience";
         }
 
@@ -230,7 +233,7 @@ public class BookingServlet extends HttpServlet {
     }
 
     /**
-     * Handle experience booking (keeping existing functionality)
+     * Handle experience booking (enhanced with validation)
      */
     private void handleExperienceBooking(HttpServletRequest request, HttpServletResponse response,
             String experienceIdParam) throws ServletException, IOException, SQLException {
@@ -265,8 +268,8 @@ public class BookingServlet extends HttpServlet {
 
         } catch (NumberFormatException e) {
             LOGGER.severe("Invalid experience ID format: " + experienceIdParam);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-                             "ID trải nghiệm không hợp lệ: " + experienceIdParam);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "ID trải nghiệm không hợp lệ: " + experienceIdParam);
         }
     }
 
@@ -306,14 +309,14 @@ public class BookingServlet extends HttpServlet {
 
         } catch (NumberFormatException e) {
             LOGGER.severe("Invalid accommodation ID format: " + accommodationIdParam);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, 
-                             "ID lưu trú không hợp lệ: " + accommodationIdParam);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "ID lưu trú không hợp lệ: " + accommodationIdParam);
         }
     }
 
     // ==================== BOOKING PROCESS HANDLERS ====================
     /**
-     * Enhanced booking creation with improved accommodation support
+     * Enhanced booking creation with comprehensive experience validation
      */
     private void handleCreateBooking(HttpServletRequest request, HttpServletResponse response, User user)
             throws ServletException, IOException, SQLException {
@@ -326,6 +329,17 @@ public class BookingServlet extends HttpServlet {
             request.setAttribute("formData", formData);
             forwardToAppropriateForm(request, response, formData);
             return;
+        }
+
+        // Enhanced validation for experience bookings
+        if (formData.hasExperience()) {
+            ValidationResult validationResult = validateExperienceBooking(formData, user.getUserId());
+            if (!validationResult.isValid()) {
+                request.setAttribute("errorMessage", validationResult.getErrorMessage());
+                request.setAttribute("formData", formData);
+                forwardToAppropriateForm(request, response, formData);
+                return;
+            }
         }
 
         // Validate service availability
@@ -352,9 +366,210 @@ public class BookingServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/booking/confirm");
     }
 
+    // ==================== EXPERIENCE VALIDATION METHODS ====================
+    
     /**
-     * Enhanced PayOS payment handler for both service types
+     * Comprehensive validation for experience bookings
      */
+    private ValidationResult validateExperienceBooking(BookingFormData formData, int userId) throws SQLException {
+        try {
+            // 1. Validate experience exists and is active
+            Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
+            if (experience == null) {
+                return ValidationResult.error("Trải nghiệm không tồn tại.");
+            }
+            
+            if (!experience.isActive()) {
+                return ValidationResult.error("Trải nghiệm hiện không khả dụng.");
+            }
+
+            // 2. Validate booking date
+            ValidationResult dateValidation = validateExperienceBookingDate(formData.getBookingDate(), formData.getTimeSlot());
+            if (!dateValidation.isValid()) {
+                return dateValidation;
+            }
+
+            // 3. Validate number of participants
+            if (formData.getNumberOfPeople() > experience.getMaxGroupSize()) {
+                return ValidationResult.error("Số người tham gia (" + formData.getNumberOfPeople() + 
+                    ") vượt quá giới hạn tối đa (" + experience.getMaxGroupSize() + " người) của trải nghiệm này.");
+            }
+
+            // 4. Check slot availability
+            boolean slotAvailable = bookingDAO.isExperienceSlotAvailable(
+                formData.getExperienceId(), 
+                new java.sql.Date(formData.getBookingDate().getTime()), 
+                formData.getTimeSlot(), 
+                formData.getNumberOfPeople()
+            );
+            
+            if (!slotAvailable) {
+                return ValidationResult.error("Slot đã hết chỗ. Vui lòng chọn ngày hoặc khung giờ khác.");
+            }
+
+            // 5. Check for conflicting bookings (same date, same timeslot)
+            boolean hasConflict = bookingDAO.hasConflictingExperienceBooking(
+                userId, 
+                new java.sql.Date(formData.getBookingDate().getTime()), 
+                formData.getTimeSlot(), 
+                null
+            );
+            
+            if (hasConflict) {
+                return ValidationResult.error("Bạn đã có đặt chỗ trải nghiệm khác trong cùng ngày và khung giờ này. " +
+                    "Một người chỉ có thể tham gia một trải nghiệm trong một khung giờ.");
+            }
+
+            // 6. Check for duplicate booking of same experience
+            boolean hasDuplicate = bookingDAO.hasDuplicateExperienceBooking(
+                userId, 
+                formData.getExperienceId(), 
+                new java.sql.Date(formData.getBookingDate().getTime()), 
+                null
+            );
+            
+            if (hasDuplicate) {
+                return ValidationResult.error("Bạn đã đặt trải nghiệm này trong ngày " + 
+                    formData.getFormattedBookingDate() + ". Không thể đặt trùng lặp.");
+            }
+
+            return ValidationResult.success();
+            
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error validating experience booking", e);
+            return ValidationResult.error("Lỗi hệ thống khi kiểm tra đặt chỗ. Vui lòng thử lại.");
+        }
+    }
+    
+    /**
+     * Validate experience booking date and time constraints
+     */
+    private ValidationResult validateExperienceBookingDate(Date bookingDate, String timeSlot) {
+        if (bookingDate == null) {
+            return ValidationResult.error("Ngày đặt chỗ không hợp lệ.");
+        }
+        
+        if (timeSlot == null || timeSlot.trim().isEmpty()) {
+            return ValidationResult.error("Khung giờ không hợp lệ.");
+        }
+
+        Calendar now = Calendar.getInstance();
+        Calendar bookingCal = Calendar.getInstance();
+        bookingCal.setTime(bookingDate);
+        
+        // Check if booking date is in the past
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        
+        if (bookingDate.before(today.getTime())) {
+            return ValidationResult.error("Không thể đặt chỗ cho ngày trong quá khứ.");
+        }
+        
+        // For today, check if current time is before experience start time
+        if (isSameDay(now, bookingCal)) {
+            Date experienceStartTime = getExperienceStartTime(timeSlot);
+            Calendar experienceStart = Calendar.getInstance();
+            experienceStart.setTime(now.getTime());
+            experienceStart.set(Calendar.HOUR_OF_DAY, experienceStartTime.getHours());
+            experienceStart.set(Calendar.MINUTE, experienceStartTime.getMinutes());
+            experienceStart.set(Calendar.SECOND, 0);
+            experienceStart.set(Calendar.MILLISECOND, 0);
+            
+            if (now.after(experienceStart)) {
+                return ValidationResult.error("Đã quá giờ bắt đầu trải nghiệm hôm nay. Vui lòng chọn ngày khác.");
+            }
+        }
+        
+        // Check maximum advance booking period (60 days)
+        Calendar maxAdvanceDate = Calendar.getInstance();
+        maxAdvanceDate.add(Calendar.DAY_OF_MONTH, MAX_ADVANCE_BOOKING_DAYS);
+        
+        if (bookingDate.after(maxAdvanceDate.getTime())) {
+            return ValidationResult.error("Chỉ có thể đặt trước tối đa " + MAX_ADVANCE_BOOKING_DAYS + " ngày.");
+        }
+        
+        return ValidationResult.success();
+    }
+    
+    /**
+     * Get experience start time based on time slot
+     */
+    private Date getExperienceStartTime(String timeSlot) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        
+        switch (timeSlot.toLowerCase()) {
+            case "morning":
+                cal.set(Calendar.HOUR_OF_DAY, 9);
+                cal.set(Calendar.MINUTE, 0);
+                break;
+            case "afternoon":
+                cal.set(Calendar.HOUR_OF_DAY, 14);
+                cal.set(Calendar.MINUTE, 0);
+                break;
+            case "evening":
+                cal.set(Calendar.HOUR_OF_DAY, 18);
+                cal.set(Calendar.MINUTE, 0);
+                break;
+            default:
+                cal.set(Calendar.HOUR_OF_DAY, 9);
+                cal.set(Calendar.MINUTE, 0);
+        }
+        
+        return cal.getTime();
+    }
+    
+    /**
+     * Check if two calendars represent the same day
+     */
+    private boolean isSameDay(Calendar cal1, Calendar cal2) {
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+    }
+
+    // ==================== VALIDATION RESULT CLASS ====================
+    
+    /**
+     * Helper class for validation results
+     */
+    private static class ValidationResult {
+        private final boolean valid;
+        private final String errorMessage;
+        
+        private ValidationResult(boolean valid, String errorMessage) {
+            this.valid = valid;
+            this.errorMessage = errorMessage;
+        }
+        
+        public static ValidationResult success() {
+            return new ValidationResult(true, null);
+        }
+        
+        public static ValidationResult error(String message) {
+            return new ValidationResult(false, message);
+        }
+        
+        public boolean isValid() {
+            return valid;
+        }
+        
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+    }
+
+    // ==================== PAYOS METHODS ====================
+    
+    private long generateUniqueOrderCode(int bookingId) {
+        long timestamp = System.currentTimeMillis() / 1000;
+        long orderCode = (timestamp % 1000000) * 100000 + bookingId;
+        return orderCode;
+    }
+
     private void handlePayOSPaymentRequest(HttpServletRequest request, HttpServletResponse response, User user)
             throws ServletException, IOException, SQLException {
 
@@ -367,33 +582,48 @@ public class BookingServlet extends HttpServlet {
         }
 
         try {
-            // Tạo booking với status PENDING
-            Booking booking = createBookingFromFormData(formData, user.getUserId());
-            booking.setStatus("PENDING");
-            int bookingId = bookingDAO.createBooking(booking);
+            // Kiểm tra xem đã có booking pending chưa
+            Booking existingBooking = (Booking) session.getAttribute("pendingBooking");
 
-            if (bookingId <= 0) {
-                throw new SQLException("Failed to create booking");
+            if (existingBooking != null) {
+                // Nếu đã có booking pending, sử dụng lại
+                LOGGER.info("Reusing existing pending booking ID: " + existingBooking.getBookingId());
+            } else {
+                // Tạo booking mới với status PENDING
+                Booking booking = createBookingFromFormData(formData, user.getUserId());
+                booking.setStatus("PENDING");
+                int bookingId = bookingDAO.createBooking(booking);
+
+                if (bookingId <= 0) {
+                    throw new SQLException("Failed to create booking");
+                }
+
+                booking.setBookingId(bookingId);
+                existingBooking = booking;
+
+                // Lưu vào session
+                session.setAttribute("pendingBooking", booking);
             }
 
-            booking.setBookingId(bookingId);
-
-            // Tạo PayOS payment
+            // Tạo PayOS payment với orderCode unique
             PayOS payOS = PayOSConfig.getPayOS();
-            
+
+            // Tạo unique orderCode
+            long uniqueOrderCode = generateUniqueOrderCode(existingBooking.getBookingId());
+
             // Create service-specific item data
             ItemData item = createPayOSItemData(formData);
-            
+
             // URLs
             String baseUrl = getBaseUrl(request);
-            String returnUrl = baseUrl + "/booking/success?bookingId=" + bookingId;
-            String cancelUrl = baseUrl + "/booking/fail?bookingId=" + bookingId;
+            String returnUrl = baseUrl + "/booking/success?bookingId=" + existingBooking.getBookingId();
+            String cancelUrl = baseUrl + "/booking/fail?bookingId=" + existingBooking.getBookingId();
 
-            // Create payment data
+            // Create payment data với unique orderCode
             PaymentData paymentData = PaymentData.builder()
-                    .orderCode((long) bookingId)
+                    .orderCode(uniqueOrderCode)
                     .amount((int) formData.getTotalPrice())
-                    .description(createPayOSDescription(formData, bookingId))
+                    .description(createPayOSDescription(formData, existingBooking.getBookingId()))
                     .returnUrl(returnUrl)
                     .cancelUrl(cancelUrl)
                     .item(item)
@@ -402,12 +632,10 @@ public class BookingServlet extends HttpServlet {
             CheckoutResponseData checkoutResponse = payOS.createPaymentLink(paymentData);
 
             // Set attributes for payment page
-            setPaymentPageAttributes(request, checkoutResponse, booking, formData);
+            setPaymentPageAttributes(request, checkoutResponse, existingBooking, formData);
 
-            // Store booking in session
-            session.setAttribute("pendingBooking", booking);
-
-            LOGGER.info("PayOS payment link created - Booking ID: " + bookingId
+            LOGGER.info("PayOS payment link created - Booking ID: " + existingBooking.getBookingId()
+                    + ", OrderCode: " + uniqueOrderCode
                     + ", Type: " + formData.getServiceType()
                     + ", Amount: " + formData.getTotalPrice());
 
@@ -415,9 +643,36 @@ public class BookingServlet extends HttpServlet {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating PayOS payment", e);
+
+            // Nếu là lỗi duplicate, thử tạo orderCode mới
+            if (e.getMessage() != null && e.getMessage().contains("đã tồn tại")) {
+                LOGGER.info("Detected duplicate orderCode, retrying with new code...");
+
+                // Xóa pending booking cũ và thử lại
+                session.removeAttribute("pendingBooking");
+
+                // Redirect để thử lại
+                response.sendRedirect(request.getContextPath() + "/booking/confirm");
+                return;
+            }
+
             request.setAttribute("errorMessage", "Không thể tạo link thanh toán. Vui lòng thử lại.");
             request.setAttribute("formData", formData);
             request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
+        }
+    }
+
+    private void clearPendingBooking(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        Booking pendingBooking = (Booking) session.getAttribute("pendingBooking");
+
+        if (pendingBooking != null) {
+            try {
+                session.removeAttribute("pendingBooking");
+                LOGGER.info("Cleared pending booking: " + pendingBooking.getBookingId());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error clearing pending booking", e);
+            }
         }
     }
 
@@ -460,7 +715,7 @@ public class BookingServlet extends HttpServlet {
      */
     private void parseAccommodationBookingDetails(HttpServletRequest request, BookingFormData formData)
             throws ParseException {
-        
+
         String checkInStr = request.getParameter("checkIn");
         String checkOutStr = request.getParameter("checkOut");
         String guestsStr = request.getParameter("guests");
@@ -501,16 +756,16 @@ public class BookingServlet extends HttpServlet {
 
         // Validate date sequence
         if (formData.getCheckInDate() != null && formData.getCheckOutDate() != null) {
-            if (formData.getCheckOutDate().before(formData.getCheckInDate()) ||
-                formData.getCheckOutDate().equals(formData.getCheckInDate())) {
+            if (formData.getCheckOutDate().before(formData.getCheckInDate())
+                    || formData.getCheckOutDate().equals(formData.getCheckInDate())) {
                 formData.addError("Ngày trả phòng phải sau ngày nhận phòng.");
             }
-            
+
             // Calculate nights
             long diffInMillies = formData.getCheckOutDate().getTime() - formData.getCheckInDate().getTime();
             int nights = (int) (diffInMillies / (1000 * 60 * 60 * 24));
             formData.setCalculatedNights(nights);
-            
+
             if (nights > 30) {
                 formData.addError("Không thể đặt quá 30 đêm.");
             }
@@ -550,7 +805,7 @@ public class BookingServlet extends HttpServlet {
         // Common validations
         validateRequiredFields(formData);
         validateDates(formData);
-        
+
         // Service-specific validations
         if (formData.hasAccommodation()) {
             validateAccommodationSpecificData(formData);
@@ -569,7 +824,7 @@ public class BookingServlet extends HttpServlet {
         if (formData.getNumberOfPeople() <= 0) {
             formData.addError("Vui lòng chọn số khách.");
         }
-        
+
         // Validate against today
         if (formData.getCheckInDate() != null) {
             Date today = resetTimeToMidnight(new Date());
@@ -586,11 +841,11 @@ public class BookingServlet extends HttpServlet {
     private ItemData createPayOSItemData(BookingFormData formData) throws SQLException {
         String itemName;
         int price = (int) formData.getTotalPrice();
-        
+
         if (formData.hasAccommodation()) {
             Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
             int nights = formData.getNumberOfNights();
-            itemName = String.format("%s - %d đêm", 
+            itemName = String.format("%s - %d đêm",
                     truncateString(accommodation.getName(), 20), nights);
         } else if (formData.hasExperience()) {
             Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
@@ -612,22 +867,22 @@ public class BookingServlet extends HttpServlet {
     private String createPayOSDescription(BookingFormData formData, int bookingId) {
         String serviceType = formData.hasExperience() ? "EXP" : "ACC";
         String description = serviceType + " #" + bookingId;
-        
+
         if (formData.getContactName() != null && !formData.getContactName().trim().isEmpty()) {
             String shortName = truncateString(formData.getContactName(), 10);
             description += " - " + shortName;
         }
-        
+
         return description;
     }
 
     /**
      * Set payment page attributes
      */
-    private void setPaymentPageAttributes(HttpServletRequest request, 
-                                        CheckoutResponseData checkoutResponse,
-                                        Booking booking, BookingFormData formData) throws SQLException {
-        
+    private void setPaymentPageAttributes(HttpServletRequest request,
+            CheckoutResponseData checkoutResponse,
+            Booking booking, BookingFormData formData) throws SQLException {
+
         request.setAttribute("paymentUrl", checkoutResponse.getCheckoutUrl());
         request.setAttribute("qrCodeData", checkoutResponse.getQrCode());
         request.setAttribute("bookingID", booking.getBookingId());
@@ -650,8 +905,8 @@ public class BookingServlet extends HttpServlet {
         String guests = request.getParameter("guests");
         String roomType = request.getParameter("roomType");
 
-        LOGGER.info("Prefilled accommodation data - checkIn: " + checkIn + 
-                   ", checkOut: " + checkOut + ", guests: " + guests + ", roomType: " + roomType);
+        LOGGER.info("Prefilled accommodation data - checkIn: " + checkIn
+                + ", checkOut: " + checkOut + ", guests: " + guests + ", roomType: " + roomType);
 
         // Validate and set check-in date
         if (checkIn != null && !checkIn.trim().isEmpty() && isValidDateFormat(checkIn)) {
@@ -693,25 +948,25 @@ public class BookingServlet extends HttpServlet {
         if (dateParam == null || dateParam.trim().isEmpty()) {
             dateParam = request.getParameter("bookingDate");
         }
-        
+
         String guestsParam = request.getParameter("guests");
         if (guestsParam == null || guestsParam.trim().isEmpty()) {
             guestsParam = request.getParameter("participants");
         }
-        
+
         String timeParam = request.getParameter("time");
         if (timeParam == null || timeParam.trim().isEmpty()) {
             timeParam = request.getParameter("timeSlot");
         }
 
-        LOGGER.info("Prefilled experience data - date: " + dateParam + 
-                   ", guests: " + guestsParam + ", time: " + timeParam);
+        LOGGER.info("Prefilled experience data - date: " + dateParam
+                + ", guests: " + guestsParam + ", time: " + timeParam);
 
         // Validate and set date
         if (dateParam != null && !dateParam.trim().isEmpty() && isValidDateFormat(dateParam)) {
             data.setBookingDateStr(dateParam.trim());
         }
-        
+
         // Validate and set participants
         if (guestsParam != null && !guestsParam.trim().isEmpty()) {
             try {
@@ -723,7 +978,7 @@ public class BookingServlet extends HttpServlet {
                 LOGGER.warning("Invalid guests parameter: " + guestsParam);
             }
         }
-        
+
         // Validate and set time slot
         if (timeParam != null && !timeParam.trim().isEmpty()) {
             String timeSlot = timeParam.trim().toLowerCase();
@@ -747,25 +1002,25 @@ public class BookingServlet extends HttpServlet {
             Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
             basePrice = experience.getPrice();
             multiplier = formData.getNumberOfPeople();
-            
+
             LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
-            
+
         } else if (formData.hasAccommodation()) {
             Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
             basePrice = accommodation.getPricePerNight();
-            
+
             int nights = formData.getNumberOfNights();
             multiplier = nights;
-            
+
             LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights);
         }
 
         double subtotal = basePrice * multiplier;
         double serviceFee = subtotal * 0.05; // 5% service fee
         double total = subtotal + serviceFee;
-        
+
         LOGGER.info("Pricing calculation - Subtotal: " + subtotal + ", Fee: " + serviceFee + ", Total: " + total);
-        
+
         return total;
     }
 
@@ -800,13 +1055,13 @@ public class BookingServlet extends HttpServlet {
     private String createEnhancedContactInfoJson(BookingFormData formData) {
         StringBuilder jsonBuilder = new StringBuilder();
         jsonBuilder.append("{");
-        
+
         // Basic contact info
         jsonBuilder.append("\"contactName\":\"").append(escapeJson(formData.getContactName())).append("\",");
         jsonBuilder.append("\"contactEmail\":\"").append(escapeJson(formData.getContactEmail())).append("\",");
         jsonBuilder.append("\"contactPhone\":\"").append(escapeJson(formData.getContactPhone())).append("\",");
         jsonBuilder.append("\"serviceType\":\"").append(formData.getServiceType()).append("\"");
-        
+
         // Accommodation-specific data
         if (formData.hasAccommodation()) {
             if (formData.getCheckInDateStr() != null) {
@@ -817,12 +1072,12 @@ public class BookingServlet extends HttpServlet {
             }
             jsonBuilder.append(",\"numberOfNights\":").append(formData.getNumberOfNights());
             jsonBuilder.append(",\"numberOfGuests\":").append(formData.getNumberOfPeople());
-            
+
             if (formData.getRoomType() != null && !formData.getRoomType().trim().isEmpty()) {
                 jsonBuilder.append(",\"roomType\":\"").append(escapeJson(formData.getRoomType())).append("\"");
             }
         }
-        
+
         // Experience-specific data
         if (formData.hasExperience()) {
             if (formData.getTimeSlot() != null) {
@@ -831,12 +1086,12 @@ public class BookingServlet extends HttpServlet {
             }
             jsonBuilder.append(",\"numberOfParticipants\":").append(formData.getNumberOfPeople());
         }
-        
+
         // Special requests
         if (formData.getSpecialRequests() != null && !formData.getSpecialRequests().trim().isEmpty()) {
             jsonBuilder.append(",\"specialRequests\":\"").append(escapeJson(formData.getSpecialRequests())).append("\"");
         }
-        
+
         jsonBuilder.append("}");
         return jsonBuilder.toString();
     }
@@ -857,7 +1112,7 @@ public class BookingServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.WARNING, "Error getting service display name", e);
         }
-        
+
         return "VietCulture Service";
     }
 
@@ -939,9 +1194,6 @@ public class BookingServlet extends HttpServlet {
         }
     }
 
-    /**
-     * Enhanced success page handler
-     */
     private void handleBookingSuccess(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException, SQLException {
 
@@ -955,11 +1207,20 @@ public class BookingServlet extends HttpServlet {
                 try {
                     int bookingId = Integer.parseInt(bookingIdParam);
                     booking = bookingDAO.getBookingById(bookingId);
+
+                    // Update status to COMPLETED if payment successful
+                    if (booking != null && "PENDING".equals(booking.getStatus())) {
+                        bookingDAO.updateBookingStatus(bookingId, "COMPLETED");
+                        booking.setStatus("COMPLETED");
+                    }
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Error loading booking for success page", e);
                 }
             }
         }
+
+        // Clear pending booking từ session
+        session.removeAttribute("pendingBooking");
 
         if (booking == null) {
             response.sendRedirect(request.getContextPath() + "/");
@@ -995,14 +1256,15 @@ public class BookingServlet extends HttpServlet {
         request.getRequestDispatcher(BOOKING_SUCCESS_PAGE).forward(request, response);
     }
 
-    /**
-     * Enhanced failure page handler
-     */
     private void handleBookingFail(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         String bookingIdParam = request.getParameter("bookingId");
         String reason = request.getParameter("reason");
+
+        // Clear pending booking từ session
+        HttpSession session = request.getSession();
+        session.removeAttribute("pendingBooking");
 
         // Log failed payment attempt
         if (bookingIdParam != null) {
@@ -1184,10 +1446,10 @@ public class BookingServlet extends HttpServlet {
         try {
             String serviceName = getServiceDisplayName(formData);
             String serviceType = formData.getServiceType();
-            
+
             String bookingDate = "";
             String bookingTime = "";
-            
+
             if ("experience".equals(serviceType)) {
                 bookingDate = formData.getFormattedBookingDate();
                 bookingTime = formData.getTimeSlotDisplayName();
@@ -1195,7 +1457,7 @@ public class BookingServlet extends HttpServlet {
                 bookingDate = formData.getFormattedCheckInDate() + " - " + formData.getFormattedCheckOutDate();
                 bookingTime = "14:00 (Nhận phòng)";
             }
-            
+
             boolean emailSent = EmailUtils.sendBookingConfirmationEmail(
                     formData.getContactEmail(),
                     formData.getContactName(),
@@ -1247,22 +1509,30 @@ public class BookingServlet extends HttpServlet {
     }
 
     private String escapeJson(String input) {
-        if (input == null) return "";
+        if (input == null) {
+            return "";
+        }
         return input.replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r")
-                    .replace("\t", "\\t");
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 
     private String truncateString(String input, int maxLength) {
-        if (input == null) return "";
-        if (input.length() <= maxLength) return input;
+        if (input == null) {
+            return "";
+        }
+        if (input.length() <= maxLength) {
+            return input;
+        }
         return input.substring(0, maxLength - 3) + "...";
     }
 
     private boolean isValidDateFormat(String dateStr) {
-        if (dateStr == null || dateStr.trim().isEmpty()) return false;
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return false;
+        }
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             sdf.setLenient(false);
@@ -1274,7 +1544,9 @@ public class BookingServlet extends HttpServlet {
     }
 
     private boolean isValidEmail(String email) {
-        if (email == null || email.trim().isEmpty()) return false;
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
         String emailRegex = "^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$";
         return email.matches(emailRegex);
     }
@@ -1381,7 +1653,7 @@ public class BookingServlet extends HttpServlet {
 
     // ==================== ENHANCED BOOKINGFORMDATA CLASS ====================
     public static class BookingFormData {
-        
+
         // Common fields
         private Integer experienceId;
         private Integer accommodationId;
@@ -1410,84 +1682,208 @@ public class BookingServlet extends HttpServlet {
         private int calculatedNights = 1;
 
         // ==================== GETTERS & SETTERS ====================
-        public Integer getExperienceId() { return experienceId; }
-        public void setExperienceId(Integer experienceId) { this.experienceId = experienceId; }
+        public Integer getExperienceId() {
+            return experienceId;
+        }
 
-        public Integer getAccommodationId() { return accommodationId; }
-        public void setAccommodationId(Integer accommodationId) { this.accommodationId = accommodationId; }
+        public void setExperienceId(Integer experienceId) {
+            this.experienceId = experienceId;
+        }
 
-        public Date getBookingDate() { return bookingDate; }
-        public void setBookingDate(Date bookingDate) { this.bookingDate = bookingDate; }
+        public Integer getAccommodationId() {
+            return accommodationId;
+        }
 
-        public String getBookingDateStr() { return bookingDateStr; }
-        public void setBookingDateStr(String bookingDateStr) { this.bookingDateStr = bookingDateStr; }
+        public void setAccommodationId(Integer accommodationId) {
+            this.accommodationId = accommodationId;
+        }
 
-        public Date getBookingTime() { return bookingTime; }
-        public void setBookingTime(Date bookingTime) { this.bookingTime = bookingTime; }
+        public Date getBookingDate() {
+            return bookingDate;
+        }
 
-        public int getNumberOfPeople() { return numberOfPeople; }
-        public void setNumberOfPeople(int numberOfPeople) { this.numberOfPeople = numberOfPeople; }
+        public void setBookingDate(Date bookingDate) {
+            this.bookingDate = bookingDate;
+        }
 
-        public double getTotalPrice() { return totalPrice; }
-        public void setTotalPrice(double totalPrice) { this.totalPrice = totalPrice; }
+        public String getBookingDateStr() {
+            return bookingDateStr;
+        }
 
-        public String getContactName() { return contactName; }
-        public void setContactName(String contactName) { this.contactName = contactName; }
+        public void setBookingDateStr(String bookingDateStr) {
+            this.bookingDateStr = bookingDateStr;
+        }
 
-        public String getContactEmail() { return contactEmail; }
-        public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
+        public Date getBookingTime() {
+            return bookingTime;
+        }
 
-        public String getContactPhone() { return contactPhone; }
-        public void setContactPhone(String contactPhone) { this.contactPhone = contactPhone; }
+        public void setBookingTime(Date bookingTime) {
+            this.bookingTime = bookingTime;
+        }
 
-        public String getSpecialRequests() { return specialRequests; }
-        public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
+        public int getNumberOfPeople() {
+            return numberOfPeople;
+        }
 
-        public String getTimeSlot() { return timeSlot; }
-        public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
+        public void setNumberOfPeople(int numberOfPeople) {
+            this.numberOfPeople = numberOfPeople;
+        }
 
-        public String getParticipantsStr() { return participantsStr; }
-        public void setParticipantsStr(String participantsStr) { this.participantsStr = participantsStr; }
+        public double getTotalPrice() {
+            return totalPrice;
+        }
 
-        public Date getCheckInDate() { return checkInDate; }
-        public void setCheckInDate(Date checkInDate) { this.checkInDate = checkInDate; }
+        public void setTotalPrice(double totalPrice) {
+            this.totalPrice = totalPrice;
+        }
 
-        public Date getCheckOutDate() { return checkOutDate; }
-        public void setCheckOutDate(Date checkOutDate) { this.checkOutDate = checkOutDate; }
+        public String getContactName() {
+            return contactName;
+        }
 
-        public String getCheckInDateStr() { return checkInDateStr; }
-        public void setCheckInDateStr(String checkInDateStr) { this.checkInDateStr = checkInDateStr; }
+        public void setContactName(String contactName) {
+            this.contactName = contactName;
+        }
 
-        public String getCheckOutDateStr() { return checkOutDateStr; }
-        public void setCheckOutDateStr(String checkOutDateStr) { this.checkOutDateStr = checkOutDateStr; }
+        public String getContactEmail() {
+            return contactEmail;
+        }
 
-        public String getGuestsStr() { return guestsStr; }
-        public void setGuestsStr(String guestsStr) { this.guestsStr = guestsStr; }
+        public void setContactEmail(String contactEmail) {
+            this.contactEmail = contactEmail;
+        }
 
-        public String getRoomType() { return roomType; }
-        public void setRoomType(String roomType) { this.roomType = roomType; }
+        public String getContactPhone() {
+            return contactPhone;
+        }
 
-        public int getCalculatedNights() { return calculatedNights; }
-        public void setCalculatedNights(int calculatedNights) { this.calculatedNights = calculatedNights; }
+        public void setContactPhone(String contactPhone) {
+            this.contactPhone = contactPhone;
+        }
 
-        public List<String> getErrors() { return errors; }
-        public void addError(String error) { this.errors.add(error); }
-        public boolean isValid() { return errors.isEmpty(); }
-        public String getErrorMessage() { return errors.isEmpty() ? null : String.join(", ", errors); }
+        public String getSpecialRequests() {
+            return specialRequests;
+        }
+
+        public void setSpecialRequests(String specialRequests) {
+            this.specialRequests = specialRequests;
+        }
+
+        public String getTimeSlot() {
+            return timeSlot;
+        }
+
+        public void setTimeSlot(String timeSlot) {
+            this.timeSlot = timeSlot;
+        }
+
+        public String getParticipantsStr() {
+            return participantsStr;
+        }
+
+        public void setParticipantsStr(String participantsStr) {
+            this.participantsStr = participantsStr;
+        }
+
+        public Date getCheckInDate() {
+            return checkInDate;
+        }
+
+        public void setCheckInDate(Date checkInDate) {
+            this.checkInDate = checkInDate;
+        }
+
+        public Date getCheckOutDate() {
+            return checkOutDate;
+        }
+
+        public void setCheckOutDate(Date checkOutDate) {
+            this.checkOutDate = checkOutDate;
+        }
+
+        public String getCheckInDateStr() {
+            return checkInDateStr;
+        }
+
+        public void setCheckInDateStr(String checkInDateStr) {
+            this.checkInDateStr = checkInDateStr;
+        }
+
+        public String getCheckOutDateStr() {
+            return checkOutDateStr;
+        }
+
+        public void setCheckOutDateStr(String checkOutDateStr) {
+            this.checkOutDateStr = checkOutDateStr;
+        }
+
+        public String getGuestsStr() {
+            return guestsStr;
+        }
+
+        public void setGuestsStr(String guestsStr) {
+            this.guestsStr = guestsStr;
+        }
+
+        public String getRoomType() {
+            return roomType;
+        }
+
+        public void setRoomType(String roomType) {
+            this.roomType = roomType;
+        }
+
+        public int getCalculatedNights() {
+            return calculatedNights;
+        }
+
+        public void setCalculatedNights(int calculatedNights) {
+            this.calculatedNights = calculatedNights;
+        }
+
+        public List<String> getErrors() {
+            return errors;
+        }
+
+        public void addError(String error) {
+            this.errors.add(error);
+        }
+
+        public boolean isValid() {
+            return errors.isEmpty();
+        }
+
+        public String getErrorMessage() {
+            return errors.isEmpty() ? null : String.join(", ", errors);
+        }
 
         // ==================== UTILITY METHODS ====================
-        public boolean hasExperience() { return experienceId != null && experienceId > 0; }
-        public boolean hasAccommodation() { return accommodationId != null && accommodationId > 0; }
+        public boolean hasExperience() {
+            return experienceId != null && experienceId > 0;
+        }
+
+        public boolean hasAccommodation() {
+            return accommodationId != null && accommodationId > 0;
+        }
 
         public String getServiceType() {
-            if (hasExperience()) return "experience";
-            if (hasAccommodation()) return "accommodation";
+            if (hasExperience()) {
+                return "experience";
+            }
+            if (hasAccommodation()) {
+                return "accommodation";
+            }
             return "unknown";
         }
 
         public Integer getServiceId() {
-            if (hasExperience()) return experienceId;
-            if (hasAccommodation()) return accommodationId;
+            if (hasExperience()) {
+                return experienceId;
+            }
+            if (hasAccommodation()) {
+                return accommodationId;
+            }
             return null;
         }
 
@@ -1501,19 +1897,25 @@ public class BookingServlet extends HttpServlet {
         }
 
         public String getFormattedBookingDate() {
-            if (bookingDate == null) return "";
+            if (bookingDate == null) {
+                return "";
+            }
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             return formatter.format(bookingDate);
         }
 
         public String getFormattedCheckInDate() {
-            if (checkInDate == null) return "";
+            if (checkInDate == null) {
+                return "";
+            }
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             return formatter.format(checkInDate);
         }
 
         public String getFormattedCheckOutDate() {
-            if (checkOutDate == null) return "";
+            if (checkOutDate == null) {
+                return "";
+            }
             SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
             return formatter.format(checkOutDate);
         }
@@ -1521,10 +1923,14 @@ public class BookingServlet extends HttpServlet {
         public String getTimeSlotDisplayName() {
             if (hasExperience() && timeSlot != null) {
                 switch (timeSlot) {
-                    case "morning": return "Buổi sáng (9:00)";
-                    case "afternoon": return "Buổi chiều (14:00)";
-                    case "evening": return "Buổi tối (18:00)";
-                    default: return timeSlot;
+                    case "morning":
+                        return "Buổi sáng (9:00)";
+                    case "afternoon":
+                        return "Buổi chiều (14:00)";
+                    case "evening":
+                        return "Buổi tối (18:00)";
+                    default:
+                        return timeSlot;
                 }
             } else if (hasAccommodation()) {
                 return "14:00 (Nhận phòng)";
@@ -1538,20 +1944,20 @@ public class BookingServlet extends HttpServlet {
 
         @Override
         public String toString() {
-            return "BookingFormData{" +
-                    "serviceType=" + getServiceType() +
-                    ", experienceId=" + experienceId +
-                    ", accommodationId=" + accommodationId +
-                    ", bookingDate=" + bookingDate +
-                    ", checkInDate=" + checkInDate +
-                    ", checkOutDate=" + checkOutDate +
-                    ", numberOfPeople=" + numberOfPeople +
-                    ", totalPrice=" + totalPrice +
-                    ", contactName='" + contactName + '\'' +
-                    ", contactEmail='" + contactEmail + '\'' +
-                    ", roomType='" + roomType + '\'' +
-                    ", errors=" + errors.size() +
-                    '}';
+            return "BookingFormData{"
+                    + "serviceType=" + getServiceType()
+                    + ", experienceId=" + experienceId
+                    + ", accommodationId=" + accommodationId
+                    + ", bookingDate=" + bookingDate
+                    + ", checkInDate=" + checkInDate
+                    + ", checkOutDate=" + checkOutDate
+                    + ", numberOfPeople=" + numberOfPeople
+                    + ", totalPrice=" + totalPrice
+                    + ", contactName='" + contactName + '\''
+                    + ", contactEmail='" + contactEmail + '\''
+                    + ", roomType='" + roomType + '\''
+                    + ", errors=" + errors.size()
+                    + '}';
         }
     }
 }

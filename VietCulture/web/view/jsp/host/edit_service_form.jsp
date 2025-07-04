@@ -321,15 +321,6 @@
                     </c:otherwise>
                 </c:choose>
 
-                <!-- ✅ REMOVED DEBUG SECTION -->
-
-                <!-- ✅ THÔNG BÁO QUAN TRỌNG CHO USER -->
-                <div class="alert alert-info">
-                    <i class="ri-information-line me-2"></i>
-                    <strong>Lưu ý:</strong> Khi bạn chỉnh sửa dịch vụ đã được duyệt, dịch vụ sẽ chuyển về trạng thái 
-                    <strong>"Chờ duyệt"</strong> để admin xem xét lại những thay đổi của bạn.
-                </div>
-                
                 <form method="POST" enctype="multipart/form-data" id="editServiceForm" action="${formAction}">
                     <!-- ✅ BỎ CÁC HIDDEN INPUT KHÔNG CẦN THIẾT -->
                     
@@ -345,8 +336,8 @@
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
                                         <label for="title" class="form-label">Tiêu Đề <span class="required">*</span></label>
-                                        <input type="text" class="form-control" id="title" name="title" required 
-                                               maxlength="500" value="${experience.title}" autocomplete="off">
+                                        <input type="text" class="form-control" id="title" name="title" required
+                                               value="${experience.title}">
                                     </div>
 
                                     <div class="col-md-12 mb-3">
@@ -402,24 +393,12 @@
                                         <label for="type" class="form-label">Loại Trải Nghiệm <span class="required">*</span></label>
                                         <select class="form-select" id="type" name="type" required>
                                             <option value="">Chọn loại trải nghiệm</option>
-                                            <c:choose>
-                                                <c:when test="${not empty categories}">
-                                                    <c:forEach var="category" items="${categories}">
-                                                        <option value="${category.name}" ${experience.type == category.name ? 'selected' : ''}>
-                                                            ${category.name}
-                                                        </option>
-                                                    </c:forEach>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <!-- Fallback hardcoded options -->
-                                                    <option value="Ẩm thực" ${experience.type == 'Ẩm thực' ? 'selected' : ''}>Ẩm thực</option>
-                                                    <option value="Văn hóa" ${experience.type == 'Văn hóa' ? 'selected' : ''}>Văn hóa</option>
-                                                    <option value="Thiên nhiên" ${experience.type == 'Thiên nhiên' ? 'selected' : ''}>Thiên nhiên</option>
-                                                    <option value="Workshop" ${experience.type == 'Workshop' ? 'selected' : ''}>Workshop</option>
-                                                    <option value="Phiêu lưu" ${experience.type == 'Phiêu lưu' ? 'selected' : ''}>Phiêu lưu</option>
-                                                    <option value="Lịch sử" ${experience.type == 'Lịch sử' ? 'selected' : ''}>Lịch sử</option>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <option value="Ẩm thực" ${experience.type == 'Ẩm thực' ? 'selected' : ''}>Ẩm thực</option>
+                                            <option value="Văn hóa" ${experience.type == 'Văn hóa' ? 'selected' : ''}>Văn hóa</option>
+                                            <option value="Thiên nhiên" ${experience.type == 'Thiên nhiên' ? 'selected' : ''}>Thiên nhiên</option>
+                                            <option value="Workshop" ${experience.type == 'Workshop' ? 'selected' : ''}>Workshop</option>
+                                            <option value="Phiêu lưu" ${experience.type == 'Phiêu lưu' ? 'selected' : ''}>Phiêu lưu</option>
+                                            <option value="Lịch sử" ${experience.type == 'Lịch sử' ? 'selected' : ''}>Lịch sử</option>
                                         </select>
                                     </div>
 
@@ -542,8 +521,8 @@
                                     </div>
 
                                     <div class="col-md-6 mb-3">
-                                        <label for="numberOfRooms" class="form-label">Số Phòng Ngủ</label>
-                                        <input type="number" class="form-control" id="numberOfRooms" name="numberOfRooms" 
+                                        <label for="bedrooms" class="form-label">Số Phòng Ngủ</label>
+                                        <input type="number" class="form-control" id="bedrooms" name="bedrooms" 
                                                min="1" max="10" value="${accommodation.numberOfRooms}">
                                     </div>
 
@@ -567,12 +546,10 @@
                         <c:if test="${not empty currentImages}">
                             <div class="current-images">
                                 <c:forEach var="image" items="${fn:split(currentImages, ',')}" varStatus="status">
-                                    <c:if test="${not empty image}">
-                                        <div class="current-image">
-                                            <img src="${pageContext.request.contextPath}/${fn:trim(image)}" alt="Current image ${status.index + 1}">
-                                            <button type="button" class="remove-image" onclick="removeImage('${fn:trim(image)}')">×</button>
-                                        </div>
-                                    </c:if>
+                                    <div class="current-image">
+                                        <img src="${pageContext.request.contextPath}/${fn:trim(image)}" alt="Current image ${status.index + 1}">
+                                        <button type="button" class="remove-image" onclick="removeImage('${fn:trim(image)}')">×</button>
+                                    </div>
                                 </c:forEach>
                             </div>
                         </c:if>

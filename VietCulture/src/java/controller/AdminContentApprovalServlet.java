@@ -26,14 +26,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Complete Servlet quản lý duyệt nội dung với logic adminApprovalStatus
- * adminApprovalStatus: PENDING, APPROVED, REJECTED
- * isActive: 1 (host hiện), 0 (host ẩn)  
- * Hiển thị công khai: adminApprovalStatus = 'APPROVED' AND isActive = 1
+ * Servlet tổng hợp để duyệt cả Experience và Accommodation
  */
 @WebServlet(name = "AdminContentApproval", urlPatterns = {
     "/admin/content/approval",
-    "/admin/content/approval/*"
+    "/admin/content/approval/*",
+    "/admin/content/experience/*/approve",
+    "/admin/content/accommodation/*/approve", 
+    "/admin/content/experience/*/reject",
+    "/admin/content/accommodation/*/reject",
+    "/admin/content/experience/*/revoke",
+    "/admin/content/accommodation/*/revoke",
+    "/admin/content/experience/*/delete",
+    "/admin/content/accommodation/*/delete", 
+    "/admin/content/approve-all",
+    "/admin/content/export-pending"
 })
 public class AdminContentApprovalServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AdminContentApprovalServlet.class.getName());
@@ -69,13 +76,10 @@ public class AdminContentApprovalServlet extends HttpServlet {
         }
 
         String pathInfo = request.getPathInfo();
-        LOGGER.info("GET request - PathInfo: " + pathInfo);
 
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 handleContentList(request, response);
-            } else if (pathInfo.equals("/export-pending")) {
-                handleExportPending(request, response);
             } else if (pathInfo.matches("/\\w+/\\d+")) {
                 // Pattern: /experience/123 or /accommodation/456
                 String[] parts = pathInfo.split("/");
@@ -88,11 +92,13 @@ public class AdminContentApprovalServlet extends HttpServlet {
                 String contentType = parts[1];
                 int contentId = Integer.parseInt(parts[2]);
                 handleGetContentImages(request, response, contentType, contentId);
+            } else if ("/export-pending".equals(pathInfo)) {
+                handleExportPending(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error in doGet", e);
+            LOGGER.log(Level.SEVERE, "Error in content approval", e);
             request.setAttribute("error", "Có lỗi xảy ra khi xử lý dữ liệu.");
             request.getRequestDispatcher("/view/jsp/admin/content/content-approval.jsp").forward(request, response);
         } catch (NumberFormatException e) {
@@ -101,508 +107,105 @@ public class AdminContentApprovalServlet extends HttpServlet {
         }
     }
 
-    @Override
+ 
+@Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        LOGGER.info("=== ADMIN CONTENT APPROVAL POST REQUEST ===");
-        LOGGER.info("Request URI: " + request.getRequestURI());
-        LOGGER.info("Path Info: " + request.getPathInfo());
+        // Debug info
+        System.out.println("=== SERVLET DEBUG ===");
+        System.out.println("Request URI: " + request.getRequestURI());
+        System.out.println("Context Path: " + request.getContextPath());
+        System.out.println("Servlet Path: " + request.getServletPath());
+        System.out.println("Path Info: " + request.getPathInfo());
         
-        // Check authentication FIRST
+        // Set response headers trước khi làm gì khác
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Cache-Control", "no-cache");
+
+        // Check authentication
         if (!isAdminAuthenticated(request)) {
-            LOGGER.warning("Unauthorized access attempt");
+            System.out.println("Unauthorized access");
             sendJsonResponse(response, false, "Không có quyền truy cập", null);
             return;
         }
 
-        String pathInfo = request.getPathInfo();
-        LOGGER.info("Processing POST path info: " + pathInfo);
+        String servletPath = request.getServletPath();
+        System.out.println("Processing servlet path: " + servletPath);
 
         try {
-            if (pathInfo == null) {
-                sendJsonResponse(response, false, "Path info is null", null);
-                return;
-            }
-
-            // Route based on path patterns
-            if (pathInfo.equals("/approve-all")) {
-                LOGGER.info("Handling approve-all request");
+            if (servletPath.endsWith("/approve")) {
+                // Extract content type and ID from path
+                String[] pathParts = servletPath.split("/");
+                String contentType = pathParts[pathParts.length - 2]; // experience hoặc accommodation
+                String idStr = pathParts[pathParts.length - 3]; // ID number
+                
+                int contentId = Integer.parseInt(idStr);
+                System.out.println("Approving " + contentType + " ID: " + contentId);
+                
+                handleApproveContent(request, response, contentType, contentId);
+                
+            } else if (servletPath.endsWith("/reject")) {
+                String[] pathParts = servletPath.split("/");
+                String contentType = pathParts[pathParts.length - 2];
+                String idStr = pathParts[pathParts.length - 3];
+                
+                int contentId = Integer.parseInt(idStr);
+                System.out.println("Rejecting " + contentType + " ID: " + contentId);
+                
+                handleRejectContent(request, response, contentType, contentId);
+                
+            } else if (servletPath.endsWith("/revoke")) {
+                String[] pathParts = servletPath.split("/");
+                String contentType = pathParts[pathParts.length - 2];
+                String idStr = pathParts[pathParts.length - 3];
+                
+                int contentId = Integer.parseInt(idStr);
+                System.out.println("Revoking " + contentType + " ID: " + contentId);
+                
+                handleRevokeContent(request, response, contentType, contentId);
+                
+            } else if (servletPath.endsWith("/delete")) {
+                String[] pathParts = servletPath.split("/");
+                String contentType = pathParts[pathParts.length - 2];
+                String idStr = pathParts[pathParts.length - 3];
+                
+                int contentId = Integer.parseInt(idStr);
+                System.out.println("Deleting " + contentType + " ID: " + contentId);
+                
+                handleDeleteContent(request, response, contentType, contentId);
+                
+            } else if (servletPath.equals("/admin/content/approve-all")) {
+                System.out.println("Approving all");
                 handleApproveAll(request, response);
                 
-            } else if (pathInfo.equals("/export-pending")) {
-                LOGGER.info("Handling export-pending request");
+            } else if (servletPath.equals("/admin/content/export-pending")) {
+                System.out.println("Exporting pending");
                 handleExportPending(request, response);
                 
-            } else if (pathInfo.matches("/\\w+/\\d+/approve")) {
-                // Pattern: /experience/123/approve
-                String[] parts = pathInfo.split("/");
-                if (parts.length >= 4) {
-                    String contentType = parts[1]; // experience or accommodation
-                    int contentId = Integer.parseInt(parts[2]); // ID
-                    
-                    LOGGER.info("Approving " + contentType + " ID: " + contentId);
-                    handleApproveContent(request, response, contentType, contentId);
-                } else {
-                    sendJsonResponse(response, false, "Invalid approve URL format", null);
-                }
-                
-            } else if (pathInfo.matches("/\\w+/\\d+/reject")) {
-                // Pattern: /experience/123/reject
-                String[] parts = pathInfo.split("/");
-                if (parts.length >= 4) {
-                    String contentType = parts[1];
-                    int contentId = Integer.parseInt(parts[2]);
-                    
-                    LOGGER.info("Rejecting " + contentType + " ID: " + contentId);
-                    handleRejectContent(request, response, contentType, contentId);
-                } else {
-                    sendJsonResponse(response, false, "Invalid reject URL format", null);
-                }
-                
-            } else if (pathInfo.matches("/\\w+/\\d+/revoke")) {
-                // Pattern: /experience/123/revoke
-                String[] parts = pathInfo.split("/");
-                if (parts.length >= 4) {
-                    String contentType = parts[1];
-                    int contentId = Integer.parseInt(parts[2]);
-                    
-                    LOGGER.info("Revoking " + contentType + " ID: " + contentId);
-                    handleRevokeContent(request, response, contentType, contentId);
-                } else {
-                    sendJsonResponse(response, false, "Invalid revoke URL format", null);
-                }
-                
-            } else if (pathInfo.matches("/\\w+/\\d+/delete")) {
-                // Pattern: /experience/123/delete
-                String[] parts = pathInfo.split("/");
-                if (parts.length >= 4) {
-                    String contentType = parts[1];
-                    int contentId = Integer.parseInt(parts[2]);
-                    
-                    LOGGER.info("Deleting " + contentType + " ID: " + contentId);
-                    handleDeleteContent(request, response, contentType, contentId);
-                } else {
-                    sendJsonResponse(response, false, "Invalid delete URL format", null);
-                }
-                
             } else {
-                LOGGER.warning("Unknown path: " + pathInfo);
-                sendJsonResponse(response, false, "Path not found: " + pathInfo, null);
+                System.out.println("Unknown path: " + servletPath);
+                sendJsonResponse(response, false, "Path not found: " + servletPath, null);
             }
             
-        } catch (NumberFormatException e) {
-            LOGGER.log(Level.SEVERE, "Invalid content ID format", e);
-            sendJsonResponse(response, false, "ID không hợp lệ: " + e.getMessage(), null);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error in doPost", e);
-            sendJsonResponse(response, false, "Lỗi hệ thống: " + e.getMessage(), null);
+            System.out.println("Error in doPost: " + e.getMessage());
+            e.printStackTrace();
+            sendJsonResponse(response, false, "Lỗi: " + e.getMessage(), null);
         }
     }
 
     /**
-     * Handle approve content - DUYỆT NỘI DUNG
-     */
-    private void handleApproveContent(HttpServletRequest request, HttpServletResponse response, 
-                                    String contentType, int contentId) throws IOException {
-        
-        LOGGER.info("=== APPROVE CONTENT START ===");
-        LOGGER.info("Content Type: " + contentType + ", ID: " + contentId);
-        
-        try {
-            // Validate inputs
-            if (!isValidContentType(contentType)) {
-                sendJsonResponse(response, false, "Content type không hợp lệ: " + contentType, null);
-                return;
-            }
-            
-            if (contentId <= 0) {
-                sendJsonResponse(response, false, "ID không hợp lệ: " + contentId, null);
-                return;
-            }
-            
-            // Get admin info
-            HttpSession session = request.getSession();
-            User admin = (User) session.getAttribute("user");
-            if (admin == null) {
-                sendJsonResponse(response, false, "Phiên đăng nhập hết hạn", null);
-                return;
-            }
-            
-            int adminUserId = admin.getUserId();
-            boolean success = false;
-            String message = "";
-
-            if ("experience".equals(contentType)) {
-                Experience experience = experienceDAO.getExperienceById(contentId);
-                if (experience == null) {
-                    sendJsonResponse(response, false, "Experience không tồn tại", null);
-                    return;
-                }
-                
-                if ("APPROVED".equals(experience.getAdminApprovalStatus())) {
-                    sendJsonResponse(response, false, "Experience đã được duyệt rồi", null);
-                    return;
-                }
-                
-                success = experienceDAO.approveExperience(contentId, adminUserId);
-                message = success ? "Experience đã được duyệt thành công!" : "Có lỗi xảy ra khi duyệt experience";
-                
-            } else if ("accommodation".equals(contentType)) {
-                Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
-                if (accommodation == null) {
-                    sendJsonResponse(response, false, "Accommodation không tồn tại", null);
-                    return;
-                }
-                
-                if ("APPROVED".equals(accommodation.getAdminApprovalStatus())) {
-                    sendJsonResponse(response, false, "Accommodation đã được duyệt rồi", null);
-                    return;
-                }
-                
-                success = accommodationDAO.approveAccommodation(contentId, adminUserId);
-                message = success ? "Accommodation đã được duyệt thành công!" : "Có lỗi xảy ra khi duyệt accommodation";
-            }
-
-            LOGGER.info("Approval result: " + success + " - " + message);
-
-            if (success) {
-                String adminEmail = admin.getEmail();
-                LOGGER.info("Admin " + adminEmail + " approved " + contentType + " ID: " + contentId);
-            }
-
-            sendJsonResponse(response, success, message, null);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleApproveContent", e);
-            sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error in handleApproveContent", e);
-            sendJsonResponse(response, false, "Lỗi hệ thống: " + e.getMessage(), null);
-        }
-        
-        LOGGER.info("=== APPROVE CONTENT END ===");
-    }
-
-    /**
-     * Handle reject content - TỪ CHỐI NỘI DUNG
-     */
-    private void handleRejectContent(HttpServletRequest request, HttpServletResponse response, 
-                                   String contentType, int contentId) throws IOException {
-
-        try {
-            String reason = request.getParameter("reason");
-            if (reason == null || reason.trim().isEmpty()) {
-                sendJsonResponse(response, false, "Lý do từ chối không được để trống", null);
-                return;
-            }
-
-            // Get admin info
-            HttpSession session = request.getSession();
-            User admin = (User) session.getAttribute("user");
-            int adminUserId = admin.getUserId();
-
-            boolean success = false;
-            String message = "";
-
-            if ("experience".equals(contentType)) {
-                Experience experience = experienceDAO.getExperienceById(contentId);
-                if (experience == null) {
-                    sendJsonResponse(response, false, "Experience không tồn tại", null);
-                    return;
-                }
-                
-                success = experienceDAO.rejectExperience(contentId, adminUserId, reason);
-                message = success ? "Experience đã bị từ chối!" : "Có lỗi xảy ra khi từ chối experience";
-                
-            } else if ("accommodation".equals(contentType)) {
-                Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
-                if (accommodation == null) {
-                    sendJsonResponse(response, false, "Accommodation không tồn tại", null);
-                    return;
-                }
-                
-                success = accommodationDAO.rejectAccommodation(contentId, adminUserId, reason);
-                message = success ? "Accommodation đã bị từ chối!" : "Có lỗi xảy ra khi từ chối accommodation";
-            } else {
-                sendJsonResponse(response, false, "Content type không hợp lệ", null);
-                return;
-            }
-
-            if (success) {
-                String adminEmail = admin.getEmail();
-                LOGGER.info("Admin " + adminEmail + " rejected " + contentType + " ID: " + contentId + " - Reason: " + reason);
-            }
-
-            sendJsonResponse(response, success, message, null);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleRejectContent", e);
-            sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-        }
-    }
-
-    /**
-     * Handle revoke approval - THU HỒI DUYỆT
-     */
-    private void handleRevokeContent(HttpServletRequest request, HttpServletResponse response, 
-                                   String contentType, int contentId) throws IOException {
-
-        try {
-            String reason = request.getParameter("reason");
-            if (reason == null || reason.trim().isEmpty()) {
-                sendJsonResponse(response, false, "Lý do thu hồi không được để trống", null);
-                return;
-            }
-
-            // Get admin info
-            HttpSession session = request.getSession();
-            User admin = (User) session.getAttribute("user");
-            int adminUserId = admin.getUserId();
-
-            boolean success = false;
-            String message = "";
-
-            if ("experience".equals(contentType)) {
-                Experience experience = experienceDAO.getExperienceById(contentId);
-                if (experience == null) {
-                    sendJsonResponse(response, false, "Experience không tồn tại", null);
-                    return;
-                }
-                
-                if (!"APPROVED".equals(experience.getAdminApprovalStatus())) {
-                    sendJsonResponse(response, false, "Experience chưa được duyệt nên không thể thu hồi", null);
-                    return;
-                }
-                
-                success = experienceDAO.revokeApproval(contentId, adminUserId, reason);
-                message = success ? "Đã thu hồi duyệt experience!" : "Có lỗi xảy ra khi thu hồi duyệt";
-                
-            } else if ("accommodation".equals(contentType)) {
-                Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
-                if (accommodation == null) {
-                    sendJsonResponse(response, false, "Accommodation không tồn tại", null);
-                    return;
-                }
-                
-                if (!"APPROVED".equals(accommodation.getAdminApprovalStatus())) {
-                    sendJsonResponse(response, false, "Accommodation chưa được duyệt nên không thể thu hồi", null);
-                    return;
-                }
-                
-                success = accommodationDAO.revokeApproval(contentId, adminUserId, reason);
-                message = success ? "Đã thu hồi duyệt accommodation!" : "Có lỗi xảy ra khi thu hồi duyệt";
-            } else {
-                sendJsonResponse(response, false, "Content type không hợp lệ", null);
-                return;
-            }
-
-            if (success) {
-                String adminEmail = admin.getEmail();
-                LOGGER.info("Admin " + adminEmail + " revoked " + contentType + " ID: " + contentId + " - Reason: " + reason);
-            }
-
-            sendJsonResponse(response, success, message, null);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleRevokeContent", e);
-            sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-        }
-    }
-
-    /**
-     * Handle delete content - XÓA VĨNH VIỄN
-     */
-    private void handleDeleteContent(HttpServletRequest request, HttpServletResponse response, 
-                                   String contentType, int contentId) throws IOException {
-
-        try {
-            boolean success = false;
-            String message = "";
-
-            if ("experience".equals(contentType)) {
-                success = experienceDAO.deleteExperience(contentId);
-                message = success ? "Experience đã bị xóa vĩnh viễn" : "Có lỗi xảy ra khi xóa experience";
-                
-            } else if ("accommodation".equals(contentType)) {
-                success = accommodationDAO.deleteAccommodation(contentId);
-                message = success ? "Accommodation đã bị xóa vĩnh viễn" : "Có lỗi xảy ra khi xóa accommodation";
-            } else {
-                sendJsonResponse(response, false, "Content type không hợp lệ", null);
-                return;
-            }
-
-            if (success) {
-                // Log activity
-                HttpSession session = request.getSession();
-                User admin = (User) session.getAttribute("user");
-                String adminEmail = admin.getEmail();
-                LOGGER.info("Admin " + adminEmail + " permanently deleted " + contentType + " ID: " + contentId);
-            }
-
-            sendJsonResponse(response, success, message, null);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleDeleteContent", e);
-            sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-        }
-    }
-
-    /**
-     * Handle approve all pending content - DUYỆT TẤT CẢ
-     */
-    private void handleApproveAll(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
-        try {
-            String contentTypeParam = request.getParameter("contentType");
-            int approvedCount = 0;
-            int totalCount = 0;
-
-            // Get admin info
-            HttpSession session = request.getSession();
-            User admin = (User) session.getAttribute("user");
-            int adminUserId = admin.getUserId();
-
-            // Approve all pending experiences
-            if (contentTypeParam == null || contentTypeParam.equals("all") || contentTypeParam.equals("experience")) {
-                List<Experience> pendingExperiences = experienceDAO.getPendingExperiences(1, 1000);
-                totalCount += pendingExperiences.size();
-
-                for (Experience exp : pendingExperiences) {
-                    try {
-                        if ("PENDING".equals(exp.getAdminApprovalStatus()) && 
-                            experienceDAO.approveExperience(exp.getExperienceId(), adminUserId)) {
-                            approvedCount++;
-                        }
-                    } catch (SQLException e) {
-                        LOGGER.log(Level.WARNING, "Failed to approve experience ID: " + exp.getExperienceId(), e);
-                    }
-                }
-            }
-
-            // Approve all pending accommodations
-            if (contentTypeParam == null || contentTypeParam.equals("all") || contentTypeParam.equals("accommodation")) {
-                List<Accommodation> pendingAccommodations = accommodationDAO.getPendingAccommodations(1, 1000);
-                totalCount += pendingAccommodations.size();
-
-                for (Accommodation acc : pendingAccommodations) {
-                    try {
-                        if ("PENDING".equals(acc.getAdminApprovalStatus()) && 
-                            accommodationDAO.approveAccommodation(acc.getAccommodationId(), adminUserId)) {
-                            approvedCount++;
-                        }
-                    } catch (SQLException e) {
-                        LOGGER.log(Level.WARNING, "Failed to approve accommodation ID: " + acc.getAccommodationId(), e);
-                    }
-                }
-            }
-
-            if (totalCount == 0) {
-                sendJsonResponse(response, false, "Không có nội dung nào chờ duyệt", null);
-                return;
-            }
-
-            // Log activity
-            String adminEmail = admin.getEmail();
-            LOGGER.info("Admin " + adminEmail + " bulk approved " + approvedCount + " content items");
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("count", approvedCount);
-            data.put("total", totalCount);
-
-            sendJsonResponse(response, true, "Đã duyệt " + approvedCount + "/" + totalCount + " nội dung thành công!", data);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleApproveAll", e);
-            sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-        }
-    }
-
-    /**
-     * Handle export pending content - XUẤT DANH SÁCH CHỜ DUYỆT
-     */
-    private void handleExportPending(HttpServletRequest request, HttpServletResponse response) throws IOException {
-
-        LOGGER.info("=== EXPORT PENDING START ===");
-        
-        try {
-            // Set response headers for CSV download
-            response.reset();
-            response.setContentType("text/csv; charset=UTF-8");
-            response.setCharacterEncoding("UTF-8");
-            response.setHeader("Content-Disposition", "attachment; filename=\"pending-content-" + 
-                              System.currentTimeMillis() + ".csv\"");
-            response.setHeader("Cache-Control", "no-cache");
-
-            try (PrintWriter out = response.getWriter()) {
-                // CSV Header with BOM for Excel UTF-8 support
-                out.print('\ufeff'); // UTF-8 BOM
-                out.println("Type,ID,Title/Name,Host,City,Created Date,Status,Price,Location,Admin Status");
-
-                // Export pending experiences
-                List<Experience> pendingExperiences = experienceDAO.getPendingExperiences(1, 10000);
-                for (Experience exp : pendingExperiences) {
-                    enrichExperienceData(exp);
-                    
-                    out.printf("Experience,%d,\"%s\",\"%s\",\"%s\",%s,\"Pending\",%.0f,\"%s\",\"%s\"%n",
-                        exp.getExperienceId(),
-                        sanitizeForCsv(exp.getTitle()),
-                        sanitizeForCsv(exp.getHostName()),
-                        sanitizeForCsv(exp.getCityName()),
-                        exp.getCreatedAt() != null ? exp.getCreatedAt().toString() : "",
-                        exp.getPrice(),
-                        sanitizeForCsv(exp.getLocation()),
-                        exp.getAdminApprovalStatus()
-                    );
-                }
-
-                // Export pending accommodations
-                List<Accommodation> pendingAccommodations = accommodationDAO.getPendingAccommodations(1, 10000);
-                for (Accommodation acc : pendingAccommodations) {
-                    enrichAccommodationData(acc);
-                    
-                    out.printf("Accommodation,%d,\"%s\",\"%s\",\"%s\",%s,\"Pending\",%.0f,\"%s\",\"%s\"%n",
-                        acc.getAccommodationId(),
-                        sanitizeForCsv(acc.getName()),
-                        sanitizeForCsv(acc.getHostName()),
-                        sanitizeForCsv(acc.getCityName()),
-                        acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : "",
-                        acc.getPricePerNight(),
-                        sanitizeForCsv(acc.getAddress()),
-                        acc.getAdminApprovalStatus()
-                    );
-                }
-                
-                out.flush();
-                LOGGER.info("CSV export completed successfully");
-            }
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error in handleExportPending", e);
-            if (!response.isCommitted()) {
-                response.reset();
-                sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error in handleExportPending", e);
-            if (!response.isCommitted()) {
-                response.reset();
-                sendJsonResponse(response, false, "Lỗi hệ thống: " + e.getMessage(), null);
-            }
-        }
-        
-        LOGGER.info("=== EXPORT PENDING END ===");
-    }
-
-    /**
-     * Handle content list display
+     * Handle content list display (both experiences and accommodations)
      */
     private void handleContentList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
 
-        String filter = request.getParameter("filter");
-        String contentType = request.getParameter("contentType");
-        String accommodationType = request.getParameter("type");
+        // Get filter parameters
+        String filter = request.getParameter("filter"); // pending, approved, all
+        String contentType = request.getParameter("contentType"); // experience, accommodation, all
+        String accommodationType = request.getParameter("type"); // For accommodations: Homestay, Hotel, etc.
         
         int page = 1;
         int pageSize = 12;
@@ -624,7 +227,15 @@ public class AdminContentApprovalServlet extends HttpServlet {
         if (contentType == null || contentType.equals("all") || contentType.equals("experience")) {
             List<Experience> experiences = getFilteredExperiences(filter, page, pageSize);
             for (Experience exp : experiences) {
-                enrichExperienceData(exp);
+                // Enrich with host and city info
+                if (exp.getHostId() > 0) {
+                    User host = userDAO.getUserById(exp.getHostId());
+                    exp.setHost(host);
+                }
+                if (exp.getCityId() > 0) {
+                    City city = cityDAO.getCityById(exp.getCityId());
+                    exp.setCity(city);
+                }
                 allContent.add(new ContentItem(exp));
             }
         }
@@ -633,20 +244,23 @@ public class AdminContentApprovalServlet extends HttpServlet {
         if (contentType == null || contentType.equals("all") || contentType.equals("accommodation")) {
             List<Accommodation> accommodations = getFilteredAccommodations(filter, page, pageSize, accommodationType);
             for (Accommodation acc : accommodations) {
-                enrichAccommodationData(acc);
+                // Enrich with host and city info
+                if (acc.getHostId() > 0) {
+                    User host = userDAO.getUserById(acc.getHostId());
+                    acc.setHost(host);
+                }
+                if (acc.getCityId() > 0) {
+                    City city = cityDAO.getCityById(acc.getCityId());
+                    acc.setCity(city);
+                }
                 allContent.add(new ContentItem(acc));
             }
         }
 
         // Sort by creation date (newest first)
-        allContent.sort((a, b) -> {
-            if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
-            if (a.getCreatedAt() == null) return 1;
-            if (b.getCreatedAt() == null) return -1;
-            return b.getCreatedAt().compareTo(a.getCreatedAt());
-        });
+        allContent.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
 
-        // Apply pagination
+        // Apply pagination to combined results
         int totalContent = allContent.size();
         int startIndex = (page - 1) * pageSize;
         int endIndex = Math.min(startIndex + pageSize, totalContent);
@@ -679,337 +293,539 @@ public class AdminContentApprovalServlet extends HttpServlet {
     private void handleContentDetail(HttpServletRequest request, HttpServletResponse response, 
                                    String contentType, int contentId)
             throws SQLException, ServletException, IOException {
-        
-        try {
-            if ("experience".equals(contentType)) {
-                Experience experience = experienceDAO.getExperienceById(contentId);
-                if (experience == null) {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Experience không tồn tại");
-                    return;
-                }
-                
-                enrichExperienceData(experience);
-                request.setAttribute("contentItem", new ContentItem(experience));
-                request.setAttribute("contentType", "experience");
-                
-            } else if ("accommodation".equals(contentType)) {
-                Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
-                if (accommodation == null) {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Accommodation không tồn tại");
-                    return;
-                }
-                
-                enrichAccommodationData(accommodation);
-                request.setAttribute("contentItem", new ContentItem(accommodation));
-                request.setAttribute("contentType", "accommodation");
-                
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Content type không hợp lệ");
+
+        if ("experience".equals(contentType)) {
+            Experience experience = experienceDAO.getExperienceById(contentId);
+            if (experience == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Experience không tồn tại");
                 return;
             }
+
+            // Get host and city info
+            if (experience.getHostId() > 0) {
+                User host = userDAO.getUserById(experience.getHostId());
+                experience.setHost(host);
+            }
+            if (experience.getCityId() > 0) {
+                City city = cityDAO.getCityById(experience.getCityId());
+                experience.setCity(city);
+            }
+
+            request.setAttribute("content", new ContentItem(experience));
+            request.setAttribute("contentType", "experience");
             
-            request.getRequestDispatcher("/view/jsp/admin/content/content-detail.jsp").forward(request, response);
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting content detail", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Lỗi hệ thống");
+        } else if ("accommodation".equals(contentType)) {
+            Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+            if (accommodation == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Accommodation không tồn tại");
+                return;
+            }
+
+            // Get host and city info
+            if (accommodation.getHostId() > 0) {
+                User host = userDAO.getUserById(accommodation.getHostId());
+                accommodation.setHost(host);
+            }
+            if (accommodation.getCityId() > 0) {
+                City city = cityDAO.getCityById(accommodation.getCityId());
+                accommodation.setCity(city);
+            }
+
+            request.setAttribute("content", new ContentItem(accommodation));
+            request.setAttribute("contentType", "accommodation");
+        } else {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Content type không hợp lệ");
+            return;
         }
+
+        request.getRequestDispatcher("/view/jsp/admin/content/content-detail.jsp").forward(request, response);
     }
 
     /**
-     * Handle get content images
+     * Handle get content images (AJAX)
      */
     private void handleGetContentImages(HttpServletRequest request, HttpServletResponse response, 
                                       String contentType, int contentId)
             throws SQLException, IOException {
+
+        String[] images = null;
         
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        
-        try {
-            List<String> images = new ArrayList<>();
-            
-            if ("experience".equals(contentType)) {
-                Experience experience = experienceDAO.getExperienceById(contentId);
-                if (experience != null && experience.getImages() != null) {
-                    String[] imageArray = experience.getImages().split(",");
-                    for (String img : imageArray) {
-                        if (!img.trim().isEmpty()) {
-                            images.add("/view/assets/images/experiences/" + img.trim());
-                        }
-                    }
-                }
-            } else if ("accommodation".equals(contentType)) {
-                Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
-                if (accommodation != null && accommodation.getImages() != null) {
-                    String[] imageArray = accommodation.getImages().split(",");
-                    for (String img : imageArray) {
-                        if (!img.trim().isEmpty()) {
-                            images.add("/view/assets/images/accommodations/" + img.trim());
-                        }
-                    }
-                }
+        if ("experience".equals(contentType)) {
+            Experience experience = experienceDAO.getExperienceById(contentId);
+            if (experience != null) {
+                images = experience.getImageList();
             }
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("images", images);
-            
-            PrintWriter out = response.getWriter();
-            out.print(gson.toJson(result));
-            out.flush();
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting content images", e);
-            sendJsonResponse(response, false, "Lỗi hệ thống", null);
+        } else if ("accommodation".equals(contentType)) {
+            Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+            if (accommodation != null) {
+                images = accommodation.getImageList();
+            }
         }
+
+        if (images == null) {
+            sendJsonResponse(response, false, "Content not found", null);
+            return;
+        }
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("images", images);
+        data.put("contentType", contentType);
+
+        sendJsonResponse(response, true, "Success", data);
     }
 
     /**
-     * Get filtered experiences based on adminApprovalStatus
+     * Handle approve content - FIXED LOGIC
+     */
+private void handleApproveContent(HttpServletRequest request, HttpServletResponse response, 
+                                String contentType, int contentId) throws IOException {
+    
+    LOGGER.info("=== APPROVE CONTENT START ===");
+    LOGGER.info("Content Type: " + contentType + ", ID: " + contentId);
+    
+    try {
+        boolean success = false;
+        String message = "";
+
+        if ("experience".equals(contentType)) {
+            LOGGER.info("Processing experience approval...");
+            
+            Experience experience = experienceDAO.getExperienceById(contentId);
+            if (experience == null) {
+                LOGGER.warning("Experience not found: " + contentId);
+                sendJsonResponse(response, false, "Experience không tồn tại.", null);
+                return;
+            }
+            
+            LOGGER.info("Experience found, isActive: " + experience.isActive());
+            
+            if (experience.isActive()) {
+                LOGGER.info("Experience already approved");
+                sendJsonResponse(response, false, "Experience đã được duyệt rồi.", null);
+                return;
+            }
+            
+            LOGGER.info("Calling experienceDAO.approveExperience...");
+            success = experienceDAO.approveExperience(contentId);
+            message = success ? "Experience đã được duyệt thành công!" : "Có lỗi xảy ra khi duyệt experience.";
+            
+        } else if ("accommodation".equals(contentType)) {
+            LOGGER.info("Processing accommodation approval...");
+            
+            Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+            if (accommodation == null) {
+                LOGGER.warning("Accommodation not found: " + contentId);
+                sendJsonResponse(response, false, "Accommodation không tồn tại.", null);
+                return;
+            }
+            
+            LOGGER.info("Accommodation found, isActive: " + accommodation.isActive());
+            
+            if (accommodation.isActive()) {
+                LOGGER.info("Accommodation already approved");
+                sendJsonResponse(response, false, "Accommodation đã được duyệt rồi.", null);
+                return;
+            }
+            
+            LOGGER.info("Calling accommodationDAO.approveAccommodation...");
+            success = accommodationDAO.approveAccommodation(contentId);
+            message = success ? "Accommodation đã được duyệt thành công!" : "Có lỗi xảy ra khi duyệt accommodation.";
+            
+        } else {
+            LOGGER.warning("Invalid content type: " + contentType);
+            sendJsonResponse(response, false, "Content type không hợp lệ.", null);
+            return;
+        }
+
+        LOGGER.info("Approval result: " + success + " - " + message);
+
+        if (success) {
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            String adminEmail = admin != null ? admin.getEmail() : "Unknown";
+            LOGGER.info("Admin " + adminEmail + " approved " + contentType + " ID: " + contentId);
+        }
+
+        LOGGER.info("Sending success response...");
+        sendJsonResponse(response, success, message, null);
+        
+    } catch (SQLException e) {
+        LOGGER.log(Level.SEVERE, "Database error in handleApproveContent", e);
+        sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Unexpected error in handleApproveContent", e);
+        sendJsonResponse(response, false, "Lỗi hệ thống: " + e.getMessage(), null);
+    }
+    
+    LOGGER.info("=== APPROVE CONTENT END ===");
+}
+    /**
+     * Handle reject content - FIXED LOGIC
+     */
+    private void handleRejectContent(HttpServletRequest request, HttpServletResponse response, 
+                                   String contentType, int contentId)
+            throws SQLException, IOException {
+
+        String reason = request.getParameter("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            sendJsonResponse(response, false, "Lý do từ chối không được để trống.", null);
+            return;
+        }
+
+        boolean allowResubmit = "on".equals(request.getParameter("allowResubmit"));
+        boolean success = false;
+        String message = "";
+
+        if ("experience".equals(contentType)) {
+            Experience experience = experienceDAO.getExperienceById(contentId);
+            if (experience == null) {
+                sendJsonResponse(response, false, "Experience không tồn tại.", null);
+                return;
+            }
+            // Từ chối: đảm bảo isActive = 0 (về trạng thái pending/rejected)
+            success = experienceDAO.rejectExperience(contentId, reason, allowResubmit);
+            message = success ? "Experience đã bị từ chối!" : "Có lỗi xảy ra khi từ chối experience.";
+            
+        } else if ("accommodation".equals(contentType)) {
+            Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+            if (accommodation == null) {
+                sendJsonResponse(response, false, "Accommodation không tồn tại.", null);
+                return;
+            }
+            // Từ chối: đảm bảo isActive = 0 (về trạng thái pending/rejected)
+            success = accommodationDAO.rejectAccommodation(contentId, reason);
+            message = success ? "Accommodation đã bị từ chối!" : "Có lỗi xảy ra khi từ chối accommodation.";
+        } else {
+            sendJsonResponse(response, false, "Content type không hợp lệ.", null);
+            return;
+        }
+
+        if (success) {
+            // Log activity
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            String adminEmail = admin != null ? admin.getEmail() : "Unknown";
+            LOGGER.info("Admin " + adminEmail + " rejected " + contentType + " ID: " + contentId + " - Reason: " + reason);
+        }
+
+        sendJsonResponse(response, success, message, null);
+    }
+
+    /**
+     * Handle revoke approval - FIXED LOGIC
+     */
+    private void handleRevokeContent(HttpServletRequest request, HttpServletResponse response, 
+                                   String contentType, int contentId)
+            throws SQLException, IOException {
+
+        String reason = request.getParameter("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            sendJsonResponse(response, false, "Lý do thu hồi không được để trống.", null);
+            return;
+        }
+
+        boolean success = false;
+        String message = "";
+
+        if ("experience".equals(contentType)) {
+            Experience experience = experienceDAO.getExperienceById(contentId);
+            if (experience == null) {
+                sendJsonResponse(response, false, "Experience không tồn tại.", null);
+                return;
+            }
+            // Kiểm tra nếu chưa được duyệt thì không thể thu hồi
+            if (!experience.isActive()) {
+                sendJsonResponse(response, false, "Experience chưa được duyệt nên không thể thu hồi.", null);
+                return;
+            }
+            // Thu hồi: chuyển từ isActive = 1 về isActive = 0
+            success = experienceDAO.revokeApproval(contentId, reason);
+            message = success ? "Đã thu hồi duyệt experience!" : "Có lỗi xảy ra khi thu hồi duyệt.";
+            
+        } else if ("accommodation".equals(contentType)) {
+            Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+            if (accommodation == null) {
+                sendJsonResponse(response, false, "Accommodation không tồn tại.", null);
+                return;
+            }
+            // Kiểm tra nếu chưa được duyệt thì không thể thu hồi
+            if (!accommodation.isActive()) {
+                sendJsonResponse(response, false, "Accommodation chưa được duyệt nên không thể thu hồi.", null);
+                return;
+            }
+            // Thu hồi: chuyển từ isActive = 1 về isActive = 0
+            success = accommodationDAO.softDeleteAccommodation(contentId, reason);
+            message = success ? "Đã thu hồi duyệt accommodation!" : "Có lỗi xảy ra khi thu hồi duyệt.";
+        } else {
+            sendJsonResponse(response, false, "Content type không hợp lệ.", null);
+            return;
+        }
+
+        if (success) {
+            // Log activity
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            String adminEmail = admin != null ? admin.getEmail() : "Unknown";
+            LOGGER.info("Admin " + adminEmail + " revoked " + contentType + " ID: " + contentId + " - Reason: " + reason);
+        }
+
+        sendJsonResponse(response, success, message, null);
+    }
+
+    /**
+     * Handle delete content
+     */
+    private void handleDeleteContent(HttpServletRequest request, HttpServletResponse response, 
+                                   String contentType, int contentId)
+            throws SQLException, IOException {
+
+        boolean success = false;
+        String message = "";
+
+        if ("experience".equals(contentType)) {
+            success = experienceDAO.deleteExperience(contentId);
+            message = success ? "Experience đã bị xóa." : "Có lỗi xảy ra khi xóa experience.";
+            
+        } else if ("accommodation".equals(contentType)) {
+            success = accommodationDAO.deleteAccommodation(contentId);
+            message = success ? "Accommodation đã bị xóa." : "Có lỗi xảy ra khi xóa accommodation.";
+        } else {
+            sendJsonResponse(response, false, "Content type không hợp lệ.", null);
+            return;
+        }
+
+        if (success) {
+            // Log activity
+            HttpSession session = request.getSession();
+            User admin = (User) session.getAttribute("user");
+            String adminEmail = admin != null ? admin.getEmail() : "Unknown";
+            LOGGER.info("Admin " + adminEmail + " deleted " + contentType + " ID: " + contentId);
+        }
+
+        sendJsonResponse(response, success, message, null);
+    }
+
+    /**
+     * Handle approve all pending content - FIXED LOGIC
+     */
+    private void handleApproveAll(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+
+        String contentTypeParam = request.getParameter("contentType");
+        int approvedCount = 0;
+        int totalCount = 0;
+
+        // Duyệt tất cả experience đang pending (isActive = 0)
+        if (contentTypeParam == null || contentTypeParam.equals("all") || contentTypeParam.equals("experience")) {
+            List<Experience> pendingExperiences = experienceDAO.getPendingExperiences(1, 1000);
+            totalCount += pendingExperiences.size();
+
+            for (Experience exp : pendingExperiences) {
+                try {
+                    // Chỉ duyệt những cái chưa được duyệt (isActive = 0)
+                    if (!exp.isActive() && experienceDAO.approveExperience(exp.getExperienceId())) {
+                        approvedCount++;
+                    }
+                } catch (SQLException e) {
+                    LOGGER.log(Level.WARNING, "Failed to approve experience ID: " + exp.getExperienceId(), e);
+                }
+            }
+        }
+
+        // Duyệt tất cả accommodation đang pending (isActive = 0)
+        if (contentTypeParam == null || contentTypeParam.equals("all") || contentTypeParam.equals("accommodation")) {
+            List<Accommodation> pendingAccommodations = accommodationDAO.getPendingAccommodations(1, 1000);
+            totalCount += pendingAccommodations.size();
+
+            for (Accommodation acc : pendingAccommodations) {
+                try {
+                    // Chỉ duyệt những cái chưa được duyệt (isActive = 0)
+                    if (!acc.isActive() && accommodationDAO.approveAccommodation(acc.getAccommodationId())) {
+                        approvedCount++;
+                    }
+                } catch (SQLException e) {
+                    LOGGER.log(Level.WARNING, "Failed to approve accommodation ID: " + acc.getAccommodationId(), e);
+                }
+            }
+        }
+
+        if (totalCount == 0) {
+            sendJsonResponse(response, false, "Không có nội dung nào cần duyệt.", null);
+            return;
+        }
+
+        // Log activity
+        HttpSession session = request.getSession();
+        User admin = (User) session.getAttribute("user");
+        String adminEmail = admin != null ? admin.getEmail() : "Unknown";
+        LOGGER.info("Admin " + adminEmail + " bulk approved " + approvedCount + " content items");
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", approvedCount);
+        data.put("total", totalCount);
+
+        sendJsonResponse(response, true, "Đã duyệt " + approvedCount + "/" + totalCount + " nội dung thành công!", data);
+    }
+
+    /**
+     * Handle export pending content
+     */
+    private void handleExportPending(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+
+        // Set response headers for CSV download
+        response.setContentType("text/csv; charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"pending-content.csv\"");
+
+        try (PrintWriter out = response.getWriter()) {
+            // CSV Header
+            out.println("Type,ID,Title/Name,Host,City,Created Date,Status");
+
+            // Export pending experiences (isActive = 0)
+            List<Experience> pendingExperiences = experienceDAO.getPendingExperiences(1, 10000);
+            for (Experience exp : pendingExperiences) {
+                out.printf("Experience,%d,\"%s\",\"%s\",\"%s\",%s,\"Pending\"%n",
+                    exp.getExperienceId(),
+                    exp.getTitle() != null ? exp.getTitle().replace("\"", "\"\"") : "",
+                    exp.getHostName() != null ? exp.getHostName().replace("\"", "\"\"") : "",
+                    exp.getCityName() != null ? exp.getCityName().replace("\"", "\"\"") : "",
+                    exp.getCreatedAt() != null ? exp.getCreatedAt().toString() : ""
+                );
+            }
+
+            // Export pending accommodations (isActive = 0)
+            List<Accommodation> pendingAccommodations = accommodationDAO.getPendingAccommodations(1, 10000);
+            for (Accommodation acc : pendingAccommodations) {
+                out.printf("Accommodation,%d,\"%s\",\"%s\",\"%s\",%s,\"Pending\"%n",
+                    acc.getAccommodationId(),
+                    acc.getName() != null ? acc.getName().replace("\"", "\"\"") : "",
+                    acc.getHostName() != null ? acc.getHostName().replace("\"", "\"\"") : "",
+                    acc.getCityName() != null ? acc.getCityName().replace("\"", "\"\"") : "",
+                    acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : ""
+                );
+            }
+        }
+    }
+
+    // Helper methods
+    
+    /**
+     * Get filtered experiences based on approval status - FIXED LOGIC
      */
     private List<Experience> getFilteredExperiences(String filter, int page, int pageSize) throws SQLException {
         switch (filter != null ? filter : "pending") {
             case "approved":
+                // Lấy những experience đã được duyệt (isActive = 1)
                 return experienceDAO.getApprovedExperiences(page, pageSize);
-            case "rejected":
-                return experienceDAO.getRejectedExperiences(page, pageSize);
             case "all":
+                // Lấy tất cả experience
                 return experienceDAO.getAllExperiences(page, pageSize);
             default: // pending
+                // Lấy những experience đang chờ duyệt (isActive = 0)
                 return experienceDAO.getPendingExperiences(page, pageSize);
         }
     }
 
     /**
-     * Get filtered accommodations based on adminApprovalStatus
+     * Get filtered accommodations based on approval status - FIXED LOGIC
      */
     private List<Accommodation> getFilteredAccommodations(String filter, int page, int pageSize, String type) throws SQLException {
         switch (filter != null ? filter : "pending") {
             case "approved":
-                return accommodationDAO.getApprovedAccommodations(page, pageSize);
-            case "rejected":
-                return accommodationDAO.getRejectedAccommodations(page, pageSize);
+                // Lấy những accommodation đã được duyệt (isActive = 1)
+                return accommodationDAO.getApprovedAccommodations(page, pageSize, type);
             case "all":
-                return accommodationDAO.getAllAccommodations(page, pageSize);
+                // Lấy tất cả accommodation
+                return accommodationDAO.getAllAccommodations(page, pageSize, type);
             default: // pending
-                return accommodationDAO.getPendingAccommodations(page, pageSize);
+                // Lấy những accommodation đang chờ duyệt (isActive = 0)
+                return accommodationDAO.getPendingAccommodations(page, pageSize, type);
         }
     }
 
     /**
-     * Get content statistics
+     * Get content statistics - FIXED LOGIC
      */
     private Map<String, Integer> getContentStatistics() throws SQLException {
         Map<String, Integer> stats = new HashMap<>();
         
-        try {
-            // Experience stats
-            stats.put("experiencePending", experienceDAO.getPendingExperiencesCount());
-            stats.put("experienceApproved", experienceDAO.getApprovedExperiencesCount());
-            stats.put("experienceRejected", experienceDAO.getRejectedExperiencesCount());
-            stats.put("experienceTotal", experienceDAO.getTotalExperiencesCount());
-            
-            // Accommodation stats
-            stats.put("accommodationPending", accommodationDAO.getPendingAccommodationsCount());
-            stats.put("accommodationApproved", accommodationDAO.getApprovedAccommodationsCount());
-            stats.put("accommodationRejected", accommodationDAO.getRejectedAccommodationsCount());
-            stats.put("accommodationTotal", accommodationDAO.getTotalAccommodationsCount());
-            
-            // Combined stats
-            stats.put("totalPending", stats.get("experiencePending") + stats.get("accommodationPending"));
-            stats.put("totalApproved", stats.get("experienceApproved") + stats.get("accommodationApproved"));
-            stats.put("totalRejected", stats.get("experienceRejected") + stats.get("accommodationRejected"));
-            stats.put("totalAll", stats.get("experienceTotal") + stats.get("accommodationTotal"));
-            
-            // Hidden content stats (approved but host hidden)
-            stats.put("experienceHidden", experienceDAO.getApprovedButHiddenCount());
-            stats.put("accommodationHidden", accommodationDAO.getApprovedButHiddenCount());
-            
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error getting content statistics", e);
-            // Return default stats
-            stats.put("experiencePending", 0);
-            stats.put("experienceApproved", 0);
-            stats.put("experienceRejected", 0);
-            stats.put("experienceTotal", 0);
-            stats.put("accommodationPending", 0);
-            stats.put("accommodationApproved", 0);
-            stats.put("accommodationRejected", 0);
-            stats.put("accommodationTotal", 0);
-            stats.put("totalPending", 0);
-            stats.put("totalApproved", 0);
-            stats.put("totalRejected", 0);
-            stats.put("totalAll", 0);
-            stats.put("experienceHidden", 0);
-            stats.put("accommodationHidden", 0);
-        }
+        // Experience stats
+        stats.put("experiencePending", experienceDAO.getPendingExperiencesCount()); // isActive = 0
+        stats.put("experienceApproved", experienceDAO.getApprovedExperiencesCount()); // isActive = 1
+        stats.put("experienceTotal", experienceDAO.getTotalExperiencesCount());
+        
+        // Accommodation stats
+        stats.put("accommodationPending", accommodationDAO.getPendingAccommodationsCount()); // isActive = 0
+        stats.put("accommodationApproved", accommodationDAO.getApprovedAccommodationsCount()); // isActive = 1
+        stats.put("accommodationTotal", accommodationDAO.getTotalAccommodationsCount());
+        
+        // Combined stats
+        stats.put("totalPending", stats.get("experiencePending") + stats.get("accommodationPending"));
+        stats.put("totalApproved", stats.get("experienceApproved") + stats.get("accommodationApproved"));
+        stats.put("totalAll", stats.get("experienceTotal") + stats.get("accommodationTotal"));
         
         return stats;
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Enrich experience data with host and city information
-     */
-    private void enrichExperienceData(Experience exp) {
-        try {
-            if (exp.getHostName() == null && exp.getHostId() > 0) {
-                User host = userDAO.getUserById(exp.getHostId());
-                if (host != null) {
-                    exp.setHostName(host.getFullName());
-                }
-            }
-            
-            if (exp.getCityName() == null && exp.getCityId() > 0) {
-                City city = cityDAO.getCityById(exp.getCityId());
-                if (city != null) {
-                    exp.setCityName(city.getVietnameseName() != null ? 
-                                 city.getVietnameseName() : city.getName());
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error enriching experience data for ID: " + exp.getExperienceId(), e);
-        }
-    }
-
-    /**
-     * Enrich accommodation data with host and city information
-     */
-    private void enrichAccommodationData(Accommodation acc) {
-        try {
-            if (acc.getHostName() == null && acc.getHostId() > 0) {
-                User host = userDAO.getUserById(acc.getHostId());
-                if (host != null) {
-                    acc.setHostName(host.getFullName());
-                }
-            }
-            
-            if (acc.getCityName() == null && acc.getCityId() > 0) {
-                City city = cityDAO.getCityById(acc.getCityId());
-                if (city != null) {
-                    acc.setCityName(city.getVietnameseName() != null ? 
-                                  city.getVietnameseName() : city.getName());
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error enriching accommodation data for ID: " + acc.getAccommodationId(), e);
-        }
-    }
-
-    /**
-     * Validate content type
-     */
-    private boolean isValidContentType(String contentType) {
-        return "experience".equals(contentType) || "accommodation".equals(contentType);
-    }
-
-    /**
-     * Sanitize string for CSV output
-     */
-    private String sanitizeForCsv(String input) {
-        if (input == null) return "";
-        return input.replace("\"", "\"\"").replace("\n", " ").replace("\r", " ");
     }
 
     /**
      * Check if user is authenticated admin
      */
     private boolean isAdminAuthenticated(HttpServletRequest request) {
-        try {
-            HttpSession session = request.getSession(false);
-            if (session == null) {
-                LOGGER.warning("No session found");
-                return false;
-            }
+        HttpSession session = request.getSession(false);
+        if (session == null) return false;
 
-            User user = (User) session.getAttribute("user");
-            if (user == null) {
-                LOGGER.warning("No user found in session");
-                return false;
-            }
-            
-            boolean isAdmin = "ADMIN".equals(user.getRole());
-            boolean isActive = user.isActive();
-            
-            LOGGER.info("User authentication check - Role: " + user.getRole() + 
-                       ", Active: " + isActive + ", IsAdmin: " + isAdmin);
-            
-            return isAdmin && isActive;
-            
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error checking admin authentication", e);
-            return false;
-        }
+        User user = (User) session.getAttribute("user");
+        return user != null && "ADMIN".equals(user.getRole());
     }
 
     /**
-     * Send JSON response with proper error handling
+     * Send JSON response
      */
-    private void sendJsonResponse(HttpServletResponse response, boolean success, String message, Object data) {
+   private void sendJsonResponse(HttpServletResponse response, boolean success, String message, Object data) {
         try {
-            LOGGER.info("=== SENDING JSON RESPONSE ===");
-            LOGGER.info("Success: " + success + ", Message: " + message);
+            System.out.println("=== SENDING RESPONSE ===");
+            System.out.println("Success: " + success);
+            System.out.println("Message: " + message);
             
-            // Check if response is already committed
-            if (response.isCommitted()) {
-                LOGGER.warning("Response already committed, cannot send JSON");
-                return;
-            }
+            // Clear any existing response
+            response.reset();
             
-            // Set response properties
-            response.setStatus(HttpServletResponse.SC_OK);
+            // Set headers
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-            response.setHeader("Pragma", "no-cache");
-            response.setHeader("Expires", "0");
+            response.setHeader("Cache-Control", "no-cache");
             
-            // Build JSON response
+            // Create JSON
             Map<String, Object> jsonResponse = new HashMap<>();
             jsonResponse.put("success", success);
             jsonResponse.put("message", message != null ? message : "");
-            jsonResponse.put("timestamp", System.currentTimeMillis());
-            
             if (data != null) {
                 jsonResponse.put("data", data);
             }
 
+            // Convert to JSON string
             String jsonString = gson.toJson(jsonResponse);
-            LOGGER.info("JSON Response: " + jsonString);
+            System.out.println("JSON: " + jsonString);
             
-            // Write response
-            try (PrintWriter out = response.getWriter()) {
-                out.print(jsonString);
-                out.flush();
-            }
+            // Send response
+            PrintWriter out = response.getWriter();
+            out.print(jsonString);
+            out.flush();
             
-            LOGGER.info("JSON response sent successfully");
+            System.out.println("Response sent successfully");
             
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error sending JSON response", e);
-            // Try to send a basic error response
-            try {
-                if (!response.isCommitted()) {
-                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    response.setContentType("application/json");
-                    response.getWriter().print("{\"success\":false,\"message\":\"Internal server error\"}");
-                }
-            } catch (IOException ioException) {
-                LOGGER.log(Level.SEVERE, "Failed to send error response", ioException);
-            }
+        } catch (Exception e) {
+            System.out.println("Error in sendJsonResponse: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // ==================== CONTENT ITEM WRAPPER CLASS ====================
-
-    /**
-     * Wrapper class for unified content handling with adminApprovalStatus
+/**
+     * Wrapper class to unify Experience and Accommodation for display
      */
     public static class ContentItem {
-        private String type;
-        private Object content;
+        private String type; // "experience" or "accommodation"
+        private Object content; // Experience or Accommodation object
         private int id;
         private String title;
         private String description;
@@ -1022,12 +838,6 @@ public class AdminContentApprovalServlet extends HttpServlet {
         private String location;
         private int hostId;
         private int cityId;
-        
-        // Admin approval fields
-        private String adminApprovalStatus;
-        private Integer adminApprovedBy;
-        private java.util.Date adminApprovedAt;
-        private String adminRejectReason;
 
         public ContentItem(Experience experience) {
             this.type = "experience";
@@ -1044,12 +854,6 @@ public class AdminContentApprovalServlet extends HttpServlet {
             this.location = experience.getLocation();
             this.hostId = experience.getHostId();
             this.cityId = experience.getCityId();
-            
-            // Admin approval status mapping
-            this.adminApprovalStatus = experience.getAdminApprovalStatus();
-            this.adminApprovedBy = experience.getAdminApprovedBy();
-            this.adminApprovedAt = experience.getAdminApprovedAt();
-            this.adminRejectReason = experience.getAdminRejectReason();
         }
 
         public ContentItem(Accommodation accommodation) {
@@ -1067,89 +871,9 @@ public class AdminContentApprovalServlet extends HttpServlet {
             this.location = accommodation.getAddress();
             this.hostId = accommodation.getHostId();
             this.cityId = accommodation.getCityId();
-            
-            // Admin approval status mapping
-            this.adminApprovalStatus = accommodation.getAdminApprovalStatus();
-            this.adminApprovedBy = accommodation.getAdminApprovedBy();
-            this.adminApprovedAt = accommodation.getAdminApprovedAt();
-            this.adminRejectReason = accommodation.getAdminRejectReason();
         }
 
-        // Status helper methods
-        public String getStatusDisplay() {
-            switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
-                case "PENDING":
-                    return "Chờ duyệt";
-                case "APPROVED":
-                    return isActive ? "Đang hiển thị" : "Đã ẩn bởi host";
-                case "REJECTED":
-                    return "Bị từ chối";
-                default:
-                    return "Không xác định";
-            }
-        }
-
-        public String getStatusClass() {
-            switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
-                case "PENDING":
-                    return "badge-warning";
-                case "APPROVED":
-                    return isActive ? "badge-success" : "badge-secondary";
-                case "REJECTED":
-                    return "badge-danger";
-                default:
-                    return "badge-light";
-            }
-        }
-
-        public boolean canApprove() {
-            return "PENDING".equals(adminApprovalStatus);
-        }
-
-        public boolean canReject() {
-            return "PENDING".equals(adminApprovalStatus);
-        }
-
-        public boolean canRevoke() {
-            return "APPROVED".equals(adminApprovalStatus);
-        }
-
-        public String getAdminStatusInfo() {
-            if ("APPROVED".equals(adminApprovalStatus) && adminApprovedAt != null) {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
-                return "Đã duyệt lúc " + sdf.format(adminApprovedAt);
-            } else if ("REJECTED".equals(adminApprovalStatus) && adminRejectReason != null) {
-                return "Bị từ chối: " + adminRejectReason;
-            }
-            return "";
-        }
-
-        // Utility methods
-        public String[] getImageList() {
-            if (images != null && !images.trim().isEmpty()) {
-                return images.split(",");
-            }
-            return new String[0];
-        }
-
-        public String getFormattedPrice() {
-            return String.format("%,.0f VNĐ", price);
-        }
-
-        public String getFirstImageUrl() {
-            String[] imageList = getImageList();
-            if (imageList.length > 0) {
-                String imageName = imageList[0].trim();
-                return "/view/assets/images/" + type + "s/" + imageName;
-            }
-            return "/view/assets/images/default-content.jpg";
-        }
-
-        public String getTypeDisplayName() {
-            return "experience".equals(type) ? "Trải nghiệm" : "Lưu trú";
-        }
-
-        // Getters for all fields
+        // Getters
         public String getType() { return type; }
         public Object getContent() { return content; }
         public int getId() { return id; }
@@ -1159,21 +883,26 @@ public class AdminContentApprovalServlet extends HttpServlet {
         public String getCityName() { return cityName; }
         public java.util.Date getCreatedAt() { return createdAt; }
         public boolean isActive() { return isActive; }
-        public boolean getActive() { return isActive; }
+        public boolean getActive() { return isActive; } // JSP compatibility
         public String getImages() { return images; }
         public double getPrice() { return price; }
         public String getLocation() { return location; }
         public int getHostId() { return hostId; }
         public int getCityId() { return cityId; }
-        public String getAdminApprovalStatus() { return adminApprovalStatus; }
-        public Integer getAdminApprovedBy() { return adminApprovedBy; }
-        public java.util.Date getAdminApprovedAt() { return adminApprovedAt; }
-        public String getAdminRejectReason() { return adminRejectReason; }
-    }
 
-    @Override
-    public void destroy() {
-        super.destroy();
-        LOGGER.info("AdminContentApprovalServlet destroyed");
+        public Experience getExperience() {
+            return "experience".equals(type) ? (Experience) content : null;
+        }
+
+        public Accommodation getAccommodation() {
+            return "accommodation".equals(type) ? (Accommodation) content : null;
+        }
+
+        public String[] getImageList() {
+            if (images != null && !images.trim().isEmpty()) {
+                return images.split(",");
+            }
+            return new String[0];
+        }
     }
 }
