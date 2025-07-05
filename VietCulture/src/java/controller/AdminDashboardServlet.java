@@ -75,9 +75,11 @@ public class AdminDashboardServlet extends HttpServlet {
 
         int totalUsers = userDAO.getTotalUsersCount();
         stats.put("totalUsers", totalUsers);
+        LOGGER.info("Total users: " + totalUsers);
 
         int activeExperiences = experienceDAO.getApprovedExperiencesCount(); // Changed to getApproved
         stats.put("activeExperiences", activeExperiences);
+        LOGGER.info("Active experiences: " + activeExperiences);
 
         int pendingExperiences = experienceDAO.getPendingExperiencesCount();
         int pendingAccommodations = accommodationDAO.getPendingAccommodationsCount();
@@ -85,6 +87,10 @@ public class AdminDashboardServlet extends HttpServlet {
         stats.put("pendingApproval", pendingApproval);
         stats.put("pendingExperiences", pendingExperiences);
         stats.put("pendingAccommodations", pendingAccommodations);
+        
+        LOGGER.info("Pending experiences: " + pendingExperiences);
+        LOGGER.info("Pending accommodations: " + pendingAccommodations);
+        LOGGER.info("Total pending approval: " + pendingApproval);
 
         int monthlyBookings = bookingDAO.getCurrentMonthBookingsCount(); // Assumes BookingDAO method
         stats.put("monthlyBookings", monthlyBookings);

@@ -628,13 +628,18 @@ public int getTotalExperiencesCount() throws SQLException {
 public int getPendingExperiencesCount() throws SQLException {
     String sql = "SELECT COUNT(*) FROM Experiences WHERE isActive = 0";
     
+    LOGGER.info("Executing query: " + sql);
+    
     try (Connection conn = DBUtils.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql);
          ResultSet rs = ps.executeQuery()) {
         
         if (rs.next()) {
-            return rs.getInt(1);
+            int count = rs.getInt(1);
+            LOGGER.info("Pending experiences count: " + count);
+            return count;
         }
+        LOGGER.info("No pending experiences found");
         return 0;
         
     } catch (SQLException e) {

@@ -239,11 +239,13 @@ private void handleCreateExperience(HttpServletRequest request, HttpServletRespo
         
         if (experienceId > 0) {
             LOGGER.info("Experience created successfully with ID: " + experienceId + " - AUTO APPROVED");
+            LOGGER.info("Experience details - Title: " + experience.getTitle() + ", isActive: " + experience.isActive());
             HttpSession session = request.getSession();
             // *** THAY ĐỔI MESSAGE ***
             session.setAttribute("success", "Trải nghiệm đã được tạo và xuất bản thành công!");
             response.sendRedirect(request.getContextPath() + "/Travel/create_service");
         } else {
+            LOGGER.severe("Failed to create experience");
             throw new RuntimeException("Không thể tạo trải nghiệm");
         }
 

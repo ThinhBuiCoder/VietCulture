@@ -25,3 +25,6 @@
 .idea/
 *.iml
 .nb-gradle/
+/VietCulture_7.0/build/
+/VietCulture_7.0/nbproject/private/
+/VietCulture_7.0/dist/
