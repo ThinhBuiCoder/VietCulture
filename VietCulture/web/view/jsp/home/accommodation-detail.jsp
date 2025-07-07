@@ -49,21 +49,24 @@
 
             .btn-copy {
                 background-color: transparent;
-                border: none;
+                border: 1px solid rgba(0,0,0,0.1);
                 cursor: pointer;
                 color: #6c757d;
                 transition: var(--transition);
-                padding: 5px 10px;
-                border-radius: 5px;
-                font-size: 0.85rem;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-size: 0.9rem;
                 display: flex;
                 align-items: center;
-                gap: 5px;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
             }
 
             .btn-copy:hover {
                 color: var(--dark-color);
                 background-color: rgba(0,0,0,0.05);
+                border-color: rgba(0,0,0,0.2);
             }
 
             .btn-copy i {
@@ -115,11 +118,18 @@
                 border: none;
                 color: white;
                 box-shadow: 0 4px 15px rgba(255, 56, 92, 0.3);
+                width: 100%;
             }
 
-            .btn-primary:hover {
-                transform: translateY(-3px);
+            .btn-primary:hover:not(:disabled) {
+                transform: translateY(-2px);
                 box-shadow: 0 8px 20px rgba(255, 56, 92, 0.4);
+            }
+
+            .btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
             }
 
             .btn-outline-primary {
@@ -559,6 +569,10 @@
                 font-size: 0.9rem;
             }
 
+            /* ============================================================================= */
+            /* FIXED BOOKING FORM STYLES */
+            /* ============================================================================= */
+
             /* Booking Card */
             .booking-card {
                 border: 2px solid var(--primary-color);
@@ -568,9 +582,12 @@
                 box-shadow: var(--shadow-lg);
             }
 
+            /* Price Display */
             .price-display {
                 text-align: center;
                 margin-bottom: 25px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid rgba(0,0,0,0.1);
             }
 
             .price-amount {
@@ -578,45 +595,144 @@
                 font-weight: 800;
                 color: var(--primary-color);
                 margin-bottom: 5px;
+                line-height: 1.2;
             }
 
             .price-unit {
                 color: #6c757d;
                 font-size: 0.9rem;
+                font-weight: 500;
             }
 
-            .booking-form .form-group {
+            /* Date Selection Wrapper */
+            .date-selection-wrapper {
                 margin-bottom: 20px;
             }
 
-            .booking-form label {
+            .date-input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .date-field {
+                width: 100%;
+            }
+
+            .date-field label {
+                display: block;
                 font-weight: 600;
                 margin-bottom: 8px;
                 color: var(--dark-color);
+                font-size: 0.9rem;
             }
 
-            .booking-form .form-control {
-                border-radius: 10px;
-                padding: 12px;
+            .date-field .form-control {
+                width: 100%;
+                padding: 12px 16px;
                 border: 2px solid rgba(0,0,0,0.1);
+                border-radius: 10px;
+                font-size: 1rem;
                 transition: var(--transition);
+                background: white;
+                box-sizing: border-box;
             }
 
-            .booking-form .form-control:focus {
+            .date-field .form-control:focus {
+                outline: none;
                 border-color: var(--primary-color);
                 box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.2);
             }
 
+            .date-field .form-control.is-valid {
+                border-color: #28a745;
+                background-image: none;
+            }
+
+            .date-field .form-control.is-invalid {
+                border-color: #dc3545;
+                background-image: none;
+            }
+
+            .date-field .form-text {
+                font-size: 0.8rem;
+                color: #6c757d;
+                margin-top: 5px;
+            }
+
+            .date-field .invalid-feedback {
+                display: block;
+                color: #dc3545;
+                font-size: 0.875rem;
+                margin-top: 5px;
+            }
+
+            /* Fix for date input styling */
+            .date-field .form-control[type="date"] {
+                position: relative;
+                padding-right: 40px;
+            }
+
+            .date-field .form-control[type="date"]::-webkit-calendar-picker-indicator {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                cursor: pointer;
+                color: var(--primary-color);
+            }
+
+            /* Availability Info */
+            .availability-info {
+                margin: 15px 0;
+            }
+
+            .availability-info .alert {
+                margin: 0;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+            }
+
+            .alert-info {
+                background-color: rgba(23, 162, 184, 0.1);
+                border-color: rgba(23, 162, 184, 0.3);
+                color: #0c5460;
+            }
+
+            .alert-success {
+                background-color: rgba(40, 167, 69, 0.1);
+                border-color: rgba(40, 167, 69, 0.3);
+                color: #155724;
+            }
+
+            /* Date Warning */
+            .date-warning {
+                margin: 15px 0;
+            }
+
+            .date-warning .alert-warning {
+                background-color: rgba(255, 193, 7, 0.1);
+                border-color: rgba(255, 193, 7, 0.3);
+                color: #856404;
+                padding: 12px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+            }
+
+            /* Booking Summary */
             .booking-summary {
                 background: rgba(131, 197, 190, 0.1);
                 padding: 15px;
                 border-radius: 10px;
                 margin: 20px 0;
+                border: 1px solid rgba(131, 197, 190, 0.3);
             }
 
             .summary-row {
                 display: flex;
                 justify-content: space-between;
+                align-items: center;
                 margin-bottom: 8px;
                 font-size: 0.9rem;
             }
@@ -628,7 +744,91 @@
                 border-top: 1px solid rgba(0,0,0,0.2);
                 padding-top: 10px;
                 margin-top: 10px;
+                margin-bottom: 0;
             }
+
+            /* Submit Section */
+            .submit-section {
+                margin: 20px 0;
+            }
+
+            /* Loading state for button */
+            .btn-primary .btn-loading {
+                display: none !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .btn-primary.loading .btn-text {
+                display: none;
+            }
+
+            .btn-primary.loading .btn-loading {
+                display: flex !important;
+            }
+
+            /* Security Notice */
+            .security-notice {
+                text-align: center;
+                margin: 15px 0;
+                padding: 10px;
+                background: rgba(40, 167, 69, 0.05);
+                border-radius: 8px;
+                border: 1px solid rgba(40, 167, 69, 0.1);
+            }
+
+            .security-notice small {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+                color: #28a745;
+                font-weight: 500;
+            }
+
+            /* Share Section */
+            .share-section {
+                margin: 15px 0;
+            }
+
+            /* Contact Host Section */
+            .contact-host-section {
+                margin-top: 25px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border: 1px solid rgba(0,0,0,0.1);
+            }
+
+            .contact-host-section h6 {
+                color: var(--dark-color);
+                font-weight: 600;
+            }
+
+            /* Safety Info Section */
+            .safety-info-section {
+                margin-top: 20px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+                border: 1px solid rgba(0,0,0,0.1);
+            }
+
+            .safety-info-section h6 {
+                color: var(--dark-color);
+                font-weight: 600;
+            }
+
+            .safety-info-section ul li {
+                display: flex;
+                align-items: center;
+                font-size: 0.9rem;
+                color: #6c757d;
+            }
+
+            /* ============================================================================= */
+            /* END OF FIXED BOOKING FORM STYLES */
+            /* ============================================================================= */
 
             /* Reviews Section */
             .rating-overview {
@@ -795,7 +995,7 @@
                 transform: translateX(3px);
             }
 
-            /* Responsive */
+            /* Responsive Design */
             @media (max-width: 992px) {
                 .content-grid {
                     grid-template-columns: 1fr;
@@ -851,6 +1051,25 @@
                 .custom-navbar {
                     padding: 10px 0;
                 }
+
+                /* Responsive booking form */
+                .date-input-group {
+                    gap: 12px;
+                }
+
+                .date-field .form-control {
+                    padding: 10px 14px;
+                    font-size: 0.95rem;
+                }
+
+                .booking-summary {
+                    padding: 12px;
+                }
+
+                .contact-host-section,
+                .safety-info-section {
+                    padding: 15px;
+                }
             }
 
             /* Loading Animation */
@@ -888,7 +1107,201 @@
                 opacity: 1;
                 transform: translateY(0);
             }
-        </style>
+
+            /* Legacy form styles - keep for compatibility */
+            .booking-form .form-group {
+                margin-bottom: 20px;
+            }
+
+            .booking-form label {
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: var(--dark-color);
+            }
+
+            .booking-form .form-control {
+                border-radius: 10px;
+                padding: 12px;
+                border: 2px solid rgba(0,0,0,0.1);
+                transition: var(--transition);
+            }
+
+            .booking-form .form-control:focus {
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.2);
+            }
+
+            /* Additional validation states */
+            .form-control.is-valid {
+                border-color: #28a745;
+                background-image: none;
+            }
+
+            .form-control.is-invalid {
+                border-color: #dc3545;
+                background-image: none;
+            }
+
+            .invalid-feedback {
+                display: block;
+                color: #dc3545;
+                font-size: 0.875rem;
+                margin-top: 5px;
+            }
+
+            .btn-loading {
+                display: none;
+            }
+
+            .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+            .form-text {
+                font-size: 0.8rem;
+                color: #6c757d;
+                margin-top: 3px;
+            }
+
+            /* Enhanced form field focus states */
+            .date-field .form-control:focus,
+            .booking-form .form-control:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.2);
+                transform: translateY(-1px);
+            }
+
+            /* Smooth transitions for all interactive elements */
+            .date-field .form-control,
+            .booking-form .form-control,
+            .btn,
+            .action-btn,
+            .btn-copy {
+                transition: all 0.3s ease;
+            }
+
+            /* Enhanced hover states */
+            .date-field .form-control:hover:not(:focus),
+            .booking-form .form-control:hover:not(:focus) {
+                border-color: rgba(255, 56, 92, 0.3);
+            }
+
+            /* Accessibility improvements */
+            .date-field label,
+            .booking-form label {
+                cursor: pointer;
+            }
+
+            .date-field .form-control:focus + .form-text,
+            .booking-form .form-control:focus + .form-text {
+                color: var(--primary-color);
+            }
+
+            /* Error state animations */
+            .form-control.is-invalid {
+                animation: shake 0.5s ease-in-out;
+            }
+
+            @keyframes shake {
+                0%, 100% {
+                    transform: translateX(0);
+                }
+                10%, 30%, 50%, 70%, 90% {
+                    transform: translateX(-2px);
+                }
+                20%, 40%, 60%, 80% {
+                    transform: translateX(2px);
+                }
+            }
+
+            /* Success state animations */
+            .form-control.is-valid {
+                animation: successPulse 0.6s ease-in-out;
+            }
+
+            @keyframes successPulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.02);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            /* Loading spinner for submit button */
+            .spinner-border-sm {
+                width: 1rem;
+                height: 1rem;
+                border-width: 0.2em;
+            }
+
+            /* Enhanced mobile responsiveness */
+            @media (max-width: 576px) {
+                .booking-card {
+                    padding: 20px;
+                }
+
+                .price-amount {
+                    font-size: 1.7rem;
+                }
+
+                .date-field .form-control {
+                    padding: 12px;
+                    font-size: 0.9rem;
+                }
+
+                .btn-primary {
+                    padding: 14px 20px;
+                    font-size: 0.95rem;
+                }
+
+                .contact-host-section,
+                .safety-info-section {
+                    padding: 12px;
+                }
+            }
+
+            /* Dark mode support (optional) */
+            @media (prefers-color-scheme: dark) {
+                .booking-card {
+                    background: #1a1a1a;
+                    border-color: var(--primary-color);
+                }
+
+                .date-field .form-control,
+                .booking-form .form-control {
+                    background: #2a2a2a;
+                    color: white;
+                    border-color: #444;
+                }
+
+                .date-field .form-control:focus,
+                .booking-form .form-control:focus {
+                    background: #2a2a2a;
+                    color: white;
+                }
+            }
+
+            /* Print styles */
+            @media print {
+                .booking-card,
+                .contact-host-section,
+                .safety-info-section {
+                    box-shadow: none;
+                    border: 1px solid #ccc;
+                }
+
+                .btn-primary,
+                .btn-copy {
+                    display: none;
+                }
+            }
+        </style>  
     </head>
     <body>
         <!-- Navigation -->
@@ -1155,11 +1568,15 @@
                                 <h5>${accommodation.numberOfRooms} Phòng</h5>
                                 <p>Phòng riêng tư</p>
                             </div>
+
+
                             <div class="info-card">
                                 <i class="ri-group-line"></i>
-                                <h5>6-8 Khách</h5>
+                                <h5>${accommodation.maxOccupancy} khách</h5>
                                 <p>Tối đa cho nhóm</p>
                             </div>
+
+
                             <div class="info-card">
                                 <i class="ri-car-line"></i>
                                 <h5>Chỗ đậu xe</h5>
@@ -1236,7 +1653,9 @@
                                 <c:forEach var="review" items="${reviews}">
                                     <div class="review-item">
                                         <div class="review-header">
-                                            <img src="${review.travelerAvatar != null ? review.travelerAvatar : '/view/assets/images/avatars/1.png'}" alt="Reviewer" class="reviewer-avatar">
+                                            <img src="${not empty review.travelerAvatar ? pageContext.request.contextPath.concat('/images/avatars/').concat(review.travelerAvatar) : 'https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg'}" 
+                                                 alt="Reviewer" class="reviewer-avatar"
+                                                 onerror="this.src='https://cdn.sforum.vn/sforum/wp-content/uploads/2023/10/avatar-trang-4.jpg'">
                                             <div class="reviewer-info">
                                                 <h6>${review.travelerName}</h6>
                                                 <div class="review-date">
@@ -1297,44 +1716,52 @@
                             <div class="price-unit">mỗi đêm</div>
                         </div>
 
-                        <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="post">
+                        <form class="booking-form" action="${pageContext.request.contextPath}/booking" method="get">
                             <input type="hidden" name="accommodationId" value="${accommodation.accommodationId}">
 
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="checkIn">Ngày nhận phòng</label>
+                            <!-- Date Selection Section -->
+                            <div class="date-selection-wrapper">
+                                <div class="date-input-group">
+                                    <div class="date-field">
+                                        <label for="checkIn">Ngày nhận phòng <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="checkIn" name="checkIn" required>
+                                        <div class="form-text">14:00 - Nhận phòng</div>
+                                        <div class="invalid-feedback" id="checkInError"></div>
                                     </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="form-group">
-                                        <label for="checkOut">Ngày trả phòng</label>
+
+                                    <div class="date-field">
+                                        <label for="checkOut">Ngày trả phòng <span class="text-danger">*</span></label>
                                         <input type="date" class="form-control" id="checkOut" name="checkOut" required>
+                                        <div class="form-text">12:00 - Trả phòng</div>
+                                        <div class="invalid-feedback" id="checkOutError"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group">
-                                <label for="guests">Số khách</label>
-                                <select class="form-control" id="guests" name="guests" required>
-                                    <option value="">Chọn số khách</option>
-                                    <option value="1">1 khách</option>
-                                    <option value="2">2 khách</option>
-                                    <option value="3">3 khách</option>
-                                    <option value="4">4 khách</option>
-                                    <option value="5">5 khách</option>
-                                    <option value="6">6 khách</option>
-                                </select>
+                            <!-- Booking availability info -->
+                            <div class="availability-info" id="availabilityInfo" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="ri-information-line me-2"></i>
+                                    <span id="availabilityText"></span>
+                                </div>
                             </div>
 
+                            <!-- Date validation warning -->
+                            <div class="date-warning" id="dateWarning" style="display: none;">
+                                <div class="alert alert-warning">
+                                    <i class="ri-alert-line me-2"></i>
+                                    <span id="warningText"></span>
+                                </div>
+                            </div>
+
+                            <!-- Booking Summary -->
                             <div class="booking-summary" id="bookingSummary" style="display: none;">
                                 <div class="summary-row">
                                     <span>Giá phòng × <span id="nightCount">0</span> đêm</span>
                                     <span id="roomTotal">0 VNĐ</span>
                                 </div>
                                 <div class="summary-row">
-                                    <span>Phí dịch vụ</span>
+                                    <span>Phí dịch vụ (5%)</span>
                                     <span id="serviceFee">0 VNĐ</span>
                                 </div>
                                 <div class="summary-row summary-total">
@@ -1343,25 +1770,38 @@
                                 </div>
                             </div>
 
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.user}">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="ri-calendar-check-line me-2"></i>Đặt Phòng Ngay
-                                    </button>
-                                </c:when>
-                                <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/login" class="btn btn-primary w-100">
-                                        <i class="ri-login-circle-line me-2"></i>Đăng Nhập để Đặt Phòng
-                                    </a>
-                                </c:otherwise>
-                            </c:choose>
+                            <!-- Submit Button -->
+                            <div class="submit-section">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user}">
+                                        <button type="submit" class="btn btn-primary w-100" id="bookingBtn" disabled>
+                                            <span class="btn-text">
+                                                <i class="ri-calendar-check-line me-2"></i>Đặt Phòng Ngay
+                                            </span>
+                                            <span class="btn-loading d-none">
+                                                <span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...
+                                            </span>
+                                        </button>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="${pageContext.request.contextPath}/login" class="btn btn-primary w-100">
+                                            <i class="ri-login-circle-line me-2"></i>Đăng Nhập để Đặt Phòng
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
                         </form>
 
-                        <div class="text-center mt-3">
-                            <small class="text-muted">Bạn sẽ chưa bị tính phí</small>
+                        <!-- Security Notice -->
+                        <div class="security-notice">
+                            <small class="text-muted">
+                                <i class="ri-shield-check-line me-1"></i>
+                                Bạn sẽ chưa bị tính phí - Thanh toán an toàn
+                            </small>
                         </div>
 
-                        <div class="text-center mt-3">
+                        <!-- Share Button -->
+                        <div class="share-section">
                             <button class="btn-copy w-100" onclick="shareAccommodation()">
                                 <i class="ri-share-line"></i>
                                 <span>Chia sẻ chỗ lưu trú này</span>
@@ -1369,8 +1809,8 @@
                         </div>
                     </div>
 
-                    <!-- Contact Host -->
-                    <div class="mt-4 p-3 bg-light rounded">
+                    <!-- Contact Host Section -->
+                    <div class="contact-host-section">
                         <h6 class="mb-3">Liên hệ chủ nhà</h6>
                         <div class="d-grid gap-2">
                             <button class="btn btn-outline-primary btn-sm">
@@ -1382,8 +1822,8 @@
                         </div>
                     </div>
 
-                    <!-- Safety Info -->
-                    <div class="mt-4 p-3 bg-light rounded">
+                    <!-- Safety Info Section -->
+                    <div class="safety-info-section">
                         <h6 class="mb-3">
                             <i class="ri-shield-check-line me-2"></i>An toàn & Bảo mật
                         </h6>
@@ -1464,7 +1904,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
         <script>
-                                // Dropdown menu functionality
+// Dropdown menu functionality
                                 const menuIcon = document.querySelector('.menu-icon');
                                 const dropdownMenu = document.querySelector('.dropdown-menu-custom');
 
@@ -1483,7 +1923,7 @@
                                     });
                                 }
 
-                                // Navbar scroll effect
+// Navbar scroll effect
                                 window.addEventListener('scroll', function () {
                                     const navbar = document.querySelector('.custom-navbar');
                                     if (window.scrollY > 50) {
@@ -1495,7 +1935,7 @@
                                     animateOnScroll();
                                 });
 
-                                // Animate elements when they come into view
+// Animate elements when they come into view
                                 function animateOnScroll() {
                                     const fadeElements = document.querySelectorAll('.fade-up');
 
@@ -1509,7 +1949,7 @@
                                     });
                                 }
 
-                                // Initialize Swiper
+// Initialize Swiper
                                 const swiper = new Swiper('.accommodation-swiper', {
                                     loop: true,
                                     autoplay: {
@@ -1530,78 +1970,364 @@
                                     }
                                 });
 
-                                // Booking form functionality
-                                const checkInInput = document.getElementById('checkIn');
-                                const checkOutInput = document.getElementById('checkOut');
-                                const guestsSelect = document.getElementById('guests');
-                                const bookingSummary = document.getElementById('bookingSummary');
-                                let pricePerNight = Number('${accommodation.pricePerNight}');
-                                if (isNaN(pricePerNight)) pricePerNight = 0;
-
-                                // Set minimum date to today
-                                const today = new Date().toISOString().split('T')[0];
-                                checkInInput.min = today;
-
-                                // Update checkout minimum date when checkin changes
-                                checkInInput.addEventListener('change', function () {
-                                    const checkInDate = new Date(this.value);
-                                    checkInDate.setDate(checkInDate.getDate() + 1);
-                                    checkOutInput.min = checkInDate.toISOString().split('T')[0];
-                                    calculateTotal();
-                                });
-
-                                checkOutInput.addEventListener('change', calculateTotal);
-                                guestsSelect.addEventListener('change', calculateTotal);
-
-                                function calculateTotal() {
-                                    const checkIn = new Date(checkInInput.value);
-                                    const checkOut = new Date(checkOutInput.value);
-
-                                    if (checkIn && checkOut && checkOut > checkIn) {
-                                        const nightCount = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-                                        const roomTotal = nightCount * pricePerNight;
-                                        const serviceFee = Math.round(roomTotal * 0.1); // 10% service fee
-                                        const totalAmount = roomTotal + serviceFee;
-
-                                        document.getElementById('nightCount').textContent = nightCount;
-                                        document.getElementById('roomTotal').textContent = formatCurrency(roomTotal);
-                                        document.getElementById('serviceFee').textContent = formatCurrency(serviceFee);
-                                        document.getElementById('totalAmount').textContent = formatCurrency(totalAmount);
-
-                                        bookingSummary.style.display = 'block';
-                                    } else {
-                                        bookingSummary.style.display = 'none';
-                                    }
-                                }
-
+// Utility function for currency formatting
                                 function formatCurrency(amount) {
                                     return new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
                                 }
 
-                                // Share accommodation function
+// Enhanced booking form functionality with validation
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    const checkInInput = document.getElementById('checkIn');
+                                    const checkOutInput = document.getElementById('checkOut');
+                                    const bookingSummary = document.getElementById('bookingSummary');
+                                    const bookingBtn = document.getElementById('bookingBtn');
+                                    const availabilityInfo = document.getElementById('availabilityInfo');
+                                    const dateWarning = document.getElementById('dateWarning');
+
+                                    let pricePerNight = Number('${accommodation.pricePerNight}');
+                                    if (isNaN(pricePerNight))
+                                        pricePerNight = 0;
+
+                                    // Constants
+                                    const MAX_ADVANCE_BOOKING_DAYS = 60;
+                                    const MAX_STAY_DURATION_DAYS = 30;
+
+                                    // Set date constraints
+                                    initializeDateConstraints();
+
+                                    // Add event listeners
+                                    if (checkInInput) {
+                                        checkInInput.addEventListener('change', function () {
+                                            validateCheckInDate(this.value);
+                                            updateCheckOutConstraints(this.value);
+                                            calculateTotal();
+                                        });
+                                    }
+
+                                    if (checkOutInput) {
+                                        checkOutInput.addEventListener('change', function () {
+                                            validateCheckOutDate(checkInInput.value, this.value);
+                                            calculateTotal();
+                                        });
+                                    }
+
+                                    function initializeDateConstraints() {
+                                        if (!checkInInput)
+                                            return;
+
+                                        const today = new Date();
+                                        const todayStr = today.toISOString().split('T')[0];
+
+                                        // Set minimum date to today
+                                        checkInInput.min = todayStr;
+
+                                        // Set maximum date to 60 days from today
+                                        const maxDate = new Date();
+                                        maxDate.setDate(maxDate.getDate() + MAX_ADVANCE_BOOKING_DAYS);
+                                        checkInInput.max = maxDate.toISOString().split('T')[0];
+
+                                        console.log('Date constraints set:', {
+                                            min: todayStr,
+                                            max: maxDate.toISOString().split('T')[0]
+                                        });
+                                    }
+
+                                    function updateCheckOutConstraints(checkInValue) {
+                                        if (!checkInValue || !checkOutInput)
+                                            return;
+
+                                        const checkInDate = new Date(checkInValue);
+
+                                        // Minimum checkout: 1 day after checkin
+                                        const minCheckOut = new Date(checkInDate);
+                                        minCheckOut.setDate(minCheckOut.getDate() + 1);
+                                        checkOutInput.min = minCheckOut.toISOString().split('T')[0];
+
+                                        // Maximum checkout: 30 days after checkin or 60 days from today, whichever is earlier
+                                        const maxFromStay = new Date(checkInDate);
+                                        maxFromStay.setDate(maxFromStay.getDate() + MAX_STAY_DURATION_DAYS);
+
+                                        const maxFromToday = new Date();
+                                        maxFromToday.setDate(maxFromToday.getDate() + MAX_ADVANCE_BOOKING_DAYS);
+
+                                        const maxCheckOut = maxFromStay < maxFromToday ? maxFromStay : maxFromToday;
+                                        checkOutInput.max = maxCheckOut.toISOString().split('T')[0];
+
+                                        // Auto-set checkout if not set
+                                        if (!checkOutInput.value && checkInValue) {
+                                            const autoCheckOut = new Date(checkInDate);
+                                            autoCheckOut.setDate(autoCheckOut.getDate() + 1);
+                                            checkOutInput.value = autoCheckOut.toISOString().split('T')[0];
+                                            checkOutInput.classList.add('auto-filled');
+
+                                            // Show notification
+                                            showAvailabilityInfo('Tự động đặt ngày trả phòng: ' + formatDateVN(autoCheckOut), 'info');
+                                        }
+                                    }
+
+                                    function validateCheckInDate(dateStr) {
+                                        if (!checkInInput)
+                                            return false;
+
+                                        if (!dateStr) {
+                                            setValidationState(checkInInput, false, 'Vui lòng chọn ngày nhận phòng');
+                                            return false;
+                                        }
+
+                                        const checkInDate = new Date(dateStr);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+
+                                        // Check if date is in the past
+                                        if (checkInDate < today) {
+                                            setValidationState(checkInInput, false, 'Ngày nhận phòng không thể là ngày trong quá khứ');
+                                            return false;
+                                        }
+
+                                        // Check maximum advance booking
+                                        const maxDate = new Date();
+                                        maxDate.setDate(maxDate.getDate() + MAX_ADVANCE_BOOKING_DAYS);
+                                        if (checkInDate > maxDate) {
+                                            setValidationState(checkInInput, false, 'Chỉ có thể đặt trước tối đa ' + MAX_ADVANCE_BOOKING_DAYS + ' ngày');
+                                            return false;
+                                        }
+
+                                        // Check if today (same day booking warning)
+                                        if (checkInDate.toDateString() === today.toDateString()) {
+                                            showDateWarning('Bạn đang đặt phòng cho ngày hôm nay, hãy chắc chắn rằng bạn có thể nhận phòng. Khuyến nghị đặt trước ít nhất 1 ngày.');
+                                        } else {
+                                            hideDateWarning();
+                                        }
+
+                                        setValidationState(checkInInput, true, 'Ngày nhận phòng hợp lệ');
+                                        return true;
+                                    }
+
+                                    function validateCheckOutDate(checkInStr, checkOutStr) {
+                                        if (!checkOutInput)
+                                            return false;
+
+                                        if (!checkOutStr) {
+                                            setValidationState(checkOutInput, false, 'Vui lòng chọn ngày trả phòng');
+                                            return false;
+                                        }
+
+                                        if (!checkInStr) {
+                                            setValidationState(checkOutInput, false, 'Vui lòng chọn ngày nhận phòng trước');
+                                            return false;
+                                        }
+
+                                        const checkInDate = new Date(checkInStr);
+                                        const checkOutDate = new Date(checkOutStr);
+
+                                        if (checkOutDate <= checkInDate) {
+                                            setValidationState(checkOutInput, false, 'Ngày trả phòng phải sau ngày nhận phòng');
+                                            return false;
+                                        }
+
+                                        // Calculate nights
+                                        const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+
+                                        if (nights > MAX_STAY_DURATION_DAYS) {
+                                            setValidationState(checkOutInput, false, 'Chỉ có thể đặt tối đa ' + MAX_STAY_DURATION_DAYS + ' đêm');
+                                            return false;
+                                        }
+
+                                        setValidationState(checkOutInput, true, nights + ' đêm - Hợp lệ');
+                                        return true;
+                                    }
+
+                                    function setValidationState(input, isValid, message) {
+                                        const errorElement = document.getElementById(input.id + 'Error');
+
+                                        if (isValid) {
+                                            input.classList.remove('is-invalid');
+                                            input.classList.add('is-valid');
+                                            if (errorElement)
+                                                errorElement.textContent = '';
+                                        } else {
+                                            input.classList.remove('is-valid');
+                                            input.classList.add('is-invalid');
+                                            if (errorElement)
+                                                errorElement.textContent = message;
+                                        }
+
+                                        updateBookingButtonState();
+                                    }
+
+                                    function updateBookingButtonState() {
+                                        if (!bookingBtn || !checkInInput || !checkOutInput)
+                                            return;
+
+                                        const checkInValid = checkInInput.classList.contains('is-valid');
+                                        const checkOutValid = checkOutInput.classList.contains('is-valid');
+                                        const hasValues = checkInInput.value && checkOutInput.value;
+
+                                        bookingBtn.disabled = !(checkInValid && checkOutValid && hasValues);
+                                    }
+
+                                    function calculateTotal() {
+                                        if (!checkInInput || !checkOutInput || !bookingSummary)
+                                            return;
+
+                                        const checkIn = new Date(checkInInput.value);
+                                        const checkOut = new Date(checkOutInput.value);
+
+                                        if (checkIn && checkOut && checkOut > checkIn &&
+                                                checkInInput.classList.contains('is-valid') &&
+                                                checkOutInput.classList.contains('is-valid')) {
+
+                                            const nightCount = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+                                            const roomTotal = nightCount * pricePerNight;
+                                            const serviceFee = Math.round(roomTotal * 0.05); // 5% service fee
+                                            const totalAmount = roomTotal + serviceFee;
+
+                                            const nightCountEl = document.getElementById('nightCount');
+                                            const roomTotalEl = document.getElementById('roomTotal');
+                                            const serviceFeeEl = document.getElementById('serviceFee');
+                                            const totalAmountEl = document.getElementById('totalAmount');
+
+                                            if (nightCountEl)
+                                                nightCountEl.textContent = nightCount;
+                                            if (roomTotalEl)
+                                                roomTotalEl.textContent = formatCurrency(roomTotal);
+                                            if (serviceFeeEl)
+                                                serviceFeeEl.textContent = formatCurrency(serviceFee);
+                                            if (totalAmountEl)
+                                                totalAmountEl.textContent = formatCurrency(totalAmount);
+
+                                            bookingSummary.style.display = 'block';
+
+                                            // Show availability info
+                                            showAvailabilityInfo(nightCount + ' đêm từ ' + formatDateVN(checkIn) + ' đến ' + formatDateVN(checkOut), 'success');
+                                        } else {
+                                            bookingSummary.style.display = 'none';
+                                            hideAvailabilityInfo();
+                                        }
+                                    }
+
+                                    function showAvailabilityInfo(message, type) {
+                                        type = type || 'info';
+                                        const availabilityText = document.getElementById('availabilityText');
+                                        if (availabilityInfo && availabilityText) {
+                                            availabilityText.textContent = message;
+
+                                            const alertDiv = availabilityInfo.querySelector('.alert');
+                                            if (alertDiv) {
+                                                alertDiv.className = 'alert alert-' + type;
+                                            }
+
+                                            availabilityInfo.style.display = 'block';
+                                        }
+                                    }
+
+                                    function hideAvailabilityInfo() {
+                                        if (availabilityInfo) {
+                                            availabilityInfo.style.display = 'none';
+                                        }
+                                    }
+
+                                    function showDateWarning(message) {
+                                        const warningText = document.getElementById('warningText');
+                                        if (dateWarning && warningText) {
+                                            warningText.textContent = message;
+                                            dateWarning.style.display = 'block';
+                                        }
+                                    }
+
+                                    function hideDateWarning() {
+                                        if (dateWarning) {
+                                            dateWarning.style.display = 'none';
+                                        }
+                                    }
+
+                                    function formatDateVN(date) {
+                                        return date.toLocaleDateString('vi-VN', {
+                                            weekday: 'short',
+                                            day: '2-digit',
+                                            month: '2-digit'
+                                        });
+                                    }
+
+                                    // Handle booking form submission
+                                    const bookingForm = document.querySelector('.booking-form');
+                                    if (bookingForm) {
+                                        bookingForm.addEventListener('submit', function (e) {
+                                            e.preventDefault();
+
+                                            // Final validation
+                                            const checkInValid = validateCheckInDate(checkInInput ? checkInInput.value : null);
+                                            const checkOutValid = validateCheckOutDate(
+                                                    checkInInput ? checkInInput.value : null,
+                                                    checkOutInput ? checkOutInput.value : null
+                                                    );
+
+                                            if (!checkInValid || !checkOutValid) {
+                                                showToast('Vui lòng kiểm tra lại ngày nhận phòng và trả phòng', 'error');
+                                                return;
+                                            }
+
+                                            // Show loading state
+                                            if (bookingBtn) {
+                                                const btnText = bookingBtn.querySelector('.btn-text');
+                                                const btnLoading = bookingBtn.querySelector('.btn-loading');
+
+                                                if (btnText && btnLoading) {
+                                                    btnText.style.display = 'none';
+                                                    btnLoading.style.display = 'inline-flex';
+                                                }
+
+                                                bookingBtn.disabled = true;
+                                            }
+
+                                            // Submit form after short delay
+                                            setTimeout(function () {
+                                                bookingForm.submit();
+                                            }, 500);
+                                        });
+                                    }
+
+                                    // Focus on check-in date when page loads
+                                    if (checkInInput) {
+                                        checkInInput.focus();
+                                    }
+
+                                    // Initial animation check
+                                    animateOnScroll();
+
+                                    // Initialize tooltips if any
+                                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                                    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                                    });
+                                });
+
+// Share accommodation function
                                 function shareAccommodation() {
                                     const url = window.location.href;
                                     const accommodationName = '${accommodation.name}';
-                                    const shareText = `Khám phá "${accommodationName}" tại VietCulture: ${url}`;
+                                    const shareText = 'Khám phá "' + accommodationName + '" tại VietCulture: ' + url;
 
                                     if (navigator.share) {
                                         navigator.share({
                                             title: accommodationName,
-                                            text: `Khám phá "${accommodationName}" tại VietCulture`,
+                                            text: 'Khám phá "' + accommodationName + '" tại VietCulture',
                                             url: url
-                                        }).catch(err => console.log('Error sharing:', err));
+                                        }).catch(function (err) {
+                                            console.log('Error sharing:', err);
+                                        });
                                     } else if (navigator.clipboard) {
                                         navigator.clipboard.writeText(shareText)
-                                                .then(() => {
-                                                    showToast(`Đã sao chép link "${accommodationName}"`, 'success');
+                                                .then(function () {
+                                                    showToast('Đã sao chép link "' + accommodationName + '"', 'success');
                                                 })
-                                                .catch(err => {
+                                                .catch(function (err) {
                                                     showToast('Không thể sao chép: ' + err, 'error');
                                                 });
                                     }
                                 }
 
-                                // Save accommodation function
+// Save accommodation function
                                 function saveAccommodation() {
                                     // This would typically save to user's favorites
                                     // For now, just show a toast
@@ -1620,9 +2346,12 @@
                                     }
                                 }
 
-                                // Show toast notification
-                                function showToast(message, type = 'success') {
+// Show toast notification
+                                function showToast(message, type) {
+                                    type = type || 'success';
                                     const toastContainer = document.querySelector('.toast-container');
+                                    if (!toastContainer)
+                                        return;
 
                                     const toast = document.createElement('div');
                                     toast.className = 'toast';
@@ -1634,14 +2363,16 @@
                                         icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
                                     }
 
-                                    toast.innerHTML = `${icon}<span>${message}</span>`;
+                                    toast.innerHTML = icon + '<span>' + message + '</span>';
                                     toastContainer.appendChild(toast);
 
-                                    setTimeout(() => toast.classList.add('show'), 10);
+                                    setTimeout(function () {
+                                        toast.classList.add('show');
+                                    }, 10);
 
-                                    setTimeout(() => {
+                                    setTimeout(function () {
                                         toast.classList.remove('show');
-                                        setTimeout(() => {
+                                        setTimeout(function () {
                                             if (toastContainer.contains(toast)) {
                                                 toastContainer.removeChild(toast);
                                             }
@@ -1649,8 +2380,8 @@
                                     }, 3000);
                                 }
 
-                                // Smooth scroll for anchor links
-                                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+// Smooth scroll for anchor links
+                                document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
                                     anchor.addEventListener('click', function (e) {
                                         e.preventDefault();
                                         const target = document.querySelector(this.getAttribute('href'));
@@ -1663,65 +2394,10 @@
                                     });
                                 });
 
-                                // Initialize page
-                                document.addEventListener('DOMContentLoaded', function () {
-                                    // Initial animation check
-                                    animateOnScroll();
-
-                                    // Focus on check-in date when page loads
-                                    if (checkInInput) {
-                                        checkInInput.focus();
-                                    }
-
-                                    // Initialize tooltips if any
-                                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                                    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                                    });
-                                });
-
-                                // Handle booking form submission
-                                document.querySelector('.booking-form').addEventListener('submit', function (e) {
-                                    // Bỏ e.preventDefault(); để cho phép form submit bình thường
-
-                                    const checkIn = checkInInput.value;
-                                    const checkOut = checkOutInput.value;
-                                    const guests = guestsSelect.value;
-
-                                    if (!checkIn || !checkOut || !guests) {
-                                        showToast('Vui lòng điền đầy đủ thông tin đặt phòng', 'error');
-                                        return;
-                                    }
-
-                                    const checkInDate = new Date(checkIn);
-                                    const checkOutDate = new Date(checkOut);
-
-                                    if (checkOutDate <= checkInDate) {
-                                        showToast('Ngày trả phòng phải sau ngày nhận phòng', 'error');
-                                        return;
-                                    }
-
-                                    // Show loading state
-                                    const submitBtn = this.querySelector('button[type="submit"]');
-                                    const originalText = submitBtn.innerHTML;
-                                    submitBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang xử lý...';
-                                    submitBtn.disabled = true;
-
-                                    // Simulate booking process (replace with actual submission)
-                                    setTimeout(() => {
-                                        showToast('Đặt phòng thành công! Bạn sẽ nhận được email xác nhận.', 'success');
-                                        submitBtn.innerHTML = originalText;
-                                        submitBtn.disabled = false;
-
-                                        // In real implementation, submit the form or redirect
-                                        // this.submit();
-                                    }, 2000);
-                                });
-
-                                // Image lazy loading
+// Image lazy loading
                                 const images = document.querySelectorAll('img');
-                                const imageObserver = new IntersectionObserver((entries, observer) => {
-                                    entries.forEach(entry => {
+                                const imageObserver = new IntersectionObserver(function (entries, observer) {
+                                    entries.forEach(function (entry) {
                                         if (entry.isIntersecting) {
                                             const img = entry.target;
                                             if (img.dataset.src) {
@@ -1733,21 +2409,23 @@
                                     });
                                 });
 
-                                images.forEach(img => imageObserver.observe(img));
+                                images.forEach(function (img) {
+                                    imageObserver.observe(img);
+                                });
         </script>
         <!-- Modal chứa form đánh giá đặt ngay sau action-buttons -->
         <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="reviewModalLabel">Đánh giá chỗ lưu trú</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-              </div>
-              <div class="modal-body">
-                <jsp:include page="/view/jsp/common/review.jsp" />
-              </div>
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="reviewModalLabel">Đánh giá chỗ lưu trú</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body">
+                        <jsp:include page="/view/jsp/common/review.jsp" />
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
     </body>
 </html>

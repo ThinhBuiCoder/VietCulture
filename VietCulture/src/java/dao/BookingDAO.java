@@ -1,5 +1,6 @@
 package dao;
 
+import model.Accommodation;
 import model.Booking;
 import model.Experience;
 import utils.DBUtils;
@@ -137,6 +138,42 @@ public class BookingDAO {
         return 0;
     }
 
+    // Overload createBooking nhận Connection (dùng cho transaction)
+    public int createBooking(Connection conn, Booking booking) throws SQLException {
+        String sql = """
+            INSERT INTO Bookings (experienceId, accommodationId, travelerId, bookingDate, 
+                                bookingTime, numberOfPeople, totalPrice, status, 
+                                specialRequests, contactInfo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setObject(1, booking.getExperienceId());
+            ps.setObject(2, booking.getAccommodationId());
+            ps.setInt(3, booking.getTravelerId());
+            ps.setDate(4, new java.sql.Date(booking.getBookingDate().getTime()));
+            ps.setTime(5, new java.sql.Time(booking.getBookingTime().getTime()));
+            ps.setInt(6, booking.getNumberOfPeople());
+            ps.setDouble(7, booking.getTotalPrice());
+            ps.setString(8, booking.getStatus());
+            ps.setString(9, booking.getSpecialRequests());
+            ps.setString(10, booking.getContactInfo());
+
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int bookingId = generatedKeys.getInt(1);
+                        booking.setBookingId(bookingId);
+                        return bookingId;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
     /**
      * Update booking status
      */
@@ -155,9 +192,9 @@ public class BookingDAO {
     }
 
     // ========== EXPERIENCE BOOKING VALIDATION METHODS ==========
-    
     /**
      * Kiểm tra xem trải nghiệm còn slot trống không
+     *
      * @param experienceId ID của trải nghiệm
      * @param bookingDate Ngày đặt
      * @param timeSlot Khung giờ (morning/afternoon/evening)
@@ -168,13 +205,13 @@ public class BookingDAO {
         // Lấy thông tin trải nghiệm
         ExperienceDAO experienceDAO = new ExperienceDAO();
         Experience experience = experienceDAO.getExperienceById(experienceId);
-        
+
         if (experience == null || !experience.isActive()) {
             return false;
         }
-        
+
         int maxGroupSize = experience.getMaxGroupSize();
-        
+
         // Đếm số người đã đặt trong cùng ngày và khung giờ
         String sql = """
             SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
@@ -184,33 +221,34 @@ public class BookingDAO {
             AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
             AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         """;
-        
-        try (Connection conn = DBUtils.getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, experienceId);
             ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
             ps.setString(3, timeSlot);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int bookedPeople = rs.getInt("bookedPeople");
                     int availableSlots = maxGroupSize - bookedPeople;
-                    
-                    LOGGER.info("Experience " + experienceId + " - Date: " + bookingDate + 
-                               " - TimeSlot: " + timeSlot + " - Booked: " + bookedPeople + 
-                               " - Max: " + maxGroupSize + " - Available: " + availableSlots);
-                    
+
+                    LOGGER.info("Experience " + experienceId + " - Date: " + bookingDate
+                            + " - TimeSlot: " + timeSlot + " - Booked: " + bookedPeople
+                            + " - Max: " + maxGroupSize + " - Available: " + availableSlots);
+
                     return availableSlots >= requestedPeople;
                 }
             }
         }
-        
+
         return false;
     }
-    
+
     /**
-     * Kiểm tra người dùng đã đặt trải nghiệm nào trong cùng ngày và khung giờ chưa
+     * Kiểm tra người dùng đã đặt trải nghiệm nào trong cùng ngày và khung giờ
+     * chưa
+     *
      * @param userId ID người dùng
      * @param bookingDate Ngày đặt
      * @param timeSlot Khung giờ
@@ -227,37 +265,38 @@ public class BookingDAO {
             AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
             AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         """);
-        
+
         if (excludeBookingId != null) {
             sql.append(" AND b.bookingId != ?");
         }
-        
-        try (Connection conn = DBUtils.getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             ps.setInt(1, userId);
             ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
             ps.setString(3, timeSlot);
-            
+
             if (excludeBookingId != null) {
                 ps.setInt(4, excludeBookingId);
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int conflictCount = rs.getInt("conflictCount");
-                    LOGGER.info("User " + userId + " conflict check - Date: " + bookingDate + 
-                               " - TimeSlot: " + timeSlot + " - Conflicts: " + conflictCount);
+                    LOGGER.info("User " + userId + " conflict check - Date: " + bookingDate
+                            + " - TimeSlot: " + timeSlot + " - Conflicts: " + conflictCount);
                     return conflictCount > 0;
                 }
             }
         }
-        
+
         return false;
     }
-    
+
     /**
-     * Kiểm tra người dùng đã đặt trải nghiệm này trong cùng ngày chưa (bất kể khung giờ)
+     * Kiểm tra người dùng đã đặt trải nghiệm này trong cùng ngày chưa (bất kể
+     * khung giờ)
+     *
      * @param userId ID người dùng
      * @param experienceId ID trải nghiệm
      * @param bookingDate Ngày đặt
@@ -273,37 +312,37 @@ public class BookingDAO {
             AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
             AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         """);
-        
+
         if (excludeBookingId != null) {
             sql.append(" AND b.bookingId != ?");
         }
-        
-        try (Connection conn = DBUtils.getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             ps.setInt(1, userId);
             ps.setInt(2, experienceId);
             ps.setDate(3, new java.sql.Date(bookingDate.getTime()));
-            
+
             if (excludeBookingId != null) {
                 ps.setInt(4, excludeBookingId);
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int duplicateCount = rs.getInt("duplicateCount");
-                    LOGGER.info("User " + userId + " duplicate check - Experience: " + experienceId + 
-                               " - Date: " + bookingDate + " - Duplicates: " + duplicateCount);
+                    LOGGER.info("User " + userId + " duplicate check - Experience: " + experienceId
+                            + " - Date: " + bookingDate + " - Duplicates: " + duplicateCount);
                     return duplicateCount > 0;
                 }
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Lấy danh sách booking trải nghiệm theo ngày và khung giờ
+     *
      * @param experienceId ID trải nghiệm
      * @param bookingDate Ngày đặt
      * @param timeSlot Khung giờ
@@ -311,7 +350,7 @@ public class BookingDAO {
      */
     public List<Booking> getExperienceBookingsByDateAndTimeSlot(int experienceId, Date bookingDate, String timeSlot) throws SQLException {
         List<Booking> bookings = new ArrayList<>();
-        
+
         String sql = """
             SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
                    b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
@@ -326,14 +365,13 @@ public class BookingDAO {
             AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
             ORDER BY b.createdAt ASC
         """;
-        
-        try (Connection conn = DBUtils.getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, experienceId);
             ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
             ps.setString(3, timeSlot);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Booking booking = mapBookingFromResultSet(rs);
@@ -343,19 +381,20 @@ public class BookingDAO {
                 }
             }
         }
-        
+
         return bookings;
     }
-    
+
     /**
      * Lấy thống kê slot đã đặt cho trải nghiệm theo ngày
+     *
      * @param experienceId ID trải nghiệm
      * @param bookingDate Ngày đặt
      * @return Map với key là timeSlot và value là số người đã đặt
      */
     public Map<String, Integer> getExperienceBookingStatsByDate(int experienceId, Date bookingDate) throws SQLException {
         Map<String, Integer> stats = new HashMap<>();
-        
+
         String sql = """
             SELECT JSON_VALUE(b.contactInfo, '$.timeSlot') as timeSlot,
                    SUM(b.numberOfPeople) as bookedPeople
@@ -366,13 +405,12 @@ public class BookingDAO {
             AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
             GROUP BY JSON_VALUE(b.contactInfo, '$.timeSlot')
         """;
-        
-        try (Connection conn = DBUtils.getConnection(); 
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, experienceId);
             ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String timeSlot = rs.getString("timeSlot");
@@ -383,12 +421,12 @@ public class BookingDAO {
                 }
             }
         }
-        
+
         // Đảm bảo có tất cả time slots với giá trị 0 nếu chưa có booking
         stats.putIfAbsent("morning", 0);
         stats.putIfAbsent("afternoon", 0);
         stats.putIfAbsent("evening", 0);
-        
+
         return stats;
     }
 
@@ -813,6 +851,242 @@ public class BookingDAO {
         }
         return 0;
     }
+// Thêm vào BookingDAO.java - Các phương thức validation cho room booking
+
+    /**
+     * Kiểm tra số phòng còn trống cho accommodation (dùng transaction và lock)
+     */
+    public boolean isAccommodationRoomAvailable(Connection conn, int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        // Lấy thông tin accommodation
+        AccommodationDAO accommodationDAO = new AccommodationDAO();
+        Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
+
+        if (accommodation == null || !accommodation.isActive()) {
+            return false;
+        }
+
+        int totalRooms = accommodation.getNumberOfRooms();
+
+        // Đếm số phòng đã được đặt trong khoảng thời gian này, lock dòng booking liên quan
+        String sql = """
+        SELECT ISNULL(SUM(CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)), 0) as bookedRooms
+        FROM Bookings b WITH (UPDLOCK, ROWLOCK)
+        WHERE b.accommodationId = ? 
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int bookedRooms = rs.getInt("bookedRooms");
+                    int availableRooms = totalRooms - bookedRooms;
+
+                    LOGGER.info("[TX] Accommodation " + accommodationId + " - Date range: " + checkInDate + " to " + checkOutDate
+                            + " - Booked: " + bookedRooms + " - Total: " + totalRooms + " - Available: " + availableRooms);
+
+                    return availableRooms >= requestedRooms;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Kiểm tra người dùng đã đặt accommodation nào trong cùng khoảng thời gian
+     * chưa
+     *
+     * @param userId ID người dùng
+     * @param checkInDate Ngày nhận phòng
+     * @param checkOutDate Ngày trả phòng
+     * @param excludeBookingId ID booking cần loại trừ (khi update)
+     * @return true nếu đã có booking trùng lặp về thời gian
+     */
+    public boolean hasConflictingAccommodationBooking(int userId, Date checkInDate, Date checkOutDate, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*) as conflictCount
+        FROM Bookings b
+        INNER JOIN Accommodations a ON b.accommodationId = a.accommodationId
+        WHERE b.travelerId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+    """);
+
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            ps.setInt(1, userId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            if (excludeBookingId != null) {
+                ps.setInt(8, excludeBookingId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int conflictCount = rs.getInt("conflictCount");
+                    LOGGER.info("User " + userId + " accommodation conflict check - Date range: " + checkInDate + " to " + checkOutDate
+                            + " - Conflicts: " + conflictCount);
+                    return conflictCount > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lấy thống kê phòng đã đặt cho accommodation theo khoảng thời gian
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày bắt đầu
+     * @param checkOutDate Ngày kết thúc
+     * @return Số phòng đã được đặt
+     */
+    public int getBookedRoomsCount(int accommodationId, Date checkInDate, Date checkOutDate) throws SQLException {
+        String sql = """
+        SELECT ISNULL(SUM(CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)), 0) as bookedRooms
+        FROM Bookings b
+        WHERE b.accommodationId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+    """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("bookedRooms");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Lấy danh sách booking accommodation theo khoảng thời gian
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày bắt đầu
+     * @param checkOutDate Ngày kết thúc
+     * @return Danh sách booking
+     */
+    public List<Booking> getAccommodationBookingsByDateRange(int accommodationId, Date checkInDate, Date checkOutDate) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+        SELECT b.bookingId, b.accommodationId, b.travelerId,
+               b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+               b.status, b.specialRequests, b.contactInfo, b.createdAt,
+               a.name as accommodationName, u.fullName as travelerName, u.email as travelerEmail
+        FROM Bookings b
+        INNER JOIN Accommodations a ON b.accommodationId = a.accommodationId
+        INNER JOIN Users u ON b.travelerId = u.userId
+        WHERE b.accommodationId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+        ORDER BY CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) ASC
+    """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    booking.setTravelerName(rs.getString("travelerName"));
+                    booking.setTravelerEmail(rs.getString("travelerEmail"));
+
+                    // Parse additional info from contactInfo JSON
+                    String contactInfo = rs.getString("contactInfo");
+                    if (contactInfo != null) {
+                        try {
+                            // Extract room quantity and dates from JSON
+                            // This is a simple extraction - in production, consider using a JSON library
+                            if (contactInfo.contains("\"roomQuantity\":")) {
+                                // Extract room quantity value
+                                // Implementation depends on your JSON parsing preference
+                            }
+                        } catch (Exception e) {
+                            LOGGER.log(Level.WARNING, "Error parsing contact info JSON", e);
+                        }
+                    }
+
+                    bookings.add(booking);
+                }
+            }
+        }
+
+        return bookings;
+    }
 
     /**
      * Get all bookings by host (no pagination)
@@ -847,5 +1121,12 @@ public class BookingDAO {
             }
         }
         return bookings;
+    }
+
+    // Hàm cũ giữ lại để không lỗi các chỗ gọi cũ
+    public boolean isAccommodationRoomAvailable(int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        try (Connection conn = DBUtils.getConnection()) {
+            return isAccommodationRoomAvailable(conn, accommodationId, checkInDate, checkOutDate, requestedRooms);
+        }
     }
 }

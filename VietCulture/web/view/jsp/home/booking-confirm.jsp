@@ -243,7 +243,7 @@
             }
 
             .service-info.accommodation {
-                background: rgba(131, 197, 190, 0.1);  
+                background: rgba(131, 197, 190, 0.1);
                 border-left: 4px solid var(--secondary-color);
             }
 
@@ -724,7 +724,7 @@
                                     <h4>${accommodation.name}</h4>
                                     <p><i class="ri-map-pin-line me-1"></i> ${accommodation.address}</p>
                                     <p><i class="ri-hotel-line me-1"></i> ${accommodation.type}</p>
-                                    <p><i class="ri-door-line me-1"></i> ${accommodation.numberOfRooms} phòng</p>
+                                    <p><i class="ri-door-line me-1"></i> ${accommodation.numberOfRooms} phòng có sẵn</p>
                                 </div>
                             </div>
 
@@ -743,17 +743,16 @@
                                 <span class="detail-value">${formData.numberOfNights} đêm</span>
                             </div>
 
+                            <!-- NEW: Display Room Quantity -->
+                            <div class="detail-row">
+                                <span class="detail-label">Số phòng:</span>
+                                <span class="detail-value">${formData.roomQuantity} phòng</span>
+                            </div>
+
                             <div class="detail-row">
                                 <span class="detail-label">Số khách:</span>
                                 <span class="detail-value">${formData.numberOfPeople} khách</span>
                             </div>
-
-                            <c:if test="${not empty formData.roomType}">
-                                <div class="detail-row">
-                                    <span class="detail-label">Loại phòng:</span>
-                                    <span class="detail-value">${formData.roomType}</span>
-                                </div>
-                            </c:if>
                         </c:if>
 
                         <!-- Common Special Requests -->
@@ -908,10 +907,10 @@
                                 <span>
                                     <c:choose>
                                         <c:when test="${not empty accommodation}">
-                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfNights} đêm
+                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng
                                         </c:when>
                                         <c:otherwise>
-                                            Giá phòng × ${formData.numberOfNights} đêm
+                                            Giá phòng × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng
                                         </c:otherwise>
                                     </c:choose>
                                 </span>
@@ -920,7 +919,6 @@
                                 </span>
                             </div>
                         </c:if>
-
                         <div class="price-row">
                             <span>Phí dịch vụ (5%)</span>
                             <span>
@@ -984,114 +982,114 @@
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-            // Payment method selection
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
-            const cashPaymentBtn = document.getElementById('cashPaymentBtn');
-            const onlinePaymentBtn = document.getElementById('onlinePaymentBtn');
+                                // Payment method selection
+                                const paymentMethods = document.querySelectorAll('.payment-method');
+                                const paymentRadios = document.querySelectorAll('input[name="paymentMethod"]');
+                                const cashPaymentBtn = document.getElementById('cashPaymentBtn');
+                                const onlinePaymentBtn = document.getElementById('onlinePaymentBtn');
 
-            paymentMethods.forEach((method, index) => {
-                method.addEventListener('click', function () {
-                    // Remove selected class from all methods
-                    paymentMethods.forEach(m => m.classList.remove('selected'));
+                                paymentMethods.forEach((method, index) => {
+                                    method.addEventListener('click', function () {
+                                        // Remove selected class from all methods
+                                        paymentMethods.forEach(m => m.classList.remove('selected'));
 
-                    // Add selected class to clicked method
-                    this.classList.add('selected');
+                                        // Add selected class to clicked method
+                                        this.classList.add('selected');
 
-                    // Check the radio button
-                    paymentRadios[index].checked = true;
+                                        // Check the radio button
+                                        paymentRadios[index].checked = true;
 
-                    // Update button visibility
-                    updateButtonVisibility();
-                });
-            });
+                                        // Update button visibility
+                                        updateButtonVisibility();
+                                    });
+                                });
 
-            function updateButtonVisibility() {
-                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-                if (selectedMethod === 'cash') {
-                    cashPaymentBtn.style.display = 'block';
-                    onlinePaymentBtn.style.display = 'none';
-                } else {
-                    cashPaymentBtn.style.display = 'none';
-                    onlinePaymentBtn.style.display = 'block';
-                }
-            }
+                                function updateButtonVisibility() {
+                                    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                                    if (selectedMethod === 'cash') {
+                                        cashPaymentBtn.style.display = 'block';
+                                        onlinePaymentBtn.style.display = 'none';
+                                    } else {
+                                        cashPaymentBtn.style.display = 'none';
+                                        onlinePaymentBtn.style.display = 'block';
+                                    }
+                                }
 
-            // Form submission functions
-            const confirmForm = document.getElementById('confirmForm');
-            const agreeTerms = document.getElementById('agreeTerms');
+                                // Form submission functions
+                                const confirmForm = document.getElementById('confirmForm');
+                                const agreeTerms = document.getElementById('agreeTerms');
 
-            function validateForm() {
-                if (!agreeTerms.checked) {
-                    alert('Vui lòng đồng ý với điều khoản sử dụng để tiếp tục.');
-                    return false;
-                }
-                return true;
-            }
+                                function validateForm() {
+                                    if (!agreeTerms.checked) {
+                                        alert('Vui lòng đồng ý với điều khoản sử dụng để tiếp tục.');
+                                        return false;
+                                    }
+                                    return true;
+                                }
 
-            function setFormAction(action) {
-                // Validate form first
-                if (!validateForm()) {
-                    return;
-                }
+                                function setFormAction(action) {
+                                    // Validate form first
+                                    if (!validateForm()) {
+                                        return;
+                                    }
 
-                const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+                                    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
 
-                // Validate payment method matches action
-                if (action === 'payment' && selectedMethod !== 'online') {
-                    alert('Vui lòng chọn phương thức thanh toán online.');
-                    return;
-                }
-                if (action === 'confirm' && selectedMethod !== 'cash') {
-                    alert('Vui lòng chọn phương thức thanh toán tiền mặt.');
-                    return;
-                }
+                                    // Validate payment method matches action
+                                    if (action === 'payment' && selectedMethod !== 'online') {
+                                        alert('Vui lòng chọn phương thức thanh toán online.');
+                                        return;
+                                    }
+                                    if (action === 'confirm' && selectedMethod !== 'cash') {
+                                        alert('Vui lòng chọn phương thức thanh toán tiền mặt.');
+                                        return;
+                                    }
 
-                // Set the correct action
-                if (action === 'payment') {
-                    document.getElementById('formAction').value = 'payos-payment';
-                } else {
-                    document.getElementById('formAction').value = 'confirm';
-                }
+                                    // Set the correct action
+                                    if (action === 'payment') {
+                                        document.getElementById('formAction').value = 'payos-payment';
+                                    } else {
+                                        document.getElementById('formAction').value = 'confirm';
+                                    }
 
-                // Show loading state
-                showLoadingState(action === 'confirm' ? 'cashPaymentBtn' : 'onlinePaymentBtn');
+                                    // Show loading state
+                                    showLoadingState(action === 'confirm' ? 'cashPaymentBtn' : 'onlinePaymentBtn');
 
-                // Submit the form
-                confirmForm.submit();
-            }
+                                    // Submit the form
+                                    confirmForm.submit();
+                                }
 
-            function showLoadingState(buttonId) {
-                const btn = document.getElementById(buttonId);
-                const btnText = btn.querySelector('.btn-text');
-                const btnLoading = btn.querySelector('.btn-loading');
+                                function showLoadingState(buttonId) {
+                                    const btn = document.getElementById(buttonId);
+                                    const btnText = btn.querySelector('.btn-text');
+                                    const btnLoading = btn.querySelector('.btn-loading');
 
-                btnText.classList.add('d-none');
-                btnLoading.classList.remove('d-none');
-                btn.disabled = true;
-            }
+                                    btnText.classList.add('d-none');
+                                    btnLoading.classList.remove('d-none');
+                                    btn.disabled = true;
+                                }
 
-            // Add click event listeners to buttons
-            document.addEventListener('DOMContentLoaded', function () {
-                updateButtonVisibility();
+                                // Add click event listeners to buttons
+                                document.addEventListener('DOMContentLoaded', function () {
+                                    updateButtonVisibility();
 
-                // Cash payment button
-                cashPaymentBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    setFormAction('confirm');
-                });
+                                    // Cash payment button
+                                    cashPaymentBtn.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        setFormAction('confirm');
+                                    });
 
-                // Online payment button - Updated for PayOS
-                onlinePaymentBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    setFormAction('payment');
-                });
-            });
+                                    // Online payment button - Updated for PayOS
+                                    onlinePaymentBtn.addEventListener('click', function (e) {
+                                        e.preventDefault();
+                                        setFormAction('payment');
+                                    });
+                                });
 
-            // Auto-scroll to top on page load
-            window.addEventListener('load', function () {
-                window.scrollTo(0, 0);
-            });
+                                // Auto-scroll to top on page load
+                                window.addEventListener('load', function () {
+                                    window.scrollTo(0, 0);
+                                });
         </script>
     </body>
 </html>

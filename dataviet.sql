@@ -153,6 +153,11 @@ CREATE TABLE Accommodations (
 );
 GO
 
+-- Thêm cột maxOccupancy vào bảng Accommodations
+ALTER TABLE Accommodations 
+ADD maxOccupancy INT NOT NULL DEFAULT 2;
+GO
+
 -- Bảng Bookings
 CREATE TABLE Bookings (
     bookingId INT PRIMARY KEY IDENTITY(1,1),
@@ -516,64 +521,64 @@ INSERT INTO Experiences (hostId, title, description, location, cityId, type, pri
 (4, N'Thử sức làm thủ công kẹo dừa Bến Tre', N'Bến Tre được xem là "thủ phủ" của dừa miền Tây với hàng triệu cây dừa xanh ngát. Từ đó, kẹo dừa ra đời như một món quà truyền thống độc đáo, gắn bó với văn hóa người dân địa phương từ nhiều thập kỷ. Kẹo dừa được làm từ nước cốt dừa, đường, bột nếp và sữa tươi, sau đó kéo thành những sợi dài, mềm dẻo và có mùi thơm béo đặc trưng. Kẹo dừa thường có nhiều vị như dừa truyền thống, dừa sữa, dừa cacao, hoặc kèm hạt điều, mè rang tạo thêm hương vị hấp dẫn. Kẹo dừa không chỉ ngon mà còn là biểu tượng của Bến Tre, rất được ưa chuộng làm quà biếu trong và ngoài nước. Bạn có thể đến tận nơi để xem quy trình làm kẹo truyền thống, tìm hiểu cách người thợ lành nghề kéo kẹo thành những sợi mịn màng, dẻo dai.', N'3A Nguyễn Đình Chiểu, TP Bến Tre', 16, N'Adventure', 150000, 12, '03:00:00', 'EASY', 'Vietnamese', N'Hướng dẫn, Nước uống', N'Sức khỏe tốt', N'KeoDua2.jpg', 1);
 GO
 
--- Chèn toàn bộ Accommodations
-INSERT INTO Accommodations (hostId, name, description, cityId, address, type, numberOfRooms, amenities, pricePerNight, images, isActive) VALUES
-(1, N'Căn hộ Lam Home Seaview', N'Căn hộ sang trọng với tầm nhìn toàn cảnh vịnh Hạ Long', 4, N'123 Đường Bãi Cháy, Hạ Long, Quảng Ninh', 'Homestay', 2, N'Wifi, Điều hòa, Ban công, Tầm nhìn biển, TV thông minh', 1500000, N'lam.jpg', 1),
-(2, N'Homestay Lily Hạ Long - Phòng 203', N'Phòng nghỉ ấm cúng gần bãi biển, lý tưởng cho cặp đôi', 4, N'456 Đường Hạ Long, Hạ Long, Quảng Ninh', 'Homestay', 1, N'Wifi, Điều hòa, Tủ lạnh, Bếp nhỏ', 700000, N'lily.jpg', 1),
-(56, N'Phòng gia đình nhìn ra biển bởi Ahana Homestay HL', N'Phòng rộng rãi cho gia đình, gần vịnh Hạ Long', 4, N'789 Đường Tuần Châu, Hạ Long, Quảng Ninh', 'Homestay', 3, N'Wifi, Điều hòa, Ban công, Bữa sáng miễn phí', 1800000, N'ahana.jpg', 1),
-(4, N'Studio Ocean Blue bên bờ biển Giường Chill & Super King', N'Studio hiện đại với giường cỡ lớn, view biển tuyệt đẹp', 4, N'101 Đường Bãi Cháy, Hạ Long, Quảng Ninh', 'Homestay', 1, N'Wifi, Điều hòa, Ban công, TV, Tầm nhìn biển', 1200000, N'ocean.jpg', 1),
-(5, N'Hanoi Park House 2.1 - Ban công - Khu phố cổ', N'Nhà nghỉ phong cách hiện đại, gần phố cổ Hà Nội', 1, N'123 Phố Hàng Bạc, Hoàn Kiếm, Hà Nội', 'Homestay', 2, N'Wifi, Điều hòa, Ban công, Bếp chung', 900000, N'a1.jpg', 1),
-(6, N'Homestay Đống Đa, Việt Nam', N'Ngôi nhà riêng biệt, lý tưởng cho nhóm bạn hoặc gia đình', 1, N'456 Đường Láng, Đống Đa, Hà Nội', 'Homestay', 4, N'Wifi, Điều hòa, Máy giặt, Bếp đầy đủ, Bãi đỗ xe', 2200000, N'b1.jpg', 1),
-(7, N'Tuyệt đẹp Lakeview-Balcony&Projector-Brand mới', N'Căn hộ mới với view hồ Tây, có máy chiếu giải trí', 1, N'789 Đường Tây Hồ, Tây Hồ, Hà Nội', 'Homestay', 2, N'Wifi, Điều hòa, Máy chiếu, Ban công, Tầm nhìn hồ', 1600000, N'c1.jpg', 1),
-(8, N'Vista 9 Skyline Suite A Poetic Gaze Over Hanoi', N'Căn hộ cao cấp với tầm nhìn toàn cảnh Hà Nội', 1, N'101 Phố Hàng Đào, Hoàn Kiếm, Hà Nội', 'Hotel', 3, N'Wifi, Điều hòa, Minibar, Tầm nhìn thành phố, Phòng gym', 2500000, N'd1.jpg', 1),
-(9, N'$Bigsale - căn hộ cao cấp tại HP - Diamond Crown', N'Căn hộ sang trọng tại khu Diamond Crown Hải Phòng', 2, N'123 Đường Lê Lợi, Ngô Quyền, Hải Phòng', 'Hotel', 2, N'Wifi, Hồ bơi, Phòng gym, Bữa sáng miễn phí', 1400000, N'e.jpg', 1),
-(10, N'Căn hộ tại HaiPhong Center - 2 phòng ngủ, 2 phòng tắm', N'Căn hộ tiện nghi tại trung tâm Hải Phòng, gần cảng', 2, N'456 Đường Cát Dài, Lê Chân, Hải Phòng', 'Homestay', 2, N'Wifi, Điều hòa, Bếp, Máy giặt', 1100000, N'f.jpg', 1),
-(11, N'Homestay Nhà Ann - Phòng Haru', N'Phòng nghỉ phong cách Nhật Bản, gần trung tâm', 2, N'789 Đường Đà Nẵng, Hải An, Hải Phòng', 'Homestay', 1, N'Wifi, Điều hòa, Tủ lạnh, Bữa sáng nhẹ', 750000, N'g.jpg', 1),
-(12, N'Nhà Bim', N'Nhà nghỉ đơn giản, gần cảng, phù hợp cho khách du lịch tiết kiệm', 2, N'101 Đường Lạch Tray, Ngô Quyền, Hải Phòng', 'Guesthouse', 3, N'Wifi, Điều hòa, Bãi đỗ xe, Quạt', 600000, N'h.jpg', 1),
-(13, N'Bungalow đôi có bồn tắm Lotus Field Homestay', N'Bungalow lãng mạn với bồn tắm riêng, gần Tam Cốc', 5, N'123 Đường Tam Cốc, Hoa Lư, Ninh Bình', 'Homestay', 1, N'Wifi, Điều hòa, Bồn tắm, Vườn, Xe đạp miễn phí', 1000000, N'n.jpg', 1),
-(14, N'Homestay Amy House yên bình 1 phòng', N'Phòng nghỉ yên tĩnh, gần khu du lịch Tràng An', 5, N'456 Đường Tràng An, Ninh Bình', 'Homestay', 1, N'Wifi, Điều hòa, Vườn, Bữa sáng địa phương', 650000, N'j.jpg', 1),
-(15, N'The Wooden Gate Ninh Bình - Jasmine Flower King', N'Phòng nghỉ sang trọng với phong cách thiên nhiên', 5, N'789 Đường Tam Cốc, Hoa Lư, Ninh Bình', 'Homestay', 2, N'Wifi, Điều hòa, Tầm nhìn núi, Xe đạp miễn phí', 1300000, N's.jpg', 1),
-(16, N'The Wooden Gate Ninh Bình - Tropical Bunk Suite', N'Phòng nghỉ độc đáo với giường tầng, gần Tràng An', 5, N'101 Đường Tràng An, Ninh Bình', 'Homestay', 2, N'Wifi, Điều hòa, Ban công, Tầm nhìn đồng lúa', 950000, N'aaaaa.jpg', 1),
-(17, N'Coconut Room - Nhà Mơ Homestay Bến Tre', N'Phòng nghỉ mộc mạc giữa vườn dừa, trải nghiệm miền Tây', 16, N'123 Đường Miệt Vườn, Mỏ Cày Nam, Bến Tre', 'Homestay', 1, N'Wifi, Quạt, Xe đạp miễn phí, Vườn dừa, Bữa sáng địa phương', 600000, N'oo.jpg', 1),
-(18, N'Comfy 1 Riverside Mekong Bến Tre homestay', N'Homestay ấm cúng bên sông Mekong, gần chợ nổi', 16, N'456 Đường Sông Cái, Châu Thành, Bến Tre', 'Homestay', 1, N'Wifi, Điều hòa, Thuyền chèo, Bữa sáng nhẹ', 650000, N'ax.jpg', 1),
-(19, N'Haven Nest retreat ( Grasshopper-châu chấu)', N'Phòng nghỉ độc đáo lấy cảm hứng từ thiên nhiên, gần sông', 16, N'789 Đường Phú Lễ, Ba Tri, Bến Tre', 'Homestay', 2, N'Wifi, Điều hòa, Vườn, Tầm nhìn sông', 800000, N'kkk.jpg', 1),
-(20, N'Haven Nest Retreat (Grey Featherback - Cá Mè Dinh)', N'Phòng nghỉ sang trọng với phong cách miền Tây, gần vườn dừa', 16, N'101 Đường Mỏ Cày, Bến Tre', 'Homestay', 2, N'Wifi, Điều hòa, Thuyền chèo, Vườn dừa', 850000, N'aq.jpg', 1),
-(21, N'Chậm Garden - Cảm nhận cuộc sống thiên nhiên', N'Homestay yên bình gần chợ nổi Cái Răng, hòa mình vào thiên nhiên', 13, N'123 Đường Cái Răng, Ninh Kiều, Cần Thơ', 'Homestay', 2, N'Wifi, Quạt, Xe đạp miễn phí, Vườn, Bữa sáng địa phương', 700000, N'sa.jpg', 1),
-(22, N'Midmost Casa - Superior Studio', N'Studio hiện đại, nằm ngay trung tâm Cần Thơ', 13, N'456 Đường Nguyễn Trãi, Ninh Kiều, Cần Thơ', 'Homestay', 1, N'Wifi, Điều hòa, Bếp nhỏ, TV thông minh', 900000, N'sd.jpg', 1),
-(23, N'Miha Villa 1 - Nhà tại Cần Thơ', N'Ngôi nhà riêng biệt, lý tưởng cho gia đình hoặc nhóm bạn', 13, N'789 Đường 30/4, Ninh Kiều, Cần Thơ', 'Homestay', 3, N'Wifi, Điều hòa, Bếp đầy đủ, Máy giặt, Bãi đỗ xe', 1500000, N'sw.jpg', 1),
-(24, N'pipo house - nắng đẹp, 1br', N'Phòng nghỉ đầy nắng, gần trung tâm Cần Thơ', 13, N'101 Đường Lê Lợi, Ninh Kiều, Cần Thơ', 'Guesthouse', 1, N'Wifi, Điều hòa, Ban công, Bữa sáng nhẹ', 750000, N'se.jpg', 1),
-(25, N'Căn Family nguyên căn 2 phòng ngủ- Lavita home', N'Căn hộ gia đình tiện nghi, gần trung tâm Đà Lạt', 15, N'123 Đường Nguyễn Thị Minh Khai, Phường 1, Đà Lạt', 'Homestay', 2, N'Wifi, Sưởi, Bếp, Ban công, Tầm nhìn đồi thông', 1200000, N'sr.jpg', 1),
-(26, N'Mối Tình Đầu Homestay Bus Room', N'Phòng nghỉ độc đáo thiết kế như xe buýt, gần hồ Xuân Hương', 15, N'456 Đường Hồ Xuân Hương, Phường 9, Đà Lạt', 'Homestay', 1, N'Wifi, Sưởi, Tủ lạnh, Vườn hoa', 850000, N'st.jpg', 1),
-(27, N'South Of The border - Phia Nam Biên Gioi', N'Homestay phong cách vintage, gần Thung Lũng Tình Yêu', 15, N'789 Đường Trại Mát, Phường 11, Đà Lạt', 'Homestay', 2, N'Wifi, Sưởi, Ban công, Lò sưởi', 1000000, N'sy.jpg', 1),
-(28, N'Summery - Nhà của Eiji', N'Ngôi nhà phong cách Nhật Bản, không gian ấm cúng ở Đà Lạt', 15, N'101 Đường Lê Hồng Phong, Phường 4, Đà Lạt', 'Homestay', 2, N'Wifi, Sưởi, Vườn, Bữa sáng kiểu Nhật', 1100000, N'su.jpg', 1),
-(29, N'Casa CoCore TimeOut khu phố thú vị nhất Sài Gòn', N'Căn hộ cao cấp ở trung tâm Quận 1, gần phố đi bộ Nguyễn Huệ', 11, N'123 Đường Lê Lợi, Quận 1, TP.HCM', 'Hotel', 2, N'Wifi, Điều hòa, Hồ bơi, Phòng gym, Minibar', 2000000, N'ds.jpg', 1),
-(30, N'ĐaKao Vibe Retro Studio GB in Center by Circadian', N'Studio phong cách retro ở khu Đa Kao sầm uất', 11, N'456 Đường Đinh Tiên Hoàng, Quận 1, TP.HCM', 'Homestay', 1, N'Wifi, Điều hòa, Bếp nhỏ, TV thông minh', 950000, N'da.jpg', 1),
-(1, N'Huế Studio gần đường Bùi Viện Em''s Home 5', N'Studio sôi động gần khu phố Tây Bùi Viện', 11, N'789 Đường Bùi Viện, Quận 1, TP.HCM', 'Homestay', 1, N'Wifi, Điều hòa, Ban công, Tủ lạnh', 900000, N'df.jpg', 1),
-(2, N'Mây 3 - Studio đầy đủ tiện nghi', N'Studio hiện đại gần chợ Bến Thành, tiện nghi đầy đủ', 11, N'101 Đường Lê Thị Riêng, Quận 1, TP.HCM', 'Guesthouse', 1, N'Wifi, Điều hòa, Bếp, TV thông minh', 850000, N'dg.jpg', 1),
-(56, N'Bigphil Home - Một ngôi nhà Santorini ấm cúng có bếp', N'Homestay phong cách Santorini, gần bãi biển Vũng Tàu', 12, N'123 Đường Bãi Sau, TP. Vũng Tàu', 'Homestay', 2, N'Wifi, Điều hòa, Bếp, Ban công, Tầm nhìn biển', 1200000, N'ca.jpg', 1),
-(4, N'Căn hộ ven biển CSJ Tower có tầm nhìn tuyệt đẹp [22 Lagom]', N'Căn hộ cao cấp với view biển tại CSJ Tower', 12, N'456 Đường Thùy Vân, TP. Vũng Tàu', 'Hotel', 2, N'Wifi, Điều hòa, Hồ bơi, Phòng gym, Tầm nhìn biển', 1800000, N'cs.jpg', 1),
-(5, N'Leo House - Tòa nhà The Song (Angia)', N'Căn hộ sang trọng trong tòa The Song, gần bãi biển', 12, N'789 Đường Lê Hồng Phong, TP. Vũng Tàu', 'Hotel', 3, N'Wifi, Điều hòa, Hồ bơi, Minibar, Bãi đỗ xe', 2000000, N'cd.jpg', 1),
-(6, N'Nhà Lily - Phòng Xanh, 1 phòng ngủ & phòng tắm riêng', N'Phòng nghỉ màu xanh, gần bãi biển Vũng Tàu', 12, N'101 Đường Hạ Long, TP. Vũng Tàu', 'Homestay', 1, N'Wifi, Điều hòa, Ban công, Tầm nhìn biển, Bữa sáng nhẹ', 900000, N'cf.jpg', 1),
-(7, N'Family Home Villa Bà Nà Hill Sun World', N'Biệt thự gia đình gần khu du lịch Bà Nà Hills', 6, N'123 Đường Bà Nà, Đà Nẵng', 'Resort', 8, N'Wifi, Hồ bơi, Bãi đỗ xe, Bữa sáng miễn phí', 2500000, N'qa.jpg', 1),
-(8, N'Jhome-2BR-Fully Furnished', N'Căn hộ 2 phòng ngủ đầy đủ tiện nghi gần trung tâm', 6, N'45 Nguyễn Văn Linh, Đà Nẵng', 'Homestay', 2, N'Wifi, Máy giặt, Ban công', 800000, N'qw.jpg', 1),
-(9, N'May Home RoomWasherBalcony5 phút đến Bãi biển Mỹ Khê', N'Phòng nghỉ tiện nghi cách bãi biển Mỹ Khê 5 phút', 6, N'78 Võ Nguyên Giáp, Đà Nẵng', 'Homestay', 3, N'Wifi, Máy giặt, Ban công, Điều hòa', 600000, N'qs.jpg', 1),
-(10, N'Mon Fiori Homestay x Moana Modern Apartment', N'Căn hộ hiện đại phong cách Mon Fiori gần biển', 6, N'12 An Thượng, Đà Nẵng', 'Homestay', 4, N'Wifi, Bếp, Ban công, TV', 900000, N'qf.jpg', 1),
-(11, N'1107ss Deluxe Ocean View miễn phí đón 1 chiều', N'Căn hộ sang trọng với tầm nhìn biển, miễn phí đưa đón', 6, N'56 Võ Nguyên Giáp, Đà Nẵng', 'Hotel', 5, N'Wifi, Hồ bơi, Đưa đón sân bay', 1500000, N'we.jpg', 1),
-(12, N'Căn HỘ Poetic Riverside Attic ở Hội An - Chợ đêm', N'Căn hộ thơ mộng gần chợ đêm Hội An', 8, N'23 Nguyễn Hoàng, Hội An', 'Homestay', 2, N'Wifi, Điều hòa, Xe đạp miễn phí', 700000, N'wa.jpg', 1),
-(13, N'Chilling Hoi An APT-BTW An An Bàng Beach+Ancient Town', N'Căn hộ thư giãn giữa bãi biển An Bàng và phố cổ', 8, N'45 Cửa Đại, Hội An', 'Homestay', 3, N'Wifi, Bếp, Ban công, Xe đạp', 850000, N'wd.jpg', 1),
-(14, N'Zen House-WoodenHouse Japan Style gần Trung tâm', N'Nhà gỗ phong cách Nhật Bản gần trung tâm Hội An', 8, N'67 Trần Nhân Tông, Hội An', 'Homestay', 2, N'Wifi, Điều hòa, Vườn nhỏ', 750000, N'wz.jpg', 1),
-(15, N'Limdim Here - Phòng ''ici'' cho 2 khách', N'Phòng nghỉ ấm cúng cho 2 người tại Huế', 7, N'12 Lê Lợi, Huế', 'Guesthouse', 1, N'Wifi, Điều hòa, Bữa sáng', 500000, N'za.jpg', 1),
-(16, N'NguyễnHouse# StudioRoomtại Trung tâm thành phố Huế', N'Phòng studio hiện đại tại trung tâm Huế', 7, N'34 Nguyễn Trãi, Huế', 'Homestay', 1, N'Wifi, Bếp, Điều hòa', 550000, N'xz.jpg', 1),
-(17, N'Nhà Ngau - phòng ''Métro'' cho 2 khách', N'Phòng phong cách Métro độc đáo tại Huế', 7, N'56 Phạm Ngũ Lão, Huế', 'Guesthouse', 1, N'Wifi, Điều hòa, Bữa sáng miễn phí', 520000, N'xc.jpg', 1),
-(18, N'Phòng tại khách sạn boutique tại Hue, Việt Nam', N'Phòng boutique sang trọng tại trung tâm Huế', 7, N'78 Hùng Vương, Huế', 'Hotel', 4, N'Wifi, Hồ bơi, Bữa sáng, Spa', 1200000, N'xv.jpg', 1),
-(19, N'Coral House -3 BR- FULL HOUSE - 700 m ra bãi biển', N'Nhà 3 phòng ngủ gần bãi biển Nha Trang', 9, N'23 Trần Phú, Nha Trang', 'Homestay', 3, N'Wifi, Bếp, Ban công, Điều hòa', 1000000, N'xq.jpg', 1),
-(20, N'Serenity RiverView 2 giường, phía trên SeaView Charm', N'Căn hộ 2 giường với tầm nhìn sông và biển', 9, N'45 Nguyễn Thị Minh Khai, Nha Trang', 'Homestay', 2, N'Wifi, Ban công, Điều hòa', 900000, N'xe.jpg', 1),
-(21, N'The Hiden House( 5 phút đến trung tâm bãi biển)', N'Nhà nghỉ gần trung tâm và bãi biển Nha Trang', 9, N'67 Lê Đại Hành, Nha Trang', 'Homestay', 3, N'Wifi, Bếp, Điều hòa, Xe đạp', 800000, N'vc.jpg', 1),
-(22, N'White Oceanus Cozy 2BR 36Fl SeaviewApt-4km toCenter', N'Căn hộ tầng 36 với tầm nhìn biển tuyệt đẹp', 9, N'12 Hùng Vương, Nha Trang', 'Homestay', 2, N'Wifi, Hồ bơi, Ban công, Điều hòa', 1100000, N'ba.jpg', 1),
-(23, N'Căn hộ biển Altara Residence', N'Căn hộ cao cấp gần bãi biển Quy Nhơn', 10, N'34 Nguyễn Huệ, Quy Nhơn', 'Homestay', 3, N'Wifi, Hồ bơi, Bãi đỗ xe, Điều hòa', 950000, N'fa.jpg', 1),
-(24, N'Pimira Homestay', N'Homestay ấm cúng tại trung tâm Quy Nhơn', 10, N'56 Lê Lợi, Quy Nhơn', 'Homestay', 2, N'Wifi, Điều hòa, Bếp', 650000, N'fs.jpg', 1),
-(25, N'Seaview 2BR 3 giường,ban công, trung tâm thành phố Stay by TYE', N'Căn hộ 2 phòng ngủ với ban công nhìn biển', 10, N'78 Trần Hưng Đạo, Quy Nhơn', 'Homestay', 2, N'Wifi, Ban công, Điều hòa, Bếp', 850000, N'fd.jpg', 1),
-(26, N'Song Suoi homestay _ căn phòng cạnh biển 1', N'Phòng nghỉ gần biển Quy Nhơn, phong cách tự nhiên', 10, N'23 Nguyễn Tất Thành, Quy Nhơn', 'Homestay', 1, N'Wifi, Điều hòa, Gần biển', 600000, N'fz.jpg', 1);
+-- Chèn toàn bộ Accommodations với maxOccupancy
+INSERT INTO Accommodations (hostId, name, description, cityId, address, type, numberOfRooms, maxOccupancy, amenities, pricePerNight, images, isActive) VALUES
+(1, N'Căn hộ Lam Home Seaview', N'Căn hộ sang trọng với tầm nhìn toàn cảnh vịnh Hạ Long', 4, N'123 Đường Bãi Cháy, Hạ Long, Quảng Ninh', 'Homestay', 2, 4, N'Wifi, Điều hòa, Ban công, Tầm nhìn biển, TV thông minh', 1500000, N'lam.jpg', 1),
+(2, N'Homestay Lily Hạ Long - Phòng 203', N'Phòng nghỉ ấm cúng gần bãi biển, lý tưởng cho cặp đôi', 4, N'456 Đường Hạ Long, Hạ Long, Quảng Ninh', 'Homestay', 1, 2, N'Wifi, Điều hòa, Tủ lạnh, Bếp nhỏ', 700000, N'lily.jpg', 1),
+(56, N'Phòng gia đình nhìn ra biển bởi Ahana Homestay HL', N'Phòng rộng rãi cho gia đình, gần vịnh Hạ Long', 4, N'789 Đường Tuần Châu, Hạ Long, Quảng Ninh', 'Homestay', 3, 6, N'Wifi, Điều hòa, Ban công, Bữa sáng miễn phí', 1800000, N'ahana.jpg', 1),
+(4, N'Studio Ocean Blue bên bờ biển Giường Chill & Super King', N'Studio hiện đại với giường cỡ lớn, view biển tuyệt đẹp', 4, N'101 Đường Bãi Cháy, Hạ Long, Quảng Ninh', 'Homestay', 1, 2, N'Wifi, Điều hòa, Ban công, TV, Tầm nhìn biển', 1200000, N'ocean.jpg', 1),
+(5, N'Hanoi Park House 2.1 - Ban công - Khu phố cổ', N'Nhà nghỉ phong cách hiện đại, gần phố cổ Hà Nội', 1, N'123 Phố Hàng Bạc, Hoàn Kiếm, Hà Nội', 'Homestay', 2, 4, N'Wifi, Điều hòa, Ban công, Bếp chung', 900000, N'a1.jpg', 1),
+(6, N'Homestay Đống Đa, Việt Nam', N'Ngôi nhà riêng biệt, lý tưởng cho nhóm bạn hoặc gia đình', 1, N'456 Đường Láng, Đống Đa, Hà Nội', 'Homestay', 4, 8, N'Wifi, Điều hòa, Máy giặt, Bếp đầy đủ, Bãi đỗ xe', 2200000, N'b1.jpg', 1),
+(7, N'Tuyệt đẹp Lakeview-Balcony&Projector-Brand mới', N'Căn hộ mới với view hồ Tây, có máy chiếu giải trí', 1, N'789 Đường Tây Hồ, Tây Hồ, Hà Nội', 'Homestay', 2, 4, N'Wifi, Điều hòa, Máy chiếu, Ban công, Tầm nhìn hồ', 1600000, N'c1.jpg', 1),
+(8, N'Vista 9 Skyline Suite A Poetic Gaze Over Hanoi', N'Căn hộ cao cấp với tầm nhìn toàn cảnh Hà Nội', 1, N'101 Phố Hàng Đào, Hoàn Kiếm, Hà Nội', 'Hotel', 3, 9, N'Wifi, Điều hòa, Minibar, Tầm nhìn thành phố, Phòng gym', 2500000, N'd1.jpg', 1),
+(9, N'$Bigsale - căn hộ cao cấp tại HP - Diamond Crown', N'Căn hộ sang trọng tại khu Diamond Crown Hải Phòng', 2, N'123 Đường Lê Lợi, Ngô Quyền, Hải Phòng', 'Hotel', 2, 6, N'Wifi, Hồ bơi, Phòng gym, Bữa sáng miễn phí', 1400000, N'e.jpg', 1),
+(10, N'Căn hộ tại HaiPhong Center - 2 phòng ngủ, 2 phòng tắm', N'Căn hộ tiện nghi tại trung tâm Hải Phòng, gần cảng', 2, N'456 Đường Cát Dài, Lê Chân, Hải Phòng', 'Homestay', 2, 4, N'Wifi, Điều hòa, Bếp, Máy giặt', 1100000, N'f.jpg', 1),
+(11, N'Homestay Nhà Ann - Phòng Haru', N'Phòng nghỉ phong cách Nhật Bản, gần trung tâm', 2, N'789 Đường Đà Nẵng, Hải An, Hải Phòng', 'Homestay', 1, 2, N'Wifi, Điều hòa, Tủ lạnh, Bữa sáng nhẹ', 750000, N'g.jpg', 1),
+(12, N'Nhà Bim', N'Nhà nghỉ đơn giản, gần cảng, phù hợp cho khách du lịch tiết kiệm', 2, N'101 Đường Lạch Tray, Ngô Quyền, Hải Phòng', 'Guesthouse', 3, 6, N'Wifi, Điều hòa, Bãi đỗ xe, Quạt', 600000, N'h.jpg', 1),
+(13, N'Bungalow đôi có bồn tắm Lotus Field Homestay', N'Bungalow lãng mạn với bồn tắm riêng, gần Tam Cốc', 5, N'123 Đường Tam Cốc, Hoa Lư, Ninh Bình', 'Homestay', 1, 2, N'Wifi, Điều hòa, Bồn tắm, Vườn, Xe đạp miễn phí', 1000000, N'n.jpg', 1),
+(14, N'Homestay Amy House yên bình 1 phòng', N'Phòng nghỉ yên tĩnh, gần khu du lịch Tràng An', 5, N'456 Đường Tràng An, Ninh Bình', 'Homestay', 1, 2, N'Wifi, Điều hòa, Vườn, Bữa sáng địa phương', 650000, N'j.jpg', 1),
+(15, N'The Wooden Gate Ninh Bình - Jasmine Flower King', N'Phòng nghỉ sang trọng với phong cách thiên nhiên', 5, N'789 Đường Tam Cốc, Hoa Lư, Ninh Bình', 'Homestay', 2, 4, N'Wifi, Điều hòa, Tầm nhìn núi, Xe đạp miễn phí', 1300000, N's.jpg', 1),
+(16, N'The Wooden Gate Ninh Bình - Tropical Bunk Suite', N'Phòng nghỉ độc đáo với giường tầng, gần Tràng An', 5, N'101 Đường Tràng An, Ninh Bình', 'Homestay', 2, 4, N'Wifi, Điều hòa, Ban công, Tầm nhìn đồng lúa', 950000, N'aaaaa.jpg', 1),
+(17, N'Coconut Room - Nhà Mơ Homestay Bến Tre', N'Phòng nghỉ mộc mạc giữa vườn dừa, trải nghiệm miền Tây', 16, N'123 Đường Miệt Vườn, Mỏ Cày Nam, Bến Tre', 'Homestay', 1, 2, N'Wifi, Quạt, Xe đạp miễn phí, Vườn dừa, Bữa sáng địa phương', 600000, N'oo.jpg', 1),
+(18, N'Comfy 1 Riverside Mekong Bến Tre homestay', N'Homestay ấm cúng bên sông Mekong, gần chợ nổi', 16, N'456 Đường Sông Cái, Châu Thành, Bến Tre', 'Homestay', 1, 2, N'Wifi, Điều hòa, Thuyền chèo, Bữa sáng nhẹ', 650000, N'ax.jpg', 1),
+(19, N'Haven Nest retreat ( Grasshopper-châu chấu)', N'Phòng nghỉ độc đáo lấy cảm hứng từ thiên nhiên, gần sông', 16, N'789 Đường Phú Lễ, Ba Tri, Bến Tre', 'Homestay', 2, 4, N'Wifi, Điều hòa, Vườn, Tầm nhìn sông', 800000, N'kkk.jpg', 1),
+(20, N'Haven Nest Retreat (Grey Featherback - Cá Mè Dinh)', N'Phòng nghỉ sang trọng với phong cách miền Tây, gần vườn dừa', 16, N'101 Đường Mỏ Cày, Bến Tre', 'Homestay', 2, 4, N'Wifi, Điều hòa, Thuyền chèo, Vườn dừa', 850000, N'aq.jpg', 1),
+(21, N'Chậm Garden - Cảm nhận cuộc sống thiên nhiên', N'Homestay yên bình gần chợ nổi Cái Răng, hòa mình vào thiên nhiên', 13, N'123 Đường Cái Răng, Ninh Kiều, Cần Thơ', 'Homestay', 2, 4, N'Wifi, Quạt, Xe đạp miễn phí, Vườn, Bữa sáng địa phương', 700000, N'sa.jpg', 1),
+(22, N'Midmost Casa - Superior Studio', N'Studio hiện đại, nằm ngay trung tâm Cần Thơ', 13, N'456 Đường Nguyễn Trãi, Ninh Kiều, Cần Thơ', 'Homestay', 1, 2, N'Wifi, Điều hòa, Bếp nhỏ, TV thông minh', 900000, N'sd.jpg', 1),
+(23, N'Miha Villa 1 - Nhà tại Cần Thơ', N'Ngôi nhà riêng biệt, lý tưởng cho gia đình hoặc nhóm bạn', 13, N'789 Đường 30/4, Ninh Kiều, Cần Thơ', 'Homestay', 3, 6, N'Wifi, Điều hòa, Bếp đầy đủ, Máy giặt, Bãi đỗ xe', 1500000, N'sw.jpg', 1),
+(24, N'pipo house - nắng đẹp, 1br', N'Phòng nghỉ đầy nắng, gần trung tâm Cần Thơ', 13, N'101 Đường Lê Lợi, Ninh Kiều, Cần Thơ', 'Guesthouse', 1, 2, N'Wifi, Điều hòa, Ban công, Bữa sáng nhẹ', 750000, N'se.jpg', 1),
+(25, N'Căn Family nguyên căn 2 phòng ngủ- Lavita home', N'Căn hộ gia đình tiện nghi, gần trung tâm Đà Lạt', 15, N'123 Đường Nguyễn Thị Minh Khai, Phường 1, Đà Lạt', 'Homestay', 2, 4, N'Wifi, Sưởi, Bếp, Ban công, Tầm nhìn đồi thông', 1200000, N'sr.jpg', 1),
+(26, N'Mối Tình Đầu Homestay Bus Room', N'Phòng nghỉ độc đáo thiết kế như xe buýt, gần hồ Xuân Hương', 15, N'456 Đường Hồ Xuân Hương, Phường 9, Đà Lạt', 'Homestay', 1, 2, N'Wifi, Sưởi, Tủ lạnh, Vườn hoa', 850000, N'st.jpg', 1),
+(27, N'South Of The border - Phia Nam Biên Gioi', N'Homestay phong cách vintage, gần Thung Lũng Tình Yêu', 15, N'789 Đường Trại Mát, Phường 11, Đà Lạt', 'Homestay', 2, 4, N'Wifi, Sưởi, Ban công, Lò sưởi', 1000000, N'sy.jpg', 1),
+(28, N'Summery - Nhà của Eiji', N'Ngôi nhà phong cách Nhật Bản, không gian ấm cúng ở Đà Lạt', 15, N'101 Đường Lê Hồng Phong, Phường 4, Đà Lạt', 'Homestay', 2, 4, N'Wifi, Sưởi, Vườn, Bữa sáng kiểu Nhật', 1100000, N'su.jpg', 1),
+(29, N'Casa CoCore TimeOut khu phố thú vị nhất Sài Gòn', N'Căn hộ cao cấp ở trung tâm Quận 1, gần phố đi bộ Nguyễn Huệ', 11, N'123 Đường Lê Lợi, Quận 1, TP.HCM', 'Hotel', 2, 6, N'Wifi, Điều hòa, Hồ bơi, Phòng gym, Minibar', 2000000, N'ds.jpg', 1),
+(30, N'ĐaKao Vibe Retro Studio GB in Center by Circadian', N'Studio phong cách retro ở khu Đa Kao sầm uất', 11, N'456 Đường Đinh Tiên Hoàng, Quận 1, TP.HCM', 'Homestay', 1, 2, N'Wifi, Điều hòa, Bếp nhỏ, TV thông minh', 950000, N'da.jpg', 1),
+(1, N'Huế Studio gần đường Bùi Viện Em''s Home 5', N'Studio sôi động gần khu phố Tây Bùi Viện', 11, N'789 Đường Bùi Viện, Quận 1, TP.HCM', 'Homestay', 1, 2, N'Wifi, Điều hòa, Ban công, Tủ lạnh', 900000, N'df.jpg', 1),
+(2, N'Mây 3 - Studio đầy đủ tiện nghi', N'Studio hiện đại gần chợ Bến Thành, tiện nghi đầy đủ', 11, N'101 Đường Lê Thị Riêng, Quận 1, TP.HCM', 'Guesthouse', 1, 2, N'Wifi, Điều hòa, Bếp, TV thông minh', 850000, N'dg.jpg', 1),
+(56, N'Bigphil Home - Một ngôi nhà Santorini ấm cúng có bếp', N'Homestay phong cách Santorini, gần bãi biển Vũng Tàu', 12, N'123 Đường Bãi Sau, TP. Vũng Tàu', 'Homestay', 2, 4, N'Wifi, Điều hòa, Bếp, Ban công, Tầm nhìn biển', 1200000, N'ca.jpg', 1),
+(4, N'Căn hộ ven biển CSJ Tower có tầm nhìn tuyệt đẹp [22 Lagom]', N'Căn hộ cao cấp với view biển tại CSJ Tower', 12, N'456 Đường Thùy Vân, TP. Vũng Tàu', 'Hotel', 2, 6, N'Wifi, Điều hòa, Hồ bơi, Phòng gym, Tầm nhìn biển', 1800000, N'cs.jpg', 1),
+(5, N'Leo House - Tòa nhà The Song (Angia)', N'Căn hộ sang trọng trong tòa The Song, gần bãi biển', 12, N'789 Đường Lê Hồng Phong, TP. Vũng Tàu', 'Hotel', 3, 9, N'Wifi, Điều hòa, Hồ bơi, Minibar, Bãi đỗ xe', 2000000, N'cd.jpg', 1),
+(6, N'Nhà Lily - Phòng Xanh, 1 phòng ngủ & phòng tắm riêng', N'Phòng nghỉ màu xanh, gần bãi biển Vũng Tàu', 12, N'101 Đường Hạ Long, TP. Vũng Tàu', 'Homestay', 1, 2, N'Wifi, Điều hòa, Ban công, Tầm nhìn biển, Bữa sáng nhẹ', 900000, N'cf.jpg', 1),
+(7, N'Family Home Villa Bà Nà Hill Sun World', N'Biệt thự gia đình gần khu du lịch Bà Nà Hills', 6, N'123 Đường Bà Nà, Đà Nẵng', 'Resort', 8, 32, N'Wifi, Hồ bơi, Bãi đỗ xe, Bữa sáng miễn phí', 2500000, N'qa.jpg', 1),
+(8, N'Jhome-2BR-Fully Furnished', N'Căn hộ 2 phòng ngủ đầy đủ tiện nghi gần trung tâm', 6, N'45 Nguyễn Văn Linh, Đà Nẵng', 'Homestay', 2, 4, N'Wifi, Máy giặt, Ban công', 800000, N'qw.jpg', 1),
+(9, N'May Home RoomWasherBalcony5 phút đến Bãi biển Mỹ Khê', N'Phòng nghỉ tiện nghi cách bãi biển Mỹ Khê 5 phút', 6, N'78 Võ Nguyên Giáp, Đà Nẵng', 'Homestay', 3, 6, N'Wifi, Máy giặt, Ban công, Điều hòa', 600000, N'qs.jpg', 1),
+(10, N'Mon Fiori Homestay x Moana Modern Apartment', N'Căn hộ hiện đại phong cách Mon Fiori gần biển', 6, N'12 An Thượng, Đà Nẵng', 'Homestay', 4, 8, N'Wifi, Bếp, Ban công, TV', 900000, N'qf.jpg', 1),
+(11, N'1107ss Deluxe Ocean View miễn phí đón 1 chiều', N'Căn hộ sang trọng với tầm nhìn biển, miễn phí đưa đón', 6, N'56 Võ Nguyên Giáp, Đà Nẵng', 'Hotel', 5, 15, N'Wifi, Hồ bơi, Đưa đón sân bay', 1500000, N'we.jpg', 1),
+(12, N'Căn HỘ Poetic Riverside Attic ở Hội An - Chợ đêm', N'Căn hộ thơ mộng gần chợ đêm Hội An', 8, N'23 Nguyễn Hoàng, Hội An', 'Homestay', 2, 4, N'Wifi, Điều hòa, Xe đạp miễn phí', 700000, N'wa.jpg', 1),
+(13, N'Chilling Hoi An APT-BTW An An Bàng Beach+Ancient Town', N'Căn hộ thư giãn giữa bãi biển An Bàng và phố cổ', 8, N'45 Cửa Đại, Hội An', 'Homestay', 3, 6, N'Wifi, Bếp, Ban công, Xe đạp', 850000, N'wd.jpg', 1),
+(14, N'Zen House-WoodenHouse Japan Style gần Trung tâm', N'Nhà gỗ phong cách Nhật Bản gần trung tâm Hội An', 8, N'67 Trần Nhân Tông, Hội An', 'Homestay', 2, 4, N'Wifi, Điều hòa, Vườn nhỏ', 750000, N'wz.jpg', 1),
+(15, N'Limdim Here - Phòng ''ici'' cho 2 khách', N'Phòng nghỉ ấm cúng cho 2 người tại Huế', 7, N'12 Lê Lợi, Huế', 'Guesthouse', 1, 2, N'Wifi, Điều hòa, Bữa sáng', 500000, N'za.jpg', 1),
+(16, N'NguyễnHouse# StudioRoomtại Trung tâm thành phố Huế', N'Phòng studio hiện đại tại trung tâm Huế', 7, N'34 Nguyễn Trãi, Huế', 'Homestay', 1, 2, N'Wifi, Bếp, Điều hòa', 550000, N'xz.jpg', 1),
+(17, N'Nhà Ngau - phòng ''Métro'' cho 2 khách', N'Phòng phong cách Métro độc đáo tại Huế', 7, N'56 Phạm Ngũ Lão, Huế', 'Guesthouse', 1, 2, N'Wifi, Điều hòa, Bữa sáng miễn phí', 520000, N'xc.jpg', 1),
+(18, N'Phòng tại khách sạn boutique tại Hue, Việt Nam', N'Phòng boutique sang trọng tại trung tâm Huế', 7, N'78 Hùng Vương, Huế', 'Hotel', 4, 12, N'Wifi, Hồ bơi, Bữa sáng, Spa', 1200000, N'xv.jpg', 1),
+(19, N'Coral House -3 BR- FULL HOUSE - 700 m ra bãi biển', N'Nhà 3 phòng ngủ gần bãi biển Nha Trang', 9, N'23 Trần Phú, Nha Trang', 'Homestay', 3, 6, N'Wifi, Bếp, Ban công, Điều hòa', 1000000, N'xq.jpg', 1),
+(20, N'Serenity RiverView 2 giường, phía trên SeaView Charm', N'Căn hộ 2 giường với tầm nhìn sông và biển', 9, N'45 Nguyễn Thị Minh Khai, Nha Trang', 'Homestay', 2, 4, N'Wifi, Ban công, Điều hòa', 900000, N'xe.jpg', 1),
+(21, N'The Hiden House( 5 phút đến trung tâm bãi biển)', N'Nhà nghỉ gần trung tâm và bãi biển Nha Trang', 9, N'67 Lê Đại Hành, Nha Trang', 'Homestay', 3, 6, N'Wifi, Bếp, Điều hòa, Xe đạp', 800000, N'vc.jpg', 1),
+(22, N'White Oceanus Cozy 2BR 36Fl SeaviewApt-4km toCenter', N'Căn hộ tầng 36 với tầm nhìn biển tuyệt đẹp', 9, N'12 Hùng Vương, Nha Trang', 'Homestay', 2, 4, N'Wifi, Hồ bơi, Ban công, Điều hòa', 1100000, N'ba.jpg', 1),
+(23, N'Căn hộ biển Altara Residence', N'Căn hộ cao cấp gần bãi biển Quy Nhơn', 10, N'34 Nguyễn Huệ, Quy Nhơn', 'Homestay', 3, 6, N'Wifi, Hồ bơi, Bãi đỗ xe, Điều hòa', 950000, N'fa.jpg', 1),
+(24, N'Pimira Homestay', N'Homestay ấm cúng tại trung tâm Quy Nhơn', 10, N'56 Lê Lợi, Quy Nhơn', 'Homestay', 2, 4, N'Wifi, Điều hòa, Bếp', 650000, N'fs.jpg', 1),
+(25, N'Seaview 2BR 3 giường,ban công, trung tâm thành phố Stay by TYE', N'Căn hộ 2 phòng ngủ với ban công nhìn biển', 10, N'78 Trần Hưng Đạo, Quy Nhơn', 'Homestay', 2, 4, N'Wifi, Ban công, Điều hòa, Bếp', 850000, N'fd.jpg', 1),
+(26, N'Song Suoi homestay _ căn phòng cạnh biển 1', N'Phòng nghỉ gần biển Quy Nhơn, phong cách tự nhiên', 10, N'23 Nguyễn Tất Thành, Quy Nhơn', 'Homestay', 1, 2, N'Wifi, Điều hòa, Gần biển', 600000, N'fz.jpg', 1);
 GO
 
 -- Chèn Reviews
@@ -672,6 +677,8 @@ ALTER TABLE Accommodations
 ADD adminApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING'
     CHECK (adminApprovalStatus IN ('PENDING', 'APPROVED', 'REJECTED'));
 GO
+
+
 
 -- 3. Thêm các trường bổ sung cho admin - EXPERIENCES (từng cột một)
 ALTER TABLE Experiences 

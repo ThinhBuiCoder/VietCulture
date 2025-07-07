@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Accommodation {
+
     private int accommodationId;
     private int hostId;
     private String name;
@@ -14,6 +15,7 @@ public class Accommodation {
     private String address;
     private String type; // Homestay, Hotel, Resort, Guesthouse
     private int numberOfRooms;
+    private int maxOccupancy; // Sức chứa tối đa của lưu trú
     private String amenities; // Comma-separated amenities
     private double pricePerNight;
     private String images; // Comma-separated image URLs
@@ -28,7 +30,7 @@ public class Accommodation {
     private boolean isFlagged = false;
     private String flagReason;
     private String thumbnailImage;
-    
+
     // Related objects
     private User host; // Updated to User instead of Host
     private City city;
@@ -47,7 +49,7 @@ public class Accommodation {
     }
 
     public Accommodation(int hostId, String name, String description, int cityId,
-                         String address, String type, double pricePerNight) {
+            String address, String type, double pricePerNight) {
         this();
         this.hostId = hostId;
         this.name = name;
@@ -122,6 +124,14 @@ public class Accommodation {
 
     public void setNumberOfRooms(int numberOfRooms) {
         this.numberOfRooms = numberOfRooms;
+    }
+
+    public int getMaxOccupancy() {
+        return maxOccupancy;
+    }
+
+    public void setMaxOccupancy(int maxOccupancy) {
+        this.maxOccupancy = maxOccupancy;
     }
 
     public String getAmenities() {
@@ -308,17 +318,25 @@ public class Accommodation {
     }
 
     public String getStatusForAdmin() {
-        if (isDeleted) return "Đã xóa";
-        if (isFlagged) return "Bị đánh dấu";
-        if (reportCount > 0) return "Bị báo cáo";
-        if (!isActive) return "Chờ duyệt";
+        if (isDeleted) {
+            return "Đã xóa";
+        }
+        if (isFlagged) {
+            return "Bị đánh dấu";
+        }
+        if (reportCount > 0) {
+            return "Bị báo cáo";
+        }
+        if (!isActive) {
+            return "Chờ duyệt";
+        }
         return "Hoạt động";
     }
 
     // FIXED: Add location methods to resolve JSP error
     /**
-     * Get location for display (compatibility method for JSP)
-     * Returns address if available, otherwise returns cityName
+     * Get location for display (compatibility method for JSP) Returns address
+     * if available, otherwise returns cityName
      */
     public String getLocation() {
         if (this.address != null && !this.address.trim().isEmpty()) {
@@ -335,18 +353,18 @@ public class Accommodation {
      */
     public String getFullLocation() {
         StringBuilder location = new StringBuilder();
-        
+
         if (this.address != null && !this.address.trim().isEmpty()) {
             location.append(this.address.trim());
         }
-        
+
         if (this.cityName != null && !this.cityName.trim().isEmpty()) {
             if (location.length() > 0) {
                 location.append(", ");
             }
             location.append(this.cityName.trim());
         }
-        
+
         return location.length() > 0 ? location.toString() : "Chưa có thông tin địa chỉ";
     }
 
@@ -454,7 +472,9 @@ public class Accommodation {
      * Check if this is a new accommodation
      */
     public boolean isNew() {
-        if (createdAt == null) return false;
+        if (createdAt == null) {
+            return false;
+        }
 
         Date now = new Date();
         long diffInMillies = now.getTime() - createdAt.getTime();
@@ -498,17 +518,149 @@ public class Accommodation {
         this.totalBookings = this.bookings.size();
     }
 
+    /**
+     * Check if accommodation can accommodate the requested number of rooms and
+     * guests
+     */
+    public boolean canAccommodate(int requestedRooms, int requestedGuests) {
+        if (requestedRooms <= 0 || requestedGuests <= 0) {
+            return false;
+        }
+
+        // Check if we have enough rooms
+        if (requestedRooms > this.numberOfRooms) {
+            return false;
+        }
+
+        // Check if guests can fit in the requested rooms
+        int maxGuestsForRooms = requestedRooms * this.maxOccupancy;
+        return requestedGuests <= maxGuestsForRooms;
+    }
+
+    /**
+     * Get maximum guests that can be accommodated with given number of rooms
+     */
+    public int getMaxGuestsForRooms(int roomCount) {
+        if (roomCount <= 0 || roomCount > this.numberOfRooms) {
+            return 0;
+        }
+        return roomCount * this.maxOccupancy;
+    }
+
+    /**
+     * Get minimum rooms needed for given number of guests
+     */
+    public int getMinRoomsForGuests(int guestCount) {
+        if (guestCount <= 0 || this.maxOccupancy <= 0) {
+            return 0;
+        }
+        return (int) Math.ceil((double) guestCount / this.maxOccupancy);
+    }
+
+    /**
+     * Get room availability summary
+     */
+    public String getRoomAvailabilitySummary() {
+        return String.format("%d phòng - Tối đa %d khách/phòng",
+                this.numberOfRooms, this.maxOccupancy);
+    }
+
+    /**
+     * Calculate total price for multiple rooms and nights
+     */
+    public double calculateTotalPrice(int rooms, int nights) {
+        if (rooms <= 0 || nights <= 0) {
+            return 0.0;
+        }
+        return this.pricePerNight * rooms * nights;
+    }
+
+    /**
+     * Get room type display with capacity info
+     */
+    public String getTypeWithCapacity() {
+        return String.format("%s (%d phòng, %d khách/phòng)",
+                getTypeText(), this.numberOfRooms, this.maxOccupancy);
+    }
+
+    /**
+     * Validate room booking request
+     */
+    public String validateRoomBooking(int requestedRooms, int requestedGuests) {
+        if (requestedRooms <= 0) {
+            return "Số phòng phải lớn hơn 0";
+        }
+
+        if (requestedGuests <= 0) {
+            return "Số khách phải lớn hơn 0";
+        }
+
+        if (requestedRooms > this.numberOfRooms) {
+            return String.format("Chỉ có %d phòng có sẵn", this.numberOfRooms);
+        }
+
+        int maxGuestsForRooms = requestedRooms * this.maxOccupancy;
+        if (requestedGuests > maxGuestsForRooms) {
+            return String.format("Số khách (%d) vượt quá sức chứa của %d phòng (tối đa %d khách)",
+                    requestedGuests, requestedRooms, maxGuestsForRooms);
+        }
+
+        return null; // No validation errors
+    }
+
+    /**
+     * Get room occupancy percentage for display
+     */
+    public double getOccupancyPercentage(int requestedGuests, int requestedRooms) {
+        if (requestedRooms <= 0 || this.maxOccupancy <= 0) {
+            return 0.0;
+        }
+
+        int maxCapacity = requestedRooms * this.maxOccupancy;
+        if (maxCapacity == 0) {
+            return 0.0;
+        }
+
+        return Math.min(100.0, (double) requestedGuests / maxCapacity * 100.0);
+    }
+
+    /**
+     * Check if this is a high-occupancy booking (>80% capacity)
+     */
+    public boolean isHighOccupancyBooking(int requestedGuests, int requestedRooms) {
+        return getOccupancyPercentage(requestedGuests, requestedRooms) > 80.0;
+    }
+
+    /**
+     * Get suggested room count for given guests
+     */
+    public int getSuggestedRooms(int guestCount) {
+        if (guestCount <= 0) {
+            return 1;
+        }
+
+        // Try to optimize for comfort - don't max out every room
+        int minRooms = getMinRoomsForGuests(guestCount);
+        int comfortableGuestsPerRoom = Math.max(1, this.maxOccupancy - 1);
+        int comfortableRooms = (int) Math.ceil((double) guestCount / comfortableGuestsPerRoom);
+
+        // Return the minimum between available rooms and comfortable rooms
+        return Math.min(this.numberOfRooms, Math.max(minRooms, comfortableRooms));
+    }
+
     @Override
     public String toString() {
-        return "Accommodation{" +
-               "accommodationId=" + accommodationId +
-               ", name='" + name + '\'' +
-               ", type='" + type + '\'' +
-               ", address='" + address + '\'' +
-               ", pricePerNight=" + pricePerNight +
-               ", isActive=" + isActive +
-               ", averageRating=" + averageRating +
-               ", totalBookings=" + totalBookings +
-               '}';
+        return "Accommodation{"
+                + "accommodationId=" + accommodationId
+                + ", name='" + name + '\''
+                + ", type='" + type + '\''
+                + ", address='" + address + '\''
+                + ", numberOfRooms=" + numberOfRooms
+                + ", maxOccupancy=" + maxOccupancy
+                + ", pricePerNight=" + pricePerNight
+                + ", isActive=" + isActive
+                + ", averageRating=" + averageRating
+                + ", totalBookings=" + totalBookings
+                + '}';
     }
 }

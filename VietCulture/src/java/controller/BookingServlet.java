@@ -23,6 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -323,6 +324,23 @@ public class BookingServlet extends HttpServlet {
 
         // Parse và validate form data
         BookingFormData formData = parseBookingForm(request);
+
+        // Kiểm tra phòng trống accommodation NGAY TẠI ĐÂY nếu là accommodation
+        if (formData.hasAccommodation() && formData.isValid()) {
+            try (java.sql.Connection conn = utils.DBUtils.getConnection()) {
+                boolean enoughRooms = bookingDAO.isAccommodationRoomAvailable(conn,
+                    formData.getAccommodationId(),
+                    formData.getCheckInDate() != null ? new java.sql.Date(formData.getCheckInDate().getTime()) : null,
+                    formData.getCheckOutDate() != null ? new java.sql.Date(formData.getCheckOutDate().getTime()) : null,
+                    formData.getRoomQuantity()
+                );
+                if (!enoughRooms) {
+                    formData.addError("Không còn đủ phòng cho khoảng thời gian này. Vui lòng chọn lại!");
+                }
+            } catch (Exception e) {
+                formData.addError("Lỗi kiểm tra phòng trống: " + e.getMessage());
+            }
+        }
 
         if (!formData.isValid()) {
             request.setAttribute("errorMessage", formData.getErrorMessage());
@@ -693,9 +711,6 @@ public class BookingServlet extends HttpServlet {
             // Parse contact info
             parseContactInfo(request, formData);
 
-            // Validate all data
-            validateBookingData(formData);
-
         } catch (NumberFormatException e) {
             formData.addError("Dữ liệu số không hợp lệ.");
             LOGGER.warning("Number format error in form parsing: " + e.getMessage());
@@ -714,125 +729,251 @@ public class BookingServlet extends HttpServlet {
      * Enhanced accommodation booking details parsing
      */
     private void parseAccommodationBookingDetails(HttpServletRequest request, BookingFormData formData)
-            throws ParseException {
+        throws ParseException {
 
-        String checkInStr = request.getParameter("checkIn");
-        String checkOutStr = request.getParameter("checkOut");
-        String guestsStr = request.getParameter("guests");
-        String roomType = request.getParameter("roomType");
+    String checkInStr = request.getParameter("checkIn");
+    String checkOutStr = request.getParameter("checkOut");
+    String guestsStr = request.getParameter("guests");
+    String roomQuantityStr = request.getParameter("roomQuantity"); // NEW
 
-        // Store raw strings for form redisplay
-        formData.setCheckInDateStr(checkInStr);
-        formData.setCheckOutDateStr(checkOutStr);
-        formData.setGuestsStr(guestsStr);
-        formData.setRoomType(roomType);
+    // Store raw strings for form redisplay
+    formData.setCheckInDateStr(checkInStr);
+    formData.setCheckOutDateStr(checkOutStr);
+    formData.setGuestsStr(guestsStr);
+    formData.setRoomQuantityStr(roomQuantityStr); // NEW
 
-        // Parse and validate check-in date
-        if (checkInStr != null && !checkInStr.trim().isEmpty()) {
-            try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                dateFormat.setLenient(false);
-                Date checkInDate = dateFormat.parse(checkInStr);
-                formData.setCheckInDate(checkInDate);
-                formData.setBookingDate(checkInDate); // Set as main booking date
-            } catch (ParseException e) {
-                formData.addError("Ngày nhận phòng không hợp lệ: " + checkInStr);
-                LOGGER.warning("Invalid check-in date: " + checkInStr);
-            }
-        }
-
-        // Parse and validate check-out date
-        if (checkOutStr != null && !checkOutStr.trim().isEmpty()) {
-            try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                dateFormat.setLenient(false);
-                Date checkOutDate = dateFormat.parse(checkOutStr);
-                formData.setCheckOutDate(checkOutDate);
-            } catch (ParseException e) {
-                formData.addError("Ngày trả phòng không hợp lệ: " + checkOutStr);
-                LOGGER.warning("Invalid check-out date: " + checkOutStr);
-            }
-        }
-
-        // Validate date sequence
-        if (formData.getCheckInDate() != null && formData.getCheckOutDate() != null) {
-            if (formData.getCheckOutDate().before(formData.getCheckInDate())
-                    || formData.getCheckOutDate().equals(formData.getCheckInDate())) {
-                formData.addError("Ngày trả phòng phải sau ngày nhận phòng.");
-            }
-
-            // Calculate nights
-            long diffInMillies = formData.getCheckOutDate().getTime() - formData.getCheckInDate().getTime();
-            int nights = (int) (diffInMillies / (1000 * 60 * 60 * 24));
-            formData.setCalculatedNights(nights);
-
-            if (nights > 30) {
-                formData.addError("Không thể đặt quá 30 đêm.");
-            }
-        }
-
-        // Parse guests
-        if (guestsStr != null && !guestsStr.trim().isEmpty()) {
-            try {
-                int guests = Integer.parseInt(guestsStr);
-                if (guests <= 0) {
-                    formData.addError("Số khách phải lớn hơn 0.");
-                } else if (guests > 20) {
-                    formData.addError("Số khách không được vượt quá 20 người.");
-                } else {
-                    formData.setNumberOfPeople(guests);
-                }
-            } catch (NumberFormatException e) {
-                formData.addError("Số khách không hợp lệ: " + guestsStr);
-                LOGGER.warning("Invalid guests number: " + guestsStr);
-            }
-        }
-
-        // Set default check-in time (14:00)
+    // Parse and validate check-in date
+    if (checkInStr != null && !checkInStr.trim().isEmpty()) {
         try {
-            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-            formData.setBookingTime(timeFormat.parse("14:00"));
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            dateFormat.setLenient(false);
+            Date checkInDate = dateFormat.parse(checkInStr);
+            formData.setCheckInDate(checkInDate);
+            formData.setBookingDate(checkInDate); // Set as main booking date
         } catch (ParseException e) {
-            // Fallback to current time
-            formData.setBookingTime(new Date());
+            formData.addError("Ngày nhận phòng không hợp lệ: " + checkInStr);
+            LOGGER.warning("Invalid check-in date: " + checkInStr);
         }
     }
+
+    // Parse and validate check-out date
+    if (checkOutStr != null && !checkOutStr.trim().isEmpty()) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            dateFormat.setLenient(false);
+            Date checkOutDate = dateFormat.parse(checkOutStr);
+            formData.setCheckOutDate(checkOutDate);
+        } catch (ParseException e) {
+            formData.addError("Ngày trả phòng không hợp lệ: " + checkOutStr);
+            LOGGER.warning("Invalid check-out date: " + checkOutStr);
+        }
+    }
+
+    // Validate date sequence
+    if (formData.getCheckInDate() != null && formData.getCheckOutDate() != null) {
+        if (formData.getCheckOutDate().before(formData.getCheckInDate())
+                || formData.getCheckOutDate().equals(formData.getCheckInDate())) {
+            formData.addError("Ngày trả phòng phải sau ngày nhận phòng.");
+        }
+
+        // Calculate nights
+        long diffInMillies = formData.getCheckOutDate().getTime() - formData.getCheckInDate().getTime();
+        int nights = (int) (diffInMillies / (1000 * 60 * 60 * 24));
+        formData.setCalculatedNights(nights);
+
+        if (nights > 30) {
+            formData.addError("Không thể đặt quá 30 đêm.");
+        }
+    }
+
+    // Parse room quantity - NEW
+    if (roomQuantityStr != null && !roomQuantityStr.trim().isEmpty()) {
+        try {
+            int roomQuantity = Integer.parseInt(roomQuantityStr);
+            if (roomQuantity <= 0) {
+                formData.addError("Số phòng phải lớn hơn 0.");
+            } else {
+                formData.setRoomQuantity(roomQuantity);
+            }
+        } catch (NumberFormatException e) {
+            formData.addError("Số phòng không hợp lệ: " + roomQuantityStr);
+            LOGGER.warning("Invalid room quantity: " + roomQuantityStr);
+        }
+    }
+
+    // Parse guests
+    if (guestsStr != null && !guestsStr.trim().isEmpty()) {
+        try {
+            int guests = Integer.parseInt(guestsStr);
+            if (guests <= 0) {
+                formData.addError("Số khách phải lớn hơn 0.");
+            } else if (guests > 50) { // Increased limit for multiple rooms
+                formData.addError("Số khách không được vượt quá 50 người.");
+            } else {
+                formData.setNumberOfPeople(guests);
+            }
+        } catch (NumberFormatException e) {
+            formData.addError("Số khách không hợp lệ: " + guestsStr);
+            LOGGER.warning("Invalid guests number: " + guestsStr);
+        }
+    }
+
+    // Validate room quantity vs guests - NEW
+    if (formData.getRoomQuantity() > 0 && formData.getNumberOfPeople() > 0) {
+        try {
+            Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
+            if (accommodation != null) {
+                int maxGuestsPerRoom = accommodation.getMaxOccupancy();
+                int maxTotalGuests = formData.getRoomQuantity() * maxGuestsPerRoom;
+                
+                if (formData.getNumberOfPeople() > maxTotalGuests) {
+                    formData.addError("Số khách (" + formData.getNumberOfPeople() + 
+                        ") vượt quá giới hạn cho " + formData.getRoomQuantity() + 
+                        " phòng (tối đa " + maxTotalGuests + " khách).");
+                }
+                
+                // Validate room quantity doesn't exceed available rooms
+                if (formData.getRoomQuantity() > accommodation.getNumberOfRooms()) {
+                    formData.addError("Số phòng yêu cầu (" + formData.getRoomQuantity() + 
+                        ") vượt quá số phòng có sẵn (" + accommodation.getNumberOfRooms() + ").");
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Error validating room quantity", e);
+            formData.addError("Không thể xác minh thông tin phòng. Vui lòng thử lại.");
+        }
+    }
+
+    // Set default check-in time (14:00)
+    try {
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+        formData.setBookingTime(timeFormat.parse("14:00"));
+    } catch (ParseException e) {
+        // Fallback to current time
+        formData.setBookingTime(new Date());
+    }
+}
 
     /**
      * Enhanced validation for booking data
      */
-    private void validateBookingData(BookingFormData formData) {
+    private void validateBookingData(BookingFormData formData, User user) {
         // Common validations
         validateRequiredFields(formData);
         validateDates(formData);
 
         // Service-specific validations
         if (formData.hasAccommodation()) {
-            validateAccommodationSpecificData(formData);
+            validateAccommodationSpecificData(formData, user);
         } else if (formData.hasExperience()) {
             validateExperienceSpecificData(formData);
         }
     }
 
-    private void validateAccommodationSpecificData(BookingFormData formData) {
-        if (formData.getCheckInDate() == null) {
-            formData.addError("Vui lòng chọn ngày nhận phòng.");
+    private void validateAccommodationSpecificData(BookingFormData formData, User user) {
+    // 1. Kiểm tra ngày nhận/trả phòng
+    if (formData.getCheckInDate() == null) {
+        formData.addError("Vui lòng chọn ngày nhận phòng.");
+    }
+    if (formData.getCheckOutDate() == null) {
+        formData.addError("Vui lòng chọn ngày trả phòng.");
+    }
+    if (formData.getCheckInDate() != null && formData.getCheckOutDate() != null) {
+        if (!formData.getCheckOutDate().after(formData.getCheckInDate())) {
+            formData.addError("Ngày trả phòng phải sau ngày nhận phòng.");
         }
-        if (formData.getCheckOutDate() == null) {
-            formData.addError("Vui lòng chọn ngày trả phòng.");
+        // Không được đặt quá 60 ngày trước
+        java.util.Calendar maxAdvance = java.util.Calendar.getInstance();
+        maxAdvance.add(java.util.Calendar.DAY_OF_MONTH, 60);
+        if (formData.getCheckInDate().after(maxAdvance.getTime())) {
+            formData.addError("Chỉ có thể đặt trước tối đa 60 ngày.");
         }
-        if (formData.getNumberOfPeople() <= 0) {
-            formData.addError("Vui lòng chọn số khách.");
-        }
-
-        // Validate against today
-        if (formData.getCheckInDate() != null) {
-            Date today = resetTimeToMidnight(new Date());
-            if (formData.getCheckInDate().before(today)) {
-                formData.addError("Ngày nhận phòng không thể là ngày trong quá khứ.");
-            }
+        // Không được đặt cho ngày trong quá khứ
+        java.util.Date today = resetTimeToMidnight(new java.util.Date());
+        if (formData.getCheckInDate().before(today)) {
+            formData.addError("Ngày nhận phòng không thể là ngày trong quá khứ.");
         }
     }
+    // 2. Số phòng và số khách
+    if (formData.getRoomQuantity() <= 0) {
+        formData.addError("Vui lòng chọn số phòng.");
+    }
+    if (formData.getNumberOfPeople() <= 0) {
+        formData.addError("Vui lòng chọn số khách.");
+    }
+    // 3. Kiểm tra sức chứa
+    try {
+        AccommodationDAO accommodationDAO = new AccommodationDAO();
+        Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
+        if (accommodation != null) {
+            int maxGuests = accommodation.getMaxOccupancy();
+            int totalCapacity = formData.getRoomQuantity() * maxGuests;
+            if (formData.getNumberOfPeople() > totalCapacity) {
+                formData.addError("Số khách vượt quá sức chứa tối đa của số phòng đã chọn.");
+            }
+            // 4. Kiểm tra phòng còn trống
+            BookingDAO bookingDAO = new BookingDAO();
+            boolean enoughRooms = bookingDAO.isAccommodationRoomAvailable(
+                formData.getAccommodationId(),
+                formData.getCheckInDate() != null ? new java.sql.Date(formData.getCheckInDate().getTime()) : null,
+                formData.getCheckOutDate() != null ? new java.sql.Date(formData.getCheckOutDate().getTime()) : null,
+                formData.getRoomQuantity()
+            );
+            if (!enoughRooms) {
+                formData.addError("Không còn đủ phòng cho khoảng thời gian này.");
+            }
+        }
+    } catch (Exception e) {
+        formData.addError("Lỗi kiểm tra phòng trống: " + e.getMessage());
+    }
+    // 5. Không đặt trùng chính mình cùng thời gian (dùng DAO để kiểm tra chính xác)
+    try {
+        if (user != null && formData.getAccommodationId() != null && formData.getCheckInDate() != null && formData.getCheckOutDate() != null) {
+            BookingDAO bookingDAO = new BookingDAO();
+            boolean hasConflict = bookingDAO.hasConflictingAccommodationBooking(
+                user.getUserId(),
+                new java.sql.Date(formData.getCheckInDate().getTime()),
+                new java.sql.Date(formData.getCheckOutDate().getTime()),
+                null
+            );
+            if (hasConflict) {
+                formData.addError("Bạn không thể đặt nhiều chỗ lưu trú khác nhau trong cùng một ngày.");
+            }
+        }
+    } catch (Exception e) {
+        formData.addError("Lỗi kiểm tra trùng booking lưu trú khác: " + e.getMessage());
+    }
+    // 6. Thông tin liên hệ
+    if (formData.getContactName() == null || formData.getContactName().trim().isEmpty()) {
+        formData.addError("Vui lòng nhập họ tên liên hệ.");
+    }
+    if (formData.getContactEmail() == null || !isValidEmail(formData.getContactEmail())) {
+        formData.addError("Email liên hệ không hợp lệ.");
+    }
+    if (formData.getContactPhone() == null || formData.getContactPhone().trim().length() < 9) {
+        formData.addError("Số điện thoại liên hệ không hợp lệ.");
+    }
+    // 5b. Không đặt nhiều lưu trú khác nhau trong cùng một ngày
+    try {
+        if (user != null && formData.getAccommodationId() != null && formData.getCheckInDate() != null) {
+            BookingDAO bookingDAO = new BookingDAO();
+            java.util.List<Booking> bookings = bookingDAO.getBookingsByUser(user.getUserId(), 0, 1000);
+            java.sql.Date checkInSql = new java.sql.Date(formData.getCheckInDate().getTime());
+            for (Booking b : bookings) {
+                if (b.isAccommodationBooking()
+                    && b.getBookingDate() != null
+                    && b.getBookingDate().equals(checkInSql)
+                    && b.getAccommodationId() != null
+                    && !b.getAccommodationId().equals(formData.getAccommodationId())) {
+                    formData.addError("Bạn không thể đặt nhiều chỗ lưu trú khác nhau trong cùng một ngày.");
+                    break;
+                }
+            }
+        }
+    } catch (Exception e) {
+        formData.addError("Lỗi kiểm tra trùng booking lưu trú khác: " + e.getMessage());
+    }
+}
 
     // ==================== PAYOS UTILITY METHODS ====================
     /**
@@ -897,46 +1038,55 @@ public class BookingServlet extends HttpServlet {
      * Enhanced pre-fill data for accommodation
      */
     private BookingFormData getPrefilledAccommodationData(HttpServletRequest request) {
-        BookingFormData data = new BookingFormData();
+    BookingFormData data = new BookingFormData();
 
-        // Get URL parameters
-        String checkIn = request.getParameter("checkIn");
-        String checkOut = request.getParameter("checkOut");
-        String guests = request.getParameter("guests");
-        String roomType = request.getParameter("roomType");
+    // Get URL parameters
+    String checkIn = request.getParameter("checkIn");
+    String checkOut = request.getParameter("checkOut");
+    String guests = request.getParameter("guests");
+    String roomQuantity = request.getParameter("roomQuantity"); // NEW
 
-        LOGGER.info("Prefilled accommodation data - checkIn: " + checkIn
-                + ", checkOut: " + checkOut + ", guests: " + guests + ", roomType: " + roomType);
+    LOGGER.info("Prefilled accommodation data - checkIn: " + checkIn
+            + ", checkOut: " + checkOut + ", guests: " + guests 
+            + ", roomQuantity: " + roomQuantity); // UPDATED
 
-        // Validate and set check-in date
-        if (checkIn != null && !checkIn.trim().isEmpty() && isValidDateFormat(checkIn)) {
-            data.setCheckInDateStr(checkIn.trim());
-        }
-
-        // Validate and set check-out date
-        if (checkOut != null && !checkOut.trim().isEmpty() && isValidDateFormat(checkOut)) {
-            data.setCheckOutDateStr(checkOut.trim());
-        }
-
-        // Validate and set guests
-        if (guests != null && !guests.trim().isEmpty()) {
-            try {
-                int guestCount = Integer.parseInt(guests.trim());
-                if (guestCount > 0 && guestCount <= 20) {
-                    data.setGuestsStr(guests.trim());
-                }
-            } catch (NumberFormatException e) {
-                LOGGER.warning("Invalid guests parameter: " + guests);
-            }
-        }
-
-        // Set room type if provided
-        if (roomType != null && !roomType.trim().isEmpty()) {
-            data.setRoomType(roomType.trim());
-        }
-
-        return data;
+    // Validate and set check-in date
+    if (checkIn != null && !checkIn.trim().isEmpty() && isValidDateFormat(checkIn)) {
+        data.setCheckInDateStr(checkIn.trim());
     }
+
+    // Validate and set check-out date
+    if (checkOut != null && !checkOut.trim().isEmpty() && isValidDateFormat(checkOut)) {
+        data.setCheckOutDateStr(checkOut.trim());
+    }
+
+    // Validate and set guests
+    if (guests != null && !guests.trim().isEmpty()) {
+        try {
+            int guestCount = Integer.parseInt(guests.trim());
+            if (guestCount > 0 && guestCount <= 50) {
+                data.setGuestsStr(guests.trim());
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.warning("Invalid guests parameter: " + guests);
+        }
+    }
+
+    // NEW: Validate and set room quantity
+    if (roomQuantity != null && !roomQuantity.trim().isEmpty()) {
+        try {
+            int roomCount = Integer.parseInt(roomQuantity.trim());
+            if (roomCount > 0 && roomCount <= 20) {
+                data.setRoomQuantityStr(roomQuantity.trim());
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.warning("Invalid room quantity parameter: " + roomQuantity);
+        }
+    }
+
+    return data;
+}
+
 
     /**
      * Enhanced pre-fill data for experience (keeping existing functionality)
@@ -995,34 +1145,35 @@ public class BookingServlet extends HttpServlet {
      * Enhanced pricing calculation for both service types
      */
     private double calculateTotalPrice(BookingFormData formData) throws SQLException {
-        double basePrice = 0;
-        double multiplier = 1;
+    double basePrice = 0;
+    double multiplier = 1;
 
-        if (formData.hasExperience()) {
-            Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
-            basePrice = experience.getPrice();
-            multiplier = formData.getNumberOfPeople();
+    if (formData.hasExperience()) {
+        Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
+        basePrice = experience.getPrice();
+        multiplier = formData.getNumberOfPeople();
 
-            LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
+        LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
 
-        } else if (formData.hasAccommodation()) {
-            Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
-            basePrice = accommodation.getPricePerNight();
+    } else if (formData.hasAccommodation()) {
+        Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
+        basePrice = accommodation.getPricePerNight();
 
-            int nights = formData.getNumberOfNights();
-            multiplier = nights;
+        int nights = formData.getNumberOfNights();
+        int roomQuantity = formData.getRoomQuantity();
+        multiplier = nights * roomQuantity; // NEW: Price = nights × rooms
 
-            LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights);
-        }
-
-        double subtotal = basePrice * multiplier;
-        double serviceFee = subtotal * 0.05; // 5% service fee
-        double total = subtotal + serviceFee;
-
-        LOGGER.info("Pricing calculation - Subtotal: " + subtotal + ", Fee: " + serviceFee + ", Total: " + total);
-
-        return total;
+        LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights + ", Rooms: " + roomQuantity);
     }
+
+    double subtotal = basePrice * multiplier;
+    double serviceFee = subtotal * 0.05; // 5% service fee
+    double total = subtotal + serviceFee;
+
+    LOGGER.info("Pricing calculation - Subtotal: " + subtotal + ", Fee: " + serviceFee + ", Total: " + total);
+
+    return total;
+}
 
     // ==================== BOOKING CREATION ====================
     /**
@@ -1053,48 +1204,47 @@ public class BookingServlet extends HttpServlet {
      * Create enhanced contact info JSON with accommodation-specific data
      */
     private String createEnhancedContactInfoJson(BookingFormData formData) {
-        StringBuilder jsonBuilder = new StringBuilder();
-        jsonBuilder.append("{");
+    StringBuilder jsonBuilder = new StringBuilder();
+    jsonBuilder.append("{");
 
-        // Basic contact info
-        jsonBuilder.append("\"contactName\":\"").append(escapeJson(formData.getContactName())).append("\",");
-        jsonBuilder.append("\"contactEmail\":\"").append(escapeJson(formData.getContactEmail())).append("\",");
-        jsonBuilder.append("\"contactPhone\":\"").append(escapeJson(formData.getContactPhone())).append("\",");
-        jsonBuilder.append("\"serviceType\":\"").append(formData.getServiceType()).append("\"");
+    // Basic contact info
+    jsonBuilder.append("\"contactName\":\"").append(escapeJson(formData.getContactName())).append("\",");
+    jsonBuilder.append("\"contactEmail\":\"").append(escapeJson(formData.getContactEmail())).append("\",");
+    jsonBuilder.append("\"contactPhone\":\"").append(escapeJson(formData.getContactPhone())).append("\",");
+    jsonBuilder.append("\"serviceType\":\"").append(formData.getServiceType()).append("\"");
 
-        // Accommodation-specific data
-        if (formData.hasAccommodation()) {
-            if (formData.getCheckInDateStr() != null) {
-                jsonBuilder.append(",\"checkInDate\":\"").append(escapeJson(formData.getCheckInDateStr())).append("\"");
-            }
-            if (formData.getCheckOutDateStr() != null) {
-                jsonBuilder.append(",\"checkOutDate\":\"").append(escapeJson(formData.getCheckOutDateStr())).append("\"");
-            }
-            jsonBuilder.append(",\"numberOfNights\":").append(formData.getNumberOfNights());
-            jsonBuilder.append(",\"numberOfGuests\":").append(formData.getNumberOfPeople());
+    // Accommodation-specific data
+    if (formData.hasAccommodation()) {
+        if (formData.getCheckInDateStr() != null) {
+            jsonBuilder.append(",\"checkInDate\":\"").append(escapeJson(formData.getCheckInDateStr())).append("\"");
+        }
+        if (formData.getCheckOutDateStr() != null) {
+            jsonBuilder.append(",\"checkOutDate\":\"").append(escapeJson(formData.getCheckOutDateStr())).append("\"");
+        }
+        jsonBuilder.append(",\"numberOfNights\":").append(formData.getNumberOfNights());
+        jsonBuilder.append(",\"numberOfGuests\":").append(formData.getNumberOfPeople());
+        jsonBuilder.append(",\"roomQuantity\":").append(formData.getRoomQuantity()); // NEW
 
-            if (formData.getRoomType() != null && !formData.getRoomType().trim().isEmpty()) {
-                jsonBuilder.append(",\"roomType\":\"").append(escapeJson(formData.getRoomType())).append("\"");
-            }
+            
         }
 
-        // Experience-specific data
-        if (formData.hasExperience()) {
-            if (formData.getTimeSlot() != null) {
-                jsonBuilder.append(",\"timeSlot\":\"").append(escapeJson(formData.getTimeSlot())).append("\"");
-                jsonBuilder.append(",\"timeSlotDisplay\":\"").append(escapeJson(formData.getTimeSlotDisplayName())).append("\"");
-            }
-            jsonBuilder.append(",\"numberOfParticipants\":").append(formData.getNumberOfPeople());
+         // Experience-specific data
+    if (formData.hasExperience()) {
+        if (formData.getTimeSlot() != null) {
+            jsonBuilder.append(",\"timeSlot\":\"").append(escapeJson(formData.getTimeSlot())).append("\"");
+            jsonBuilder.append(",\"timeSlotDisplay\":\"").append(escapeJson(formData.getTimeSlotDisplayName())).append("\"");
         }
-
-        // Special requests
-        if (formData.getSpecialRequests() != null && !formData.getSpecialRequests().trim().isEmpty()) {
-            jsonBuilder.append(",\"specialRequests\":\"").append(escapeJson(formData.getSpecialRequests())).append("\"");
-        }
-
-        jsonBuilder.append("}");
-        return jsonBuilder.toString();
+        jsonBuilder.append(",\"numberOfParticipants\":").append(formData.getNumberOfPeople());
     }
+
+    // Special requests
+    if (formData.getSpecialRequests() != null && !formData.getSpecialRequests().trim().isEmpty()) {
+        jsonBuilder.append(",\"specialRequests\":\"").append(escapeJson(formData.getSpecialRequests())).append("\"");
+    }
+
+    jsonBuilder.append("}");
+    return jsonBuilder.toString();
+}
 
     // ==================== UTILITY METHODS ====================
     /**
@@ -1159,6 +1309,64 @@ public class BookingServlet extends HttpServlet {
             return;
         }
 
+        // Nếu là accommodation booking thì kiểm tra phòng trống và insert booking trong transaction
+        if (formData.hasAccommodation()) {
+            Connection conn = null;
+            boolean autoCommit = true;
+            try {
+                conn = utils.DBUtils.getConnection();
+                autoCommit = conn.getAutoCommit();
+                conn.setAutoCommit(false);
+
+                // Kiểm tra lại phòng trống với lock
+                boolean enoughRooms = bookingDAO.isAccommodationRoomAvailable(conn,
+                    formData.getAccommodationId(),
+                    formData.getCheckInDate() != null ? new java.sql.Date(formData.getCheckInDate().getTime()) : null,
+                    formData.getCheckOutDate() != null ? new java.sql.Date(formData.getCheckOutDate().getTime()) : null,
+                    formData.getRoomQuantity()
+                );
+                if (!enoughRooms) {
+                    conn.rollback();
+                    request.setAttribute("errorMessage", "Không còn đủ phòng cho khoảng thời gian này (giao dịch đồng thời). Vui lòng thử lại.");
+                    request.setAttribute("formData", formData);
+                    request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
+                    return;
+                }
+
+                Booking booking = createBookingFromFormData(formData, user.getUserId());
+                booking.setStatus("CONFIRMED");
+                int bookingId = bookingDAO.createBooking(conn, booking);
+
+                if (bookingId > 0) {
+                    conn.commit();
+                    booking.setBookingId(bookingId);
+                    sendBookingConfirmationEmail(booking, formData, user);
+                    session.removeAttribute("bookingFormData");
+                    session.setAttribute("successBooking", booking);
+                    logBookingActivity(bookingId, "CASH_PAYMENT_CONFIRMED",
+                        "Booking confirmed with cash payment for " + formData.getServiceType());
+                    LOGGER.info("Cash booking created successfully - ID: " + bookingId
+                            + ", User: " + user.getUserId() + ", Type: " + formData.getServiceType());
+                    response.sendRedirect(request.getContextPath() + "/booking/success");
+                } else {
+                    conn.rollback();
+                    throw new SQLException("Failed to create booking");
+                }
+            } catch (SQLException e) {
+                if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
+                LOGGER.log(Level.SEVERE, "Error creating cash booking (TX)", e);
+                request.setAttribute("errorMessage", "Không thể tạo đặt chỗ. Vui lòng thử lại.");
+                request.setAttribute("formData", formData);
+                request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
+            } finally {
+                if (conn != null) {
+                    try { conn.setAutoCommit(autoCommit); conn.close(); } catch (Exception ex) {}
+                }
+            }
+            return;
+        }
+
+        // ... giữ nguyên logic cũ cho experience booking ...
         try {
             Booking booking = createBookingFromFormData(formData, user.getUserId());
             booking.setStatus("CONFIRMED"); // Cash payment -> confirmed immediately
@@ -1166,21 +1374,13 @@ public class BookingServlet extends HttpServlet {
 
             if (bookingId > 0) {
                 booking.setBookingId(bookingId);
-
-                // Send confirmation email
                 sendBookingConfirmationEmail(booking, formData, user);
-
-                // Clear form data and set success data
                 session.removeAttribute("bookingFormData");
                 session.setAttribute("successBooking", booking);
-
-                // Log activity
                 logBookingActivity(bookingId, "CASH_PAYMENT_CONFIRMED",
                         "Booking confirmed with cash payment for " + formData.getServiceType());
-
                 LOGGER.info("Cash booking created successfully - ID: " + bookingId
                         + ", User: " + user.getUserId() + ", Type: " + formData.getServiceType());
-
                 response.sendRedirect(request.getContextPath() + "/booking/success");
             } else {
                 throw new SQLException("Failed to create booking");
@@ -1654,33 +1854,33 @@ public class BookingServlet extends HttpServlet {
     // ==================== ENHANCED BOOKINGFORMDATA CLASS ====================
     public static class BookingFormData {
 
-        // Common fields
-        private Integer experienceId;
-        private Integer accommodationId;
-        private Date bookingDate;
-        private String bookingDateStr;
-        private Date bookingTime;
-        private int numberOfPeople;
-        private double totalPrice;
-        private String contactName;
-        private String contactEmail;
-        private String contactPhone;
-        private String specialRequests;
-        private List<String> errors = new ArrayList<>();
+    // Common fields
+    private Integer experienceId;
+    private Integer accommodationId;
+    private Date bookingDate;
+    private String bookingDateStr;
+    private Date bookingTime;
+    private int numberOfPeople;
+    private double totalPrice;
+    private String contactName;
+    private String contactEmail;
+    private String contactPhone;
+    private String specialRequests;
+    private List<String> errors = new ArrayList<>();
 
-        // Experience-specific fields
-        private String timeSlot;
-        private String participantsStr;
+    // Experience-specific fields
+    private String timeSlot;
+    private String participantsStr;
 
-        // Accommodation-specific fields
-        private Date checkInDate;
-        private Date checkOutDate;
-        private String checkInDateStr;
-        private String checkOutDateStr;
-        private String guestsStr;
-        private String roomType;
-        private int calculatedNights = 1;
-
+    // Accommodation-specific fields
+    private Date checkInDate;
+    private Date checkOutDate;
+    private String checkInDateStr;
+    private String checkOutDateStr;
+    private String guestsStr;
+    private int roomQuantity; // NEW: replaced roomType
+    private String roomQuantityStr; // NEW
+    private int calculatedNights = 1;
         // ==================== GETTERS & SETTERS ====================
         public Integer getExperienceId() {
             return experienceId;
@@ -1826,13 +2026,22 @@ public class BookingServlet extends HttpServlet {
             this.guestsStr = guestsStr;
         }
 
-        public String getRoomType() {
-            return roomType;
-        }
+       // NEW: Room Quantity getters and setters
+    public int getRoomQuantity() {
+        return roomQuantity;
+    }
 
-        public void setRoomType(String roomType) {
-            this.roomType = roomType;
-        }
+    public void setRoomQuantity(int roomQuantity) {
+        this.roomQuantity = roomQuantity;
+    }
+
+    public String getRoomQuantityStr() {
+        return roomQuantityStr;
+    }
+
+    public void setRoomQuantityStr(String roomQuantityStr) {
+        this.roomQuantityStr = roomQuantityStr;
+    }
 
         public int getCalculatedNights() {
             return calculatedNights;
@@ -1887,15 +2096,49 @@ public class BookingServlet extends HttpServlet {
             return null;
         }
 
-        public int getNumberOfNights() {
-            if (checkInDate != null && checkOutDate != null) {
-                long diffInMillies = checkOutDate.getTime() - checkInDate.getTime();
-                int nights = (int) (diffInMillies / (1000 * 60 * 60 * 24));
-                return Math.max(1, nights);
-            }
-            return calculatedNights > 0 ? calculatedNights : 1;
+        /**
+     * Get number of nights calculation with room consideration
+     */
+    public int getNumberOfNights() {
+        if (checkInDate != null && checkOutDate != null) {
+            long diffInMillies = checkOutDate.getTime() - checkInDate.getTime();
+            int nights = (int) (diffInMillies / (1000 * 60 * 60 * 24));
+            return Math.max(1, nights);
         }
+        return calculatedNights > 0 ? calculatedNights : 1;
+    }
 
+    /**
+     * Get total room nights (nights × rooms) for pricing
+     */
+    public int getTotalRoomNights() {
+        return getNumberOfNights() * Math.max(1, roomQuantity);
+    }
+
+    /**
+     * Enhanced validation for accommodation data
+     */
+    public boolean isValidAccommodationData() {
+        return hasAccommodation() && 
+               checkInDate != null && 
+               checkOutDate != null && 
+               numberOfPeople > 0 && 
+               roomQuantity > 0;
+    }
+
+    /**
+     * Get room and guest summary text
+     */
+    public String getRoomGuestSummary() {
+        if (roomQuantity > 0 && numberOfPeople > 0) {
+            return roomQuantity + " phòng, " + numberOfPeople + " khách";
+        } else if (roomQuantity > 0) {
+            return roomQuantity + " phòng";
+        } else if (numberOfPeople > 0) {
+            return numberOfPeople + " khách";
+        }
+        return "";
+    }
         public String getFormattedBookingDate() {
             if (bookingDate == null) {
                 return "";
@@ -1938,26 +2181,44 @@ public class BookingServlet extends HttpServlet {
             return "";
         }
 
-        public String getFormattedTotalPrice() {
-            return String.format("%,.0f VNĐ", totalPrice);
-        }
+        /**
+     * Get formatted total price with room consideration
+     */
+    public String getFormattedTotalPrice() {
+        return String.format("%,.0f VNĐ", totalPrice);
+    }
+/**
+     * Get room quantity display text
+     */
+    public String getRoomQuantityDisplay() {
+        if (roomQuantity <= 0) return "";
+        return roomQuantity == 1 ? "1 phòng" : roomQuantity + " phòng";
+    }
 
+    /**
+     * Validate room capacity against guests
+     */
+    public boolean isRoomCapacityValid(int maxGuestsPerRoom) {
+        if (roomQuantity <= 0 || numberOfPeople <= 0) return true;
+        return numberOfPeople <= (roomQuantity * maxGuestsPerRoom);
+    }
         @Override
-        public String toString() {
-            return "BookingFormData{"
-                    + "serviceType=" + getServiceType()
-                    + ", experienceId=" + experienceId
-                    + ", accommodationId=" + accommodationId
-                    + ", bookingDate=" + bookingDate
-                    + ", checkInDate=" + checkInDate
-                    + ", checkOutDate=" + checkOutDate
-                    + ", numberOfPeople=" + numberOfPeople
-                    + ", totalPrice=" + totalPrice
-                    + ", contactName='" + contactName + '\''
-                    + ", contactEmail='" + contactEmail + '\''
-                    + ", roomType='" + roomType + '\''
-                    + ", errors=" + errors.size()
-                    + '}';
-        }
+    public String toString() {
+        return "BookingFormData{"
+                + "serviceType=" + getServiceType()
+                + ", experienceId=" + experienceId
+                + ", accommodationId=" + accommodationId
+                + ", bookingDate=" + bookingDate
+                + ", checkInDate=" + checkInDate
+                + ", checkOutDate=" + checkOutDate
+                + ", numberOfPeople=" + numberOfPeople
+                + ", roomQuantity=" + roomQuantity  // NEW
+                + ", totalPrice=" + totalPrice
+                + ", contactName='" + contactName + '\''
+                + ", contactEmail='" + contactEmail + '\''
+                + ", errors=" + errors.size()
+                + '}';
+    }
     }
 }
+

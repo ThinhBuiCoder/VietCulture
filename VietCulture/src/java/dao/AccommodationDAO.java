@@ -19,7 +19,7 @@ public class AccommodationDAO {
 public Accommodation getAccommodationById(int accommodationId) throws SQLException {
     String sql = """
         SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.type, a.numberOfRooms, a.maxOccupancy, a.amenities, a.pricePerNight, a.images,
                a.createdAt, a.isActive, a.averageRating, a.totalBookings,
                u.fullName as hostName, c.vietnameseName as cityName
         FROM Accommodations a
@@ -51,7 +51,7 @@ public List<Accommodation> getApprovedAccommodations(int page, int pageSize, Str
     List<Accommodation> accommodations = new ArrayList<>();
     StringBuilder sql = new StringBuilder("""
         SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.type, a.numberOfRooms, a.maxOccupancy, a.amenities, a.pricePerNight, a.images,
                a.createdAt, a.isActive, a.averageRating, a.totalBookings,
                u.fullName as hostName, c.vietnameseName as cityName
         FROM Accommodations a
@@ -112,7 +112,7 @@ public List<Accommodation> getPendingAccommodations(int page, int pageSize, Stri
     List<Accommodation> accommodations = new ArrayList<>();
     StringBuilder sql = new StringBuilder("""
         SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.type, a.numberOfRooms, a.maxOccupancy, a.amenities, a.pricePerNight, a.images,
                a.createdAt, a.isActive, a.averageRating, a.totalBookings,
                u.fullName as hostName, c.vietnameseName as cityName
         FROM Accommodations a
@@ -584,7 +584,7 @@ public List<Accommodation> getAllAccommodations(int page, int pageSize, String t
     List<Accommodation> accommodations = new ArrayList<>();
     StringBuilder sql = new StringBuilder("""
         SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-               a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+               a.type, a.numberOfRooms, a.maxOccupancy, a.amenities, a.pricePerNight, a.images,
                a.createdAt, a.isActive, a.averageRating, a.totalBookings,
                u.fullName as hostName, c.vietnameseName as cityName
         FROM Accommodations a
@@ -1050,9 +1050,9 @@ public boolean deleteAccommodation(int accommodationId) throws SQLException {
 public int createAccommodation(Accommodation accommodation) throws SQLException {
     String sql = """
         INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
-                                   numberOfRooms, amenities, pricePerNight, images, createdAt, 
+                                   numberOfRooms, maxOccupancy, amenities, pricePerNight, images, createdAt, 
                                    isActive, averageRating, totalBookings)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """;
 
     try (Connection conn = DBUtils.getConnection();
@@ -1065,16 +1065,17 @@ public int createAccommodation(Accommodation accommodation) throws SQLException 
         ps.setString(5, accommodation.getAddress());
         ps.setString(6, accommodation.getType());
         ps.setInt(7, accommodation.getNumberOfRooms());
-        ps.setString(8, accommodation.getAmenities());
-        ps.setDouble(9, accommodation.getPricePerNight());
-        ps.setString(10, accommodation.getImages());
-        ps.setDate(11, accommodation.getCreatedAt() != null ? 
+        ps.setInt(8, accommodation.getMaxOccupancy());
+        ps.setString(9, accommodation.getAmenities());
+        ps.setDouble(10, accommodation.getPricePerNight());
+        ps.setString(11, accommodation.getImages());
+        ps.setDate(12, accommodation.getCreatedAt() != null ? 
                    new java.sql.Date(accommodation.getCreatedAt().getTime()) : 
                    new java.sql.Date(System.currentTimeMillis()));
         // *** QUAN TRỌNG: Sử dụng giá trị isActive từ object ***
-        ps.setBoolean(12, accommodation.isActive()); // Sẽ là true nếu set ở servlet
-        ps.setDouble(13, accommodation.getAverageRating());
-        ps.setInt(14, accommodation.getTotalBookings());
+        ps.setBoolean(13, accommodation.isActive()); // Sẽ là true nếu set ở servlet
+        ps.setDouble(14, accommodation.getAverageRating());
+        ps.setInt(15, accommodation.getTotalBookings());
 
         int affectedRows = ps.executeUpdate();
 
@@ -1104,7 +1105,7 @@ public int createAccommodation(Accommodation accommodation) throws SQLException 
         String sql = """
             UPDATE Accommodations 
             SET name = ?, description = ?, cityId = ?, address = ?, type = ?, 
-                numberOfRooms = ?, amenities = ?, pricePerNight = ?, images = ?, 
+                numberOfRooms = ?, maxOccupancy = ?, amenities = ?, pricePerNight = ?, images = ?, 
                 averageRating = ?, totalBookings = ?
             WHERE accommodationId = ?
         """;
@@ -1118,12 +1119,13 @@ public int createAccommodation(Accommodation accommodation) throws SQLException 
             ps.setString(4, accommodation.getAddress());
             ps.setString(5, accommodation.getType());
             ps.setInt(6, accommodation.getNumberOfRooms());
-            ps.setString(7, accommodation.getAmenities());
-            ps.setDouble(8, accommodation.getPricePerNight());
-            ps.setString(9, accommodation.getImages());
-            ps.setDouble(10, accommodation.getAverageRating());
-            ps.setInt(11, accommodation.getTotalBookings());
-            ps.setInt(12, accommodation.getAccommodationId());
+            ps.setInt(7, accommodation.getMaxOccupancy());
+            ps.setString(8, accommodation.getAmenities());
+            ps.setDouble(9, accommodation.getPricePerNight());
+            ps.setString(10, accommodation.getImages());
+            ps.setDouble(11, accommodation.getAverageRating());
+            ps.setInt(12, accommodation.getTotalBookings());
+            ps.setInt(13, accommodation.getAccommodationId());
 
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
@@ -1194,6 +1196,7 @@ private Accommodation mapAccommodationFromResultSet(ResultSet rs) throws SQLExce
         accommodation.setAddress(rs.getString("address"));
         accommodation.setType(rs.getString("type"));
         accommodation.setNumberOfRooms(rs.getInt("numberOfRooms"));
+        accommodation.setMaxOccupancy(rs.getInt("maxOccupancy"));
         accommodation.setAmenities(rs.getString("amenities"));
         accommodation.setPricePerNight(rs.getDouble("pricePerNight"));
         accommodation.setImages(rs.getString("images"));
@@ -1485,6 +1488,7 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
         accommodation.setAddress(rs.getString("address"));
         accommodation.setType(rs.getString("type"));
         accommodation.setNumberOfRooms(rs.getInt("numberOfRooms"));
+        accommodation.setMaxOccupancy(rs.getInt("maxOccupancy"));
         accommodation.setAmenities(rs.getString("amenities"));
         accommodation.setPricePerNight(rs.getDouble("pricePerNight"));
         accommodation.setImages(rs.getString("images"));
@@ -1529,7 +1533,5 @@ public int getTotalAccommodationsCount(String type) throws SQLException {
 
         return accommodation;
     }
-
-
 
 }
