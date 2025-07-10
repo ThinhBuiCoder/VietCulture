@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-
     private static final Logger LOGGER = Logger.getLogger(LoginServlet.class.getName());
     private UserDAO userDAO;
 
@@ -48,8 +47,8 @@ public class LoginServlet extends HttpServlet {
 
         try {
             // Validate input
-            if (email == null || email.trim().isEmpty()
-                    || password == null || password.trim().isEmpty()) {
+            if (email == null || email.trim().isEmpty() ||
+                password == null || password.trim().isEmpty()) {
                 request.setAttribute("error", "Vui lòng nhập email và mật khẩu.");
                 request.getRequestDispatcher("/view/jsp/home/login.jsp").forward(request, response);
                 return;
@@ -128,7 +127,7 @@ public class LoginServlet extends HttpServlet {
         // Redirect based on role
         switch (user.getRole()) {
             case "ADMIN":
-                return contextPath + "/admin/dashboard";
+                return contextPath + "/home";
             case "HOST":
                 return contextPath + "/host/dashboard";
             case "TRAVELER":

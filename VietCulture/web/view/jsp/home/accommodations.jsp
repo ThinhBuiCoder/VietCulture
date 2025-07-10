@@ -1116,7 +1116,7 @@
                             <div class="card-item">
                                 <div class="card-image">
                                     <!-- Favorite Button -->
-                                    <c:if test="${not empty sessionScope.user && sessionScope.user.role == 'TRAVELER'}">
+                                    <c:if test="${not empty sessionScope.user}">
                                         <button class="favorite-btn" 
                                                 data-accommodation-id="${accommodation.accommodationId}" 
                                                 data-type="accommodation"

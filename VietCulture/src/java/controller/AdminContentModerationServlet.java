@@ -59,10 +59,14 @@ public class AdminContentModerationServlet extends HttpServlet {
 
         String pathInfo = request.getPathInfo();
 
+        // Chuyển hướng từ /admin/content/moderation sang /admin/content/approval
+        if (pathInfo == null || pathInfo.equals("/")) {
+            response.sendRedirect(request.getContextPath() + "/admin/content/approval");
+            return;
+        }
+
         try {
-            if (pathInfo == null || pathInfo.equals("/")) {
-                handleModerationOverview(request, response);
-            } else if (pathInfo.matches("/\\d+")) {
+            if (pathInfo.matches("/\\d+")) {
                 // View specific content detail
                 int contentId = Integer.parseInt(pathInfo.substring(1));
                 handleContentDetail(request, response, contentId);

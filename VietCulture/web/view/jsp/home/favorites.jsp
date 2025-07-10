@@ -97,20 +97,14 @@
         .nav-center-item {
             color: rgba(255,255,255,0.7);
             text-decoration: none;
-            font-weight: 500;
-            transition: var(--transition);
-            padding: 8px 16px;
-            border-radius: 8px;
         }
 
         .nav-center-item:hover {
             color: white;
-            background-color: rgba(255,255,255,0.1);
         }
 
         .nav-center-item.active {
             color: var(--primary-color);
-            background-color: rgba(255, 56, 92, 0.1);
         }
 
         .nav-right {
@@ -177,6 +171,105 @@
             margin-right: 12px;
             font-size: 18px;
             color: #10466C;
+        }
+
+        /* Chat Link Styles */
+        .nav-chat-link {
+            position: relative;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .nav-chat-link:hover {
+            color: var(--primary-color) !important;
+            background-color: rgba(255, 56, 92, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Standard Dropdown Styles */
+        .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            padding: 10px 0;
+            min-width: 200px;
+            background: white;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            color: var(--dark-color);
+            transition: var(--transition);
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .dropdown-item.active {
+            background-color: #10466C !important;
+            color: white !important;
+        }
+
+        .dropdown-item.active:hover {
+            background-color: #0d3a5a !important;
+            color: white !important;
+        }
+
+        .dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .dropdown-divider {
+            margin: 8px 0;
+            border-color: #e9ecef;
+        }
+
+        .message-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #FF385C;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 600;
+            border: 2px solid #10466C;
+            animation: pulse 2s infinite;
+        }
+
+        .message-badge.show {
+            display: flex;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+            }
         }
 
         /* Page Header */
@@ -777,58 +870,80 @@
 
             <div class="nav-center">
                 <a href="${pageContext.request.contextPath}/" class="nav-center-item">
-                    <i class="ri-home-line me-1"></i>Trang Chủ
+                    Trang Chủ
                 </a>
-                <a href="${pageContext.request.contextPath}/experiences" class="nav-center-item">
-                    <i class="ri-compass-discover-line me-1"></i>Trải Nghiệm
+                <a href="/Travel/experiences" class="nav-center-item">
+                    Trải Nghiệm
                 </a>
-                <a href="${pageContext.request.contextPath}/accommodations" class="nav-center-item">
-                    <i class="ri-home-heart-line me-1"></i>Lưu Trú
-                </a>
-                <a href="${pageContext.request.contextPath}/favorites" class="nav-center-item active">
-                    <i class="ri-heart-fill me-1"></i>Yêu Thích
+                <a href="/Travel/accommodations" class="nav-center-item">
+                    Lưu Trú
                 </a>
             </div>
 
             <div class="nav-right">
-                <c:choose>
-                    <c:when test="${not empty sessionScope.user}">
-                        <div class="dropdown">
-                            <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
-                                <i class="ri-user-line me-2" style="color: white;"></i> 
-                                ${fn:escapeXml(sessionScope.user.fullName)}
+                <!-- Icon tin nhắn cố định cho HOST và TRAVELER -->
+                <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
+                    <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
+                        <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
+                        <!-- Badge đỏ sẽ được thêm bằng JavaScript -->
+                    </a>
+                </c:if>
+                
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
+                        <i class="ri-user-line" style="color: white;"></i> 
+                        ${sessionScope.user.fullName}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <%-- Role-based dashboard access --%>
+                        <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-dashboard-line"></i> Quản Trị
+                                </a>
+                            </li>
+                        </c:if>
+                        <c:if test="${sessionScope.user.role == 'HOST'}">
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+                                </a>
+                            </li>
+                        </c:if>
+                        <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                            <li>
+                                <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                                    <i class="ri-vip-crown-line"></i> Nâng Lên Host
+                                </a>
+                            </li>
+                        </c:if>
+                        
+                        <%-- Favorites - ACTIVE STATE for this page --%>
+                        <li>
+                            <a class="dropdown-item active" href="${pageContext.request.contextPath}/favorites" style="color: white; background-color: #10466C; font-weight: 700;">
+                                <i class="ri-heart-line"></i> Yêu Thích
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-custom">
-                                <c:if test="${sessionScope.user.role == 'TRAVELER'}">
-                                    <li>
-                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/favorites">
-                                            <i class="ri-heart-line"></i> Yêu Thích
-                                        </a>
-                                    </li>
-                                </c:if>
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/profile">
-                                        <i class="ri-user-settings-line"></i> Hồ Sơ
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/logout">
-                                        <i class="ri-logout-circle-r-line"></i> Đăng Xuất
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <a href="${pageContext.request.contextPath}/login" class="nav-center-item">
-                            <i class="ri-login-circle-line me-1"></i>Đăng Nhập
-                        </a>
-                        <a href="${pageContext.request.contextPath}/register" class="nav-center-item">
-                            <i class="ri-user-add-line me-1"></i>Đăng Ký
-                        </a>
-                    </c:otherwise>
-                </c:choose>
+                        </li>
+                        
+                        <%-- Profile option --%>
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
+                                <i class="ri-user-settings-line"></i> Hồ Sơ
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
+                                <i class="ri-logout-circle-r-line"></i> Đăng Xuất
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -1552,6 +1667,62 @@
             setTimeout(() => showToast('Tin nhắn lỗi thử nghiệm', 'error'), 1000);
             setTimeout(() => showToast('Tin nhắn thông tin thử nghiệm', 'info'), 2000);
         }
+
+        // Check unread messages and update badge
+        function checkUnreadMessages() {
+            // Only check if user is logged in and has chat access
+            const isLoggedIn = '${not empty sessionScope.user}' === 'true';
+            const userRole = '${sessionScope.user.role}';
+            
+            if (isLoggedIn && (userRole === 'HOST' || userRole === 'TRAVELER')) {
+                fetch('${pageContext.request.contextPath}/api/chat/unread-count')
+                    .then(response => response.json())
+                    .then(data => {
+                        const chatLink = document.querySelector('.nav-chat-link');
+                        if (chatLink) {
+                            // Remove existing badge if any
+                            const existingBadge = chatLink.querySelector('.message-badge');
+                            if (existingBadge) {
+                                existingBadge.remove();
+                            }
+                            
+                            // Add new badge if there are unread messages
+                            if (data.unreadCount && data.unreadCount > 0) {
+                                const badge = document.createElement('span');
+                                badge.className = 'message-badge show';
+                                badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                                badge.style.cssText = `
+                                    position: absolute;
+                                    top: -2px;
+                                    right: -2px;
+                                    background: #FF385C;
+                                    color: white;
+                                    border-radius: 50%;
+                                    width: 16px;
+                                    height: 16px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 0.6rem;
+                                    font-weight: 600;
+                                    border: 2px solid #10466C;
+                                    animation: pulse 2s infinite;
+                                `;
+                                chatLink.style.position = 'relative';
+                                chatLink.appendChild(badge);
+                            }
+                        }
+                    })
+                    .catch(error => console.log('Error checking unread messages:', error));
+            }
+        }
+
+        // Initialize unread messages check
+        document.addEventListener('DOMContentLoaded', function() {
+            checkUnreadMessages();
+            // Check every 30 seconds
+            setInterval(checkUnreadMessages, 30000);
+        });
 
         // Make debug functions available globally
         window.debugFavorites = debugFavorites;

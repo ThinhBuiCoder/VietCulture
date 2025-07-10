@@ -22,9 +22,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * RegisterServlet with OTP-based email verification Simple and user-friendly
- * registration flow: 1. User submits registration form 2. System sends OTP to
- * email 3. User enters OTP to complete registration
+ * RegisterServlet with OTP-based email verification
+ * Simple and user-friendly registration flow:
+ * 1. User submits registration form
+ * 2. System sends OTP to email
+ * 3. User enters OTP to complete registration
  */
 @WebServlet(urlPatterns = {"/register", "/verify-otp", "/resend-otp"})
 public class RegisterServlet extends HttpServlet {
@@ -166,7 +168,7 @@ public class RegisterServlet extends HttpServlet {
             // Check if email already exists
             if (userDAO.emailExists(regData.email())) {
                 setErrorAndForward(request, response,
-                        "Email này đã được sử dụng. Vui lòng sử dụng email khác.", REGISTER_VIEW);
+                    "Email này đã được sử dụng. Vui lòng sử dụng email khác.", REGISTER_VIEW);
                 return;
             }
 
@@ -317,8 +319,8 @@ public class RegisterServlet extends HttpServlet {
                     errorMsg = "Bạn đã nhập sai mã OTP quá nhiều lần. Vui lòng đăng ký lại.";
                 }
 
-                LOGGER.warning("❌ Invalid OTP for " + pendingUser.getEmail()
-                        + ". Attempts: " + attempts + "/" + MAX_OTP_ATTEMPTS);
+                LOGGER.warning("❌ Invalid OTP for " + pendingUser.getEmail() +
+                              ". Attempts: " + attempts + "/" + MAX_OTP_ATTEMPTS);
 
                 if (remainingAttempts <= 0) {
                     clearOTPSession(session);
@@ -413,7 +415,7 @@ public class RegisterServlet extends HttpServlet {
                 if (timeSinceLastResend < 30000) { // 30 seconds
                     long remainingCooldown = (30000 - timeSinceLastResend) / 1000;
                     setOTPError(request, response, session,
-                            "Vui lòng đợi " + remainingCooldown + " giây trước khi yêu cầu gửi lại mã.");
+                        "Vui lòng đợi " + remainingCooldown + " giây trước khi yêu cầu gửi lại mã.");
                     return;
                 }
             }
@@ -434,8 +436,8 @@ public class RegisterServlet extends HttpServlet {
             // Send new OTP email
             sendOTPEmailAsync(pendingUser.getEmail(), pendingUser.getFullName(), newOTPCode);
 
-            LOGGER.info("✅ New OTP sent to: " + pendingUser.getEmail()
-                    + " (Resend attempt: " + (resendAttempts + 1) + ")");
+            LOGGER.info("✅ New OTP sent to: " + pendingUser.getEmail() +
+                       " (Resend attempt: " + (resendAttempts + 1) + ")");
 
             // Redirect back to OTP verification with success message
             response.sendRedirect(request.getContextPath() + "/verify-otp?resent=true");
@@ -490,13 +492,11 @@ public class RegisterServlet extends HttpServlet {
             String submittedToken = request.getParameter(CSRF_TOKEN_ATTR);
             HttpSession session = request.getSession(false);
 
-            if (session == null) {
-                return false;
-            }
+            if (session == null) return false;
 
             String sessionToken = (String) session.getAttribute(CSRF_TOKEN_ATTR);
-            boolean isValid = submittedToken != null && sessionToken != null
-                    && submittedToken.equals(sessionToken);
+            boolean isValid = submittedToken != null && sessionToken != null &&
+                             submittedToken.equals(sessionToken);
 
             if (isValid) {
                 session.removeAttribute(CSRF_TOKEN_ATTR); // Use once
@@ -518,12 +518,8 @@ public class RegisterServlet extends HttpServlet {
             String role = sanitizeInput(request.getParameter("role"));
             boolean agreeTerms = "on".equals(request.getParameter("agreeTerms"));
 
-            if (email != null) {
-                email = email.toLowerCase().trim();
-            }
-            if (fullName != null) {
-                fullName = fullName.trim();
-            }
+            if (email != null) email = email.toLowerCase().trim();
+            if (fullName != null) fullName = fullName.trim();
 
             return new RegistrationData(fullName, email, password, confirmPassword, role, agreeTerms);
         } catch (Exception e) {
@@ -564,8 +560,8 @@ public class RegisterServlet extends HttpServlet {
         }
 
         // Role validation
-        if (data.role() == null
-                || (!data.role().equals("TRAVELER") && !data.role().equals("HOST"))) {
+        if (data.role() == null ||
+            (!data.role().equals("TRAVELER") && !data.role().equals("HOST"))) {
             return "Vui lòng chọn vai trò tham gia.";
         }
 
@@ -607,12 +603,10 @@ public class RegisterServlet extends HttpServlet {
     }
 
     private String sanitizeInput(String input) {
-        if (input == null) {
-            return null;
-        }
+        if (input == null) return null;
         return input.trim()
-                .replaceAll("<script[^>]*>.*?</script>", "")
-                .replaceAll("<.*?>", "");
+                   .replaceAll("<script[^>]*>.*?</script>", "")
+                   .replaceAll("<.*?>", "");
     }
 
     private String generateCSRFToken() {
@@ -636,7 +630,7 @@ public class RegisterServlet extends HttpServlet {
     }
 
     private void setErrorAndForward(HttpServletRequest request, HttpServletResponse response,
-            String errorMessage, String viewPath) throws ServletException, IOException {
+                                   String errorMessage, String viewPath) throws ServletException, IOException {
         request.setAttribute("error", errorMessage);
 
         // Generate new CSRF token
@@ -649,7 +643,7 @@ public class RegisterServlet extends HttpServlet {
     }
 
     private void setOTPError(HttpServletRequest request, HttpServletResponse response,
-            HttpSession session, String errorMessage) throws ServletException, IOException {
+                            HttpSession session, String errorMessage) throws ServletException, IOException {
 
         User pendingUser = (User) session.getAttribute(PENDING_USER_ATTR);
         Date otpExpiry = (Date) session.getAttribute(OTP_EXPIRY_ATTR);
@@ -694,12 +688,11 @@ public class RegisterServlet extends HttpServlet {
      * Record for registration data
      */
     private record RegistrationData(
-            String fullName,
-            String email,
-            String password,
-            String confirmPassword,
-            String role,
-            boolean agreeTerms) {
-
-    }
+        String fullName,
+        String email,
+        String password,
+        String confirmPassword,
+        String role,
+        boolean agreeTerms
+    ) {}
 }

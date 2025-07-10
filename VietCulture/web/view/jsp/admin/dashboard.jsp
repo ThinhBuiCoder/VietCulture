@@ -77,13 +77,7 @@
                             <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/content/moderation">
                                 <i class="fas fa-eye me-2"></i> Kiểm duyệt nội dung
                             </a>
-                        </li>
-                   
-                        <li class="nav-item">
-                            <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/statistics/users">
-                                <i class="fas fa-chart-bar me-2"></i> Thống kê
-                            </a>
-                        </li>
+                        </li>                 
                         <li class="nav-item">
                             <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/complaints">
                                 <i class="fas fa-exclamation-triangle me-2"></i> Khiếu nại

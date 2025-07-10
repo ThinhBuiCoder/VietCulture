@@ -2,9 +2,11 @@ package model;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /**
  * Lớp mô hình đại diện cho một trải nghiệm du lịch
+ * Đã cập nhật với logic adminApprovalStatus mới
  */
 public class Experience {
     private int experienceId;
@@ -22,7 +24,7 @@ public class Experience {
     private String includedItems;
     private String requirements;
     private Date createdAt;
-    private boolean isActive;
+    private boolean isActive = true; // Host hiện/ẩn (1 = hiện, 0 = ẩn)
     private String images;
     private double averageRating;
     private int totalBookings;
@@ -33,7 +35,14 @@ public class Experience {
     private boolean isFlagged = false;
     private String flagReason;
     private String firstImage;
-private String categoryName;
+    private String categoryName;
+
+    // ===== TRƯỜNG MỚI CHO ADMIN APPROVAL =====
+    private String adminApprovalStatus = "PENDING"; // PENDING, APPROVED, REJECTED
+    private Integer adminApprovedBy; // User ID của admin duyệt
+    private Date adminApprovedAt; // Thời gian duyệt
+    private String adminRejectReason; // Lý do từ chối
+    private String adminNotes; // Ghi chú của admin
 
     // Các trường bổ sung để hiển thị
     private String cityName;
@@ -57,24 +66,177 @@ private String categoryName;
         this.duration = duration;
         this.difficulty = difficulty;
         this.language = language;
-        this.isActive = false; // Mặc định chưa được duyệt
+        this.isActive = true; // Host muốn hiện (mặc định)
+        this.adminApprovalStatus = "PENDING"; // Chờ admin duyệt
         this.averageRating = 0.0;
         this.totalBookings = 0;
     }
 
+    // ===== GETTERS VÀ SETTERS CHO ADMIN APPROVAL =====
+    
+    public String getAdminApprovalStatus() {
+        return adminApprovalStatus;
+    }
+    
+    public void setAdminApprovalStatus(String adminApprovalStatus) {
+        this.adminApprovalStatus = adminApprovalStatus;
+    }
+    
+    public Integer getAdminApprovedBy() {
+        return adminApprovedBy;
+    }
+    
+    public void setAdminApprovedBy(Integer adminApprovedBy) {
+        this.adminApprovedBy = adminApprovedBy;
+    }
+    
+    public Date getAdminApprovedAt() {
+        return adminApprovedAt;
+    }
+    
+    public void setAdminApprovedAt(Date adminApprovedAt) {
+        this.adminApprovedAt = adminApprovedAt;
+    }
+    
+    public String getAdminRejectReason() {
+        return adminRejectReason;
+    }
+    
+    public void setAdminRejectReason(String adminRejectReason) {
+        this.adminRejectReason = adminRejectReason;
+    }
+    
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+    
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
+    }
 
-public void setFirstImage(String firstImage) {
-    this.firstImage = firstImage;
-}
+    // ===== UTILITY METHODS =====
+    
+    /**
+     * Kiểm tra có được hiển thị công khai không
+     */
+    public boolean isPubliclyVisible() {
+        return "APPROVED".equals(adminApprovalStatus) && isActive;
+    }
+    
+    /**
+     * Kiểm tra admin đã duyệt chưa
+     */
+    public boolean isAdminApproved() {
+        return "APPROVED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra đang chờ admin duyệt
+     */
+    public boolean isPendingApproval() {
+        return "PENDING".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra admin đã từ chối
+     */
+    public boolean isAdminRejected() {
+        return "REJECTED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Lấy trạng thái hiển thị chi tiết cho host
+     */
+    public String getDetailedStatus() {
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "Chờ admin duyệt";
+            case "APPROVED":
+                return isActive ? "Đang hiển thị công khai" : "Đã ẩn bởi host";
+            case "REJECTED":
+                return "Bị admin từ chối" + (adminRejectReason != null ? " - " + adminRejectReason : "");
+            default:
+                return "Không xác định";
+        }
+    }
+    
+    /**
+     * Lấy CSS class cho trạng thái
+     */
+    public String getStatusCssClass() {
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "badge-warning";
+            case "APPROVED":
+                return isActive ? "badge-success" : "badge-secondary";
+            case "REJECTED":
+                return "badge-danger";
+            default:
+                return "badge-light";
+        }
+    }
+    
+    /**
+     * Kiểm tra host có thể chỉnh sửa không
+     */
+    public boolean canHostEdit() {
+        // Host có thể chỉnh sửa khi đang pending hoặc bị reject
+        return "PENDING".equals(adminApprovalStatus) || "REJECTED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Kiểm tra host có thể ẩn/hiện không  
+     */
+    public boolean canHostToggleVisibility() {
+        // Host chỉ có thể ẩn/hiện khi admin đã approve
+        return "APPROVED".equals(adminApprovalStatus);
+    }
+    
+    /**
+     * Lấy thông tin admin duyệt (để hiển thị)
+     */
+    public String getApprovalInfo() {
+        if ("APPROVED".equals(adminApprovalStatus) && adminApprovedAt != null) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            return "Đã duyệt lúc " + sdf.format(adminApprovedAt);
+        }
+        return null;
+    }
 
-public String getCategoryName() {
-    return categoryName;
-}
+    /**
+     * Lấy trạng thái hiển thị ngắn gọn cho admin
+     */
+    public String getStatusForAdmin() {
+        if (isDeleted) return "Đã xóa";
+        if (isFlagged) return "Bị đánh dấu";
+        if (reportCount > 0) return "Bị báo cáo";
+        
+        switch (adminApprovalStatus != null ? adminApprovalStatus : "PENDING") {
+            case "PENDING":
+                return "Chờ duyệt";
+            case "APPROVED":
+                return isActive ? "Hoạt động" : "Đã ẩn";
+            case "REJECTED":
+                return "Bị từ chối";
+            default:
+                return "Không xác định";
+        }
+    }
 
-public void setCategoryName(String categoryName) {
-    this.categoryName = categoryName;
-}
-    // Getters và Setters cho các trường liên quan đến báo cáo và xóa
+    // ===== GETTERS VÀ SETTERS CŨ =====
+
+    public void setFirstImage(String firstImage) {
+        this.firstImage = firstImage;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
     public int getReportCount() {
         return reportCount;
     }
@@ -123,20 +285,10 @@ public void setCategoryName(String categoryName) {
         this.flagReason = flagReason;
     }
 
-    // Các phương thức hỗ trợ
     public boolean isReported() {
         return reportCount > 0;
     }
 
-    public String getStatusForAdmin() {
-        if (isDeleted) return "Đã xóa";
-        if (isFlagged) return "Bị đánh dấu";
-        if (reportCount > 0) return "Bị báo cáo";
-        if (!isActive) return "Chờ duyệt";
-        return "Hoạt động";
-    }
-
-    // Getters và Setters cho các trường khác
     public int getExperienceId() {
         return experienceId;
     }
@@ -335,7 +487,7 @@ public void setCategoryName(String categoryName) {
     }
 
     public String getStatusText() {
-        return isActive ? "Đang hoạt động" : "Chờ duyệt";
+        return getDetailedStatus();
     }
 
     public String[] getImageList() {
@@ -366,6 +518,7 @@ public void setCategoryName(String categoryName) {
                 ", maxGroupSize=" + maxGroupSize +
                 ", difficulty='" + difficulty + '\'' +
                 ", isActive=" + isActive +
+                ", adminApprovalStatus='" + adminApprovalStatus + '\'' +
                 ", averageRating=" + averageRating +
                 ", totalBookings=" + totalBookings +
                 '}';
@@ -382,8 +535,6 @@ public void setCategoryName(String categoryName) {
     }
 
     public void setCategoryId(int parseInt) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
-
-
 }

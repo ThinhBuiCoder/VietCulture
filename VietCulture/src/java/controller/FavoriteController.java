@@ -110,14 +110,6 @@ public class FavoriteController extends HttpServlet {
             return; // CRITICAL: Return here to prevent further processing
         }
         
-        // Check role - RETURN EARLY TO AVOID DOUBLE RESPONSE
-        if (!"TRAVELER".equals(user.getRole())) {
-            System.out.println("User is not TRAVELER, showing error page");
-            request.setAttribute("error", "Chỉ có Traveler mới có thể xem danh sách yêu thích");
-            request.getRequestDispatcher("/view/jsp/home/error.jsp").forward(request, response);
-            return; // CRITICAL: Return here to prevent further processing
-        }
-
         try {
             System.out.println("Getting favorites for userId: " + user.getUserId());
 
@@ -200,12 +192,12 @@ public class FavoriteController extends HttpServlet {
         System.out.println("Role: " + (user != null ? user.getRole() : "null"));
 
         // Check authentication
-        if (user == null || !"TRAVELER".equals(user.getRole())) {
+        if (user == null) {
             System.out.println("Unauthorized access attempt");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write(gson.toJson(Map.of(
                 "success", false,
-                "message", "Vui lòng đăng nhập với tài khoản Traveler"
+                "message", "Vui lòng đăng nhập để sử dụng tính năng yêu thích"
             )));
             return;
         }

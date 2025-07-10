@@ -226,45 +226,16 @@
             </li>
             
             <!-- Statistics Section -->
-            <li class="nav-item mt-3">
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
-                    <span><i class="fas fa-chart-bar me-2"></i>Thống kê & Báo cáo</span>
-                </h6>
-            </li>
+       
             
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/statistics/users') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/statistics/users">
-                    <i class="fas fa-users-cog me-2"></i> 
-                    <span>Thống kê Users</span>
-                </a>
-            </li>
+         
             
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/statistics/content') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/statistics/content">
-                    <i class="fas fa-chart-pie me-2"></i> 
-                    <span>Thống kê Content</span>
-                </a>
-            </li>
+         
             
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/statistics/bookings') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/statistics/bookings">
-                    <i class="fas fa-chart-line me-2"></i> 
-                    <span>Thống kê Bookings</span>
-                </a>
-            </li>
+      
+
             
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/reports') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/reports/system">
-                    <i class="fas fa-file-alt me-2"></i> 
-                    <span>Báo cáo hệ thống</span>
-                </a>
-            </li>
-            
-            <!-- Support Section -->
+   
             <li class="nav-item mt-3">
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
                     <span><i class="fas fa-life-ring me-2"></i>Hỗ trợ</span>
@@ -280,75 +251,16 @@
                         <span class="badge bg-danger ms-auto">${newComplaints}</span>
                     </c:if>
                 </a>
-            </li>
+            </li>         
+
             
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/support') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/support/tickets">
-                    <i class="fas fa-headset me-2"></i> 
-                    <span>Support Tickets</span>
-                    <c:if test="${not empty openTickets and openTickets > 0}">
-                        <span class="badge bg-info ms-auto">${openTickets}</span>
-                    </c:if>
-                </a>
-            </li>
-            
-            <!-- System Settings -->
-            <li class="nav-item mt-3">
-                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
-                    <span><i class="fas fa-cogs me-2"></i>Cài đặt hệ thống</span>
-                </h6>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/settings/general') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/settings/general">
-                    <i class="fas fa-cog me-2"></i> 
-                    <span>Cài đặt chung</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/settings/email') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/settings/email">
-                    <i class="fas fa-envelope me-2"></i> 
-                    <span>Cài đặt Email</span>
-                </a>
-            </li>
-            
-            <li class="nav-item">
-                <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/settings/payments') ? 'active text-white' : 'text-white-50'}" 
-                   href="${pageContext.request.contextPath}/admin/settings/payments">
-                    <i class="fas fa-credit-card me-2"></i> 
-                    <span>Cài đặt thanh toán</span>
-                </a>
-            </li>
+         
         </ul>
         
         <!-- Divider -->
         <hr class="text-white-50 my-4">
         
-        <!-- Quick Actions -->
-        <div class="mb-3">
-            <h6 class="sidebar-heading px-3 mb-2 text-white-50">
-                <span><i class="fas fa-bolt me-2"></i>Thao tác nhanh</span>
-            </h6>
-            <div class="px-3">
-                <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2" onclick="quickApproveAll()" title="Duyệt tất cả nội dung pending">
-                    <i class="fas fa-check-double me-1"></i> Duyệt tất cả
-                </button>
-                <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2" onclick="quickBackup()" title="Sao lưu dữ liệu hệ thống">
-                    <i class="fas fa-database me-1"></i> Backup ngay
-                </button>
-                <button type="button" class="btn btn-outline-light btn-sm w-100 mb-2" onclick="clearCache()" title="Xóa cache để cải thiện hiệu suất">
-                    <i class="fas fa-broom me-1"></i> Xóa Cache
-                </button>
-                <button type="button" class="btn btn-outline-light btn-sm w-100" onclick="viewLogs()" title="Xem nhật ký hệ thống">
-                    <i class="fas fa-list-ul me-1"></i> Xem Logs
-                </button>
-            </div>
-        </div>
-        
+        <!-- Quick Actions -->      
         <!-- System Status -->
         <div class="px-3 mb-3">
             <h6 class="sidebar-heading mb-2 text-white-50">
@@ -404,21 +316,11 @@
                     <i class="fas fa-key me-2"></i> Đổi mật khẩu
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li>
-                    <h6 class="dropdown-header">
-                        <i class="fas fa-shield-alt me-1"></i> Bảo mật
-                    </h6>
-                </li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/admin/security/sessions">
-                    <i class="fas fa-desktop me-2"></i> Quản lý Sessions
-                </a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/admin/security/logs">
-                    <i class="fas fa-history me-2"></i> Login History
-                </a></li>
+               
+               
+            
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/admin/content/approval">
-                    <i class="fas fa-check-double me-2"></i> Duyệt nội dung nhanh
-                </a></li>
+   
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
                     <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất

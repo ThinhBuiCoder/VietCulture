@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Các giải pháp bản đồ miễn phí</title>
+    <style>
+        .map-option {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        .map-container {
+            height: 300px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .pros, .cons {
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .pros { background: #d4edda; border-left: 4px solid #28a745; }
+        .cons { background: #f8d7da; border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+
+<h1>🗺️ Các giải pháp bản đồ thay thế Google Maps</h1>
+
+<!-- Option 1: Google Maps Embed (Miễn phí) -->
+<div class="map-option">
+    <h2>1. Google Maps Embed API (Miễn phí)</h2>
+    <div class="map-container">
+        <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.3197217241813!2d106.69967931476295!3d10.78282489405924!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317529292e8d3dd1%3A0xf15f5aad773c112b!2sDistrict%201%2C%20Ho%20Chi%20Minh%20City%2C%20Vietnam!5e0!3m2!1sen!2s!4v1699000000000!5m2!1sen!2s" 
+            width="100%" 
+            height="300" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+    </div>
+    
+    <div class="pros-cons">
+        <div class="pros">
+            <strong>✅ Ưu điểm:</strong>
+            <ul>
+                <li>Hoàn toàn miễn phí</li>
+                <li>Không cần API key</li>
+                <li>Dữ liệu chính xác</li>
+                <li>Dễ implement</li>
+            </ul>
+        </div>
+        <div class="cons">
+            <strong>❌ Nhược điểm:</strong>
+            <ul>
+                <li>Không có directions API</li>
+                <li>Không custom được</li>
+                <li>Không lấy được GPS user</li>
+                <li>Chỉ hiển thị tĩnh</li>
+            </ul>
+        </div>
+    </div>
+
+    <details>
+        <summary><strong>📋 Code implementation:</strong></summary>
+        <pre><code>&lt;iframe 
+    src="https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&amp;q=${experience.location}" 
+    width="100%" 
+    height="400" 
+    style="border:0;" 
+    allowfullscreen="" 
+    loading="lazy"&gt;
+&lt;/iframe&gt;
+
+&lt;!-- Hoặc không cần API key: --&gt;
+&lt;iframe 
+    src="https://www.google.com/maps?q=${experience.location}&amp;output=embed" 
+    width="100%" 
+    height="400"&gt;
+&lt;/iframe&gt;</code></pre>
+    </details>
+</div>
+
+<!-- Option 2: OpenStreetMap + Leaflet -->
+<div class="map-option">
+    <h2>2. OpenStreetMap + Leaflet (Khuyến nghị)</h2>
+    <div class="map-container">
+        <div id="leafletExample" style="height: 300px;"></div>
+    </div>
+    
+    <div class="pros-cons">
+        <div class="pros">
+            <strong>✅ Ưu điểm:</strong>
+            <ul>
+                <li>Hoàn toàn miễn phí</li>
+                <li>Không cần API key</li>
+                <li>Tính năng đầy đủ</li>
+                <li>Directions, geocoding</li>
+                <li>Custom markers, popups</li>
+                <li>Open source</li>
+            </ul>
+        </div>
+        <div class="cons">
+            <strong>❌ Nhược điểm:</strong>
+            <ul>
+                <li>Dữ liệu ít hơn Google</li>
+                <li>Satellite images kém hơn</li>
+                <li>Cần học thêm API</li>
+            </ul>
+        </div>
+    </div>
+
+    <details>
+        <summary><strong>📋 Code implementation:</strong></summary>
+        <pre><code>&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /&gt;
+&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"&gt;&lt;/script&gt;
+
+&lt;div id="map" style="height: 400px;"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+var map = L.map('map').setView([10.7769, 106.7009], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.marker([10.7769, 106.7009]).addTo(map)
+  .bindPopup('${experience.title}').openPopup();
+&lt;/script&gt;</code></pre>
+    </details>
+</div>
+
+<!-- Option 3: Mapbox -->
+<div class="map-option">
+    <h2>3. Mapbox (Free tier: 50,000 views/tháng)</h2>
+    <div class="map-container">
+        <div style="background: #f0f0f0; height: 300px; display: flex; align-items: center; justify-content: center; color: #666;">
+            <div>Mapbox Demo (Cần API key để hiển thị)</div>
+        </div>
+    </div>
+    
+    <div class="pros-cons">
+        <div class="pros">
+            <strong>✅ Ưu điểm:</strong>
+            <ul>
+                <li>50,000 views miễn phí/tháng</li>
+                <li>UI đẹp, modern</li>
+                <li>Performance tốt</li>
+                <li>Tùy chỉnh cao</li>
+            </ul>
+        </div>
+        <div class="cons">
+            <strong>❌ Nhược điểm:</strong>
+            <ul>
+                <li>Cần đăng ký account</li>
+                <li>Có giới hạn free tier</li>
+                <li>Phức tạp hơn Leaflet</li>
+            </ul>
+        </div>
+    </div>
+
+    <details>
+        <summary><strong>📋 Code implementation:</strong></summary>
+        <pre><code>&lt;script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"&gt;&lt;/script&gt;
+&lt;link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" /&gt;
+
+mapboxgl.accessToken = 'YOUR_MAPBOX_TOKEN';
+const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [106.7009, 10.7769],
+    zoom: 13
+});
+
+new mapboxgl.Marker()
+    .setLngLat([106.7009, 10.7769])
+    .addTo(map);</code></pre>
+    </details>
+</div>
+
+<!-- Option 4: HERE Maps -->
+<div class="map-option">
+    <h2>4. HERE Maps (Free tier: 250,000 views/tháng)</h2>
+    <div class="map-container">
+        <div style="background: #f0f0f0; height: 300px; display: flex; align-items: center; justify-content: center; color: #666;">
+            <div>HERE Maps Demo (Cần API key để hiển thị)</div>
+        </div>
+    </div>
+    
+    <div class="pros-cons">
+        <div class="pros">
+            <strong>✅ Ưu điểm:</strong>
+            <ul>
+                <li>250,000 requests miễn phí/tháng</li>
+                <li>Dữ liệu tốt cho châu Á</li>
+                <li>Directions API mạnh</li>
+                <li>Offline maps</li>
+            </ul>
+        </div>
+        <div class="cons">
+            <strong>❌ Nhược điểm:</strong>
+            <ul>
+                <li>Cần đăng ký account</li>
+                <li>Documentation phức tạp</li>
+                <li>Ít phổ biến ở VN</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Option 5: Goong Maps (Việt Nam) -->
+<div class="map-option">
+    <h2>5. Goong Maps (Việt Nam) 🇻🇳</h2>
+    <div class="map-container">
+        <div style="background: #f0f0f0; height: 300px; display: flex; align-items: center; justify-content: center; color: #666;">
+            <div>Goong Maps Demo (Cần API key từ map.goong.io)</div>
+        </div>
+    </div>
+    
+    <div class="pros-cons">
+        <div class="pros">
+            <strong>✅ Ưu điểm:</strong>
+            <ul>
+                <li>Dữ liệu Việt Nam rất tốt</li>
+                <li>API bằng tiếng Việt</li>
+                <li>Support địa phương</li>
+                <li>Free tier hấp dẫn</li>
+            </ul>
+        </div>
+        <div class="cons">
+            <strong>❌ Nhược điểm:</strong>
+            <ul>
+                <li>Chỉ tập trung VN</li>
+                <li>Ít tài liệu</li>
+                <li>API mới, ít ổn định</li>
+            </ul>
+        </div>
+    </div>
+
+    <details>
+        <summary><strong>📋 Đăng ký Goong Maps:</strong></summary>
+        <ol>
+            <li>Vào: <a href="https://account.goong.io/" target="_blank">https://account.goong.io/</a></li>
+            <li>Đăng ký tài khoản miễn phí</li>
+            <li>Tạo API key mới</li>
+            <li>Free tier: 5,000 requests/ngày</li>
+        </ol>
+    </details>
+</div>
+
+<!-- Recommendation -->
+<div style="background: #d1ecf1; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #0c5460;">
+    <h2>🎯 Khuyến nghị cho dự án VietCulture:</h2>
+    
+    <h3>📱 Giải pháp hybrid (Kết hợp):</h3>
+    <ol>
+        <li><strong>OpenStreetMap + Leaflet</strong> làm bản đồ chính (miễn phí 100%)</li>
+        <li><strong>Google Maps Embed</strong> làm fallback khi OSM lỗi</li>
+        <li><strong>External links</strong> để mở Google Maps, Zalo Map native apps</li>
+    </ol>
+
+    <h3>💡 Implementation strategy:</h3>
+    <ul>
+        <li>✅ Thay file hiện tại bằng <code>experience-detail-leaflet.jsp</code></li>
+        <li>✅ Giữ lại các external map links (Google, Zalo, Apple)</li>
+        <li>✅ Thêm copy địa chỉ để user paste vào app yêu thích</li>
+        <li>✅ Progressive enhancement: OSM → Static map → External links</li>
+    </ul>
+</div>
+
+</body>
+
+<!-- Leaflet example script -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize example Leaflet map
+    var exampleMap = L.map('leafletExample').setView([10.7769, 106.7009], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(exampleMap);
+    
+    // Custom marker
+    var customIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: #FF385C; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    L.marker([10.7769, 106.7009], {icon: customIcon})
+        .addTo(exampleMap)
+        .bindPopup('<b>Trải nghiệm mẫu</b><br>Quận 1, TP.HCM')
+        .openPopup();
+});
+</script>
+
+</html> 
