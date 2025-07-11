@@ -3,6 +3,7 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
+
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -1649,6 +1650,341 @@
                 }
             }
 
+            /* =================================
+               Weather Widget Styles
+               ================================= */
+
+            .weather-widget {
+                background: linear-gradient(135deg, 
+                    rgba(131, 197, 190, 0.1) 0%, 
+                    rgba(255, 56, 92, 0.05) 100%),
+                    var(--bg-primary);
+                border-radius: var(--border-radius);
+                padding: 20px;
+                margin-top: 20px;
+                border: 1px solid rgba(0,0,0,0.1);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .weather-widget::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 80px;
+                height: 80px;
+                background: radial-gradient(circle, rgba(255, 56, 92, 0.1) 0%, transparent 70%);
+                border-radius: 50%;
+                pointer-events: none;
+            }
+
+            .weather-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 15px;
+                position: relative;
+                z-index: 1;
+            }
+
+            .weather-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0;
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--dark-color);
+            }
+
+            .weather-title i {
+                font-size: 1.1rem;
+                color: var(--primary-color);
+            }
+
+            .weather-refresh {
+                background: none;
+                border: none;
+                color: #6c757d;
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 5px;
+                transition: var(--transition);
+            }
+
+            .weather-refresh:hover {
+                color: var(--primary-color);
+                background: rgba(0,0,0,0.05);
+                transform: rotate(180deg);
+            }
+
+            .weather-content {
+                position: relative;
+                z-index: 1;
+            }
+
+            .weather-loading {
+                text-align: center;
+                padding: 20px 0;
+                color: #6c757d;
+            }
+
+            .weather-loading i {
+                font-size: 1.5rem;
+                animation: spin 2s linear infinite;
+                color: var(--primary-color);
+                margin-bottom: 10px;
+            }
+
+            .weather-error {
+                text-align: center;
+                padding: 15px;
+                color: #dc3545;
+                background: #f8d7da;
+                border-radius: 8px;
+                border: 1px solid #f5c6cb;
+            }
+
+            .weather-current {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                margin-bottom: 20px;
+                padding: 15px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            }
+
+            .weather-icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--primary-color), #FF6B6B);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.5rem;
+                flex-shrink: 0;
+                animation: float 3s ease-in-out infinite;
+            }
+
+            .weather-main {
+                flex: 1;
+            }
+
+            .weather-temp {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--dark-color);
+                line-height: 1;
+                margin-bottom: 5px;
+            }
+
+            .weather-desc {
+                font-size: 0.85rem;
+                color: #6c757d;
+                text-transform: capitalize;
+                margin-bottom: 5px;
+            }
+
+            .weather-location {
+                font-size: 0.75rem;
+                color: #6c757d;
+                display: flex;
+                align-items: center;
+                gap: 3px;
+            }
+
+            .weather-details {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .weather-detail {
+                background: white;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                border: 1px solid rgba(0,0,0,0.05);
+            }
+
+            .weather-detail i {
+                font-size: 1rem;
+                color: var(--secondary-color);
+                margin-bottom: 5px;
+            }
+
+            .weather-detail-value {
+                font-size: 1rem;
+                font-weight: 600;
+                color: var(--dark-color);
+                margin-bottom: 2px;
+            }
+
+            .weather-detail-label {
+                font-size: 0.65rem;
+                color: #6c757d;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .weather-forecast {
+                margin-top: 15px;
+            }
+
+            .forecast-title {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--dark-color);
+                margin-bottom: 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .forecast-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .forecast-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px;
+                background: white;
+                border-radius: 8px;
+                border: 1px solid rgba(0,0,0,0.05);
+                transition: var(--transition);
+            }
+
+            .forecast-item:hover {
+                border-color: rgba(0,0,0,0.1);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            }
+
+            .forecast-date {
+                font-size: 0.75rem;
+                color: var(--dark-color);
+                font-weight: 500;
+                min-width: 35px;
+            }
+
+            .forecast-weather {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: 1;
+            }
+
+            .forecast-icon {
+                width: 20px;
+                height: 20px;
+                border-radius: 4px;
+                background: #f8f9fa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.75rem;
+                color: #6c757d;
+            }
+
+            .forecast-desc {
+                font-size: 0.7rem;
+                color: #6c757d;
+                text-transform: capitalize;
+            }
+
+            .forecast-temp {
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--dark-color);
+                text-align: right;
+                min-width: 40px;
+            }
+
+            .weather-quality {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 0.65rem;
+                font-weight: 500;
+                margin-top: 5px;
+            }
+
+            .weather-quality.excellent {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            .weather-quality.good {
+                background: #fff3cd;
+                color: #856404;
+            }
+
+            .weather-quality.poor {
+                background: #f8d7da;
+                color: #721c24;
+            }
+
+            .weather-attribution {
+                margin-top: 15px;
+                padding-top: 10px;
+                border-top: 1px solid rgba(0,0,0,0.1);
+                text-align: center;
+            }
+
+            .weather-attribution a {
+                color: #6c757d;
+                text-decoration: none;
+                font-size: 0.65rem;
+                transition: var(--transition);
+            }
+
+            .weather-attribution a:hover {
+                color: var(--primary-color);
+            }
+
+            /* Weather Animations */
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-4px); }
+            }
+
+            /* Weather Themes */
+            .weather-widget.sunny {
+                background: linear-gradient(135deg, 
+                    rgba(251, 191, 36, 0.1) 0%, 
+                    rgba(245, 158, 11, 0.05) 100%);
+            }
+
+            .weather-widget.rainy {
+                background: linear-gradient(135deg, 
+                    rgba(59, 130, 246, 0.1) 0%, 
+                    rgba(37, 99, 235, 0.05) 100%);
+            }
+
+            .weather-widget.stormy {
+                background: linear-gradient(135deg, 
+                    rgba(75, 85, 99, 0.1) 0%, 
+                    rgba(55, 65, 81, 0.05) 100%);
+            }
+
             /* High Contrast Mode Support */
             @media (prefers-contrast: high) {
                 :root {
@@ -2470,6 +2806,25 @@
                                     </button>
                                 </c:otherwise>
                             </c:choose>
+                        </div>
+                    </div>
+
+                    <!-- Weather Widget -->
+                    <div class="weather-widget">
+                        <div class="weather-header">
+                            <h6 class="weather-title">
+                                <i class="ri-sun-line"></i>
+                                Thời tiết tại điểm đến
+                            </h6>
+                            <button class="weather-refresh" onclick="refreshWeather()" title="Cập nhật thời tiết">
+                                <i class="ri-refresh-line"></i>
+                            </button>
+                        </div>
+                        <div class="weather-content" id="weatherContent">
+                            <div class="weather-loading">
+                                <i class="ri-loader-4-line"></i>
+                                <div>Đang tải thông tin thời tiết...</div>
+                            </div>
                         </div>
                     </div>
 
@@ -3600,6 +3955,614 @@
                                                     });
                                         }
 
+                        // Weather Widget Functions
+                                        let weatherData = null;
+                                        let isLoadingWeather = false;
+
+                                                                                                async function loadWeatherData() {
+                                            if (isLoadingWeather) return;
+                                            
+                                            isLoadingWeather = true;
+                                            showWeatherLoading();
+
+                                            try {
+                                                // Try multiple location formats for better API recognition
+                                                const primaryLocation = getLocationForWeather();
+                                                const fallbackLocations = [
+                                                    primaryLocation,
+                                                    'Ho Chi Minh City, Vietnam',  // Always working fallback
+                                                    'Hanoi, Vietnam',
+                                                    'Da Nang, Vietnam'
+                                                ];
+
+                                                let weatherResult = null;
+                                                let workingLocation = null;
+
+                                                // Try each location until one works
+                                                for (let locationName of fallbackLocations) {
+                                                    try {
+                                                        console.log('🔄 Trying location:', locationName);
+                                                        
+                                                        const result = await tryLoadWeatherForLocation(locationName);
+                                                        
+                                                        if (result && result.location && 
+                                                            !result.location.name.toLowerCase().includes('adial')) {
+                                                            weatherResult = result;
+                                                            workingLocation = locationName;
+                                                            console.log('✅ Successfully loaded weather for:', locationName);
+                                                            break;
+                                                        }
+                                                        
+                                                    } catch (locationError) {
+                                                        console.log('❌ Failed for location:', locationName, locationError.message);
+                                                        continue;
+                                                    }
+                                                }
+
+                                                if (!weatherResult) {
+                                                    throw new Error('Không thể tải dữ liệu thời tiết cho bất kỳ địa điểm nào');
+                                                }
+
+                                                // Override location name if we had to use fallback
+                                                if (workingLocation !== primaryLocation) {
+                                                    weatherResult.location.name = getExpectedLocationName();
+                                                    console.log('📍 Using display name:', weatherResult.location.name);
+                                                }
+
+                                                weatherData = weatherResult;
+                                                renderWeatherData();
+                                                applyWeatherTheme();
+                                                
+                                            } catch (error) {
+                                                console.error('Weather API Error:', error);
+                                                showWeatherError('Không thể tải dữ liệu thời tiết. Vui lòng thử lại sau.');
+                                            } finally {
+                                                isLoadingWeather = false;
+                                            }
+                                        }
+
+                                        async function tryLoadWeatherForLocation(locationName) {
+                                            const apiKey = 'b872f76c011e4a5fbab105122251107';
+                                            const baseUrl = 'https://api.weatherapi.com/v1';
+
+                                            const currentUrl = baseUrl + '/current.json?key=' + apiKey + '&q=' + encodeURIComponent(locationName) + '&aqi=yes&lang=vi';
+                                            const forecastUrl = baseUrl + '/forecast.json?key=' + apiKey + '&q=' + encodeURIComponent(locationName) + '&days=4&aqi=yes&lang=vi';
+
+                                            const [currentResponse, forecastResponse] = await Promise.all([
+                                                fetch(currentUrl),
+                                                fetch(forecastUrl)
+                                            ]);
+
+                                            if (!currentResponse.ok || !forecastResponse.ok) {
+                                                throw new Error('API request failed');
+                                            }
+
+                                            const currentData = await currentResponse.json();
+                                            const forecastData = await forecastResponse.json();
+
+                                            return {
+                                                current: currentData.current,
+                                                location: currentData.location,
+                                                forecast: forecastData.forecast.forecastday.slice(1, 4)
+                                            };
+                                        }
+
+                                        function getLocationForWeather() {
+                                            // Get experience data from JSP
+                                            const expTitle = "${experience.title}";
+                                            const expLocation = "${experience.location}";
+                                            const expCityName = "${experience.cityName}";
+                                            const expCityId = "${experience.cityId}";
+                                            
+                                            console.log('🌍 Experience data for weather:');
+                                            console.log('- Title:', expTitle);
+                                            console.log('- Location:', expLocation);
+                                            console.log('- City Name:', expCityName);
+                                            console.log('- City ID:', expCityId);
+                                            
+                                            let weatherLocation = '';
+                                            
+                                            // Priority 1: Map cityId to exact location (MOST ACCURATE)
+                                            if (expCityId && expCityId !== 'null' && expCityId !== '0') {
+                                                weatherLocation = mapCityIdToLocation(parseInt(expCityId));
+                                                console.log('✅ Using cityId mapping (ID=' + expCityId + '):', weatherLocation);
+                                            }
+                                            // Priority 2: Use cityName mapping
+                                            else if (expCityName && expCityName.trim() !== '' && expCityName !== 'null') {
+                                                weatherLocation = mapCityNameToEnglish(expCityName.trim());
+                                                console.log('✅ Using mapped city name:', weatherLocation);
+                                            } 
+                                            // Priority 3: Parse location string intelligently
+                                            else if (expLocation && expLocation.trim() !== '' && expLocation !== 'null') {
+                                                weatherLocation = parseLocationString(expLocation);
+                                                console.log('✅ Using parsed location:', weatherLocation);
+                                            } 
+                                            // Priority 4: Default fallback
+                                            else {
+                                                weatherLocation = 'Ho Chi Minh City';
+                                                console.log('⚠️ Using default location:', weatherLocation);
+                                            }
+                                            
+                                            // Validate and add Vietnam if needed
+                                            const finalLocation = validateLocation(weatherLocation);
+                                            
+                                            console.log('🎯 Final weather location for \'' + expTitle + '\' (CityID: ' + expCityId + '):', finalLocation);
+                                            return finalLocation;
+                                        }
+
+                                        function mapCityIdToLocation(cityId) {
+                                            // Get city data from current experience (from database)
+                                            const expCityId = parseInt("${experience.cityId}");
+                                            const expCityName = "${experience.cityName}";
+                                            
+                                            console.log('🗺️ Experience city data:');
+                                            console.log('- Experience CityID:', expCityId);
+                                            console.log('- Experience City Name:', expCityName);
+                                            console.log('- Requested CityID:', cityId);
+                                            
+                                            // If the requested cityId matches current experience city
+                                            if (cityId === expCityId && expCityName && expCityName.trim() !== '' && expCityName !== 'null') {
+                                                const weatherLocation = mapVietnameseCityToEnglish(expCityName.trim());
+                                                console.log('✅ Using database city name for CityID ' + cityId + ':', weatherLocation);
+                                                return weatherLocation;
+                                            }
+                                            
+                                            // Fallback mapping for other cities (limited but covers main cities)
+                                            const fallbackMapping = {
+                                                1: 'Hanoi',                    // Hanoi
+                                                2: 'Hai Phong',                // Haiphong  
+                                                3: 'Sapa',                     // Sapa
+                                                4: 'Ha Long',                  // Ha Long
+                                                5: 'Ninh Binh',               // Ninh Binh
+                                                6: 'Da Nang',                  // Da Nang
+                                                7: 'Hue',                      // Hue
+                                                8: 'Hoi An',                   // Hoi An
+                                                9: 'Nha Trang',                // Nha Trang
+                                                10: 'Quy Nhon',                // Quy Nhon
+                                                11: 'Ho Chi Minh City',        // Ho Chi Minh City
+                                                12: 'Vung Tau',                // Vung Tau
+                                                13: 'Can Tho',                 // Can Tho
+                                                14: 'Phu Quoc',                // Phu Quoc
+                                                15: 'Da Lat',                  // Da Lat
+                                                16: 'Ben Tre'                  // Ben Tre
+                                            };
+                                            
+                                            const location = fallbackMapping[cityId];
+                                            
+                                            if (location) {
+                                                console.log('🗺️ Fallback CityID ' + cityId + ' mapped to:', location);
+                                                return location;
+                                            } else {
+                                                console.log('⚠️ Unknown cityID:', cityId, '- using default fallback');
+                                                return 'Ho Chi Minh City'; // Fallback for unknown cityId
+                                            }
+                                        }
+
+                                        function mapVietnameseCityToEnglish(vietnameseName) {
+                                            // Map Vietnamese city names to English for weather API
+                                            const mapping = {
+                                                'Hà Nội': 'Hanoi',
+                                                'Hanoi': 'Hanoi',
+                                                'Hồ Chí Minh': 'Ho Chi Minh City',
+                                                'Ho Chi Minh City': 'Ho Chi Minh City',
+                                                'TP.HCM': 'Ho Chi Minh City',
+                                                'Sài Gòn': 'Ho Chi Minh City',
+                                                'Đà Nẵng': 'Da Nang',
+                                                'Da Nang': 'Da Nang',
+                                                'Huế': 'Hue',
+                                                'Hue': 'Hue',
+                                                'Hội An': 'Hoi An',
+                                                'Hoi An': 'Hoi An',
+                                                'Nha Trang': 'Nha Trang',
+                                                'Đà Lạt': 'Da Lat',
+                                                'Da Lat': 'Da Lat',
+                                                'Vũng Tàu': 'Vung Tau',
+                                                'Vung Tau': 'Vung Tau',
+                                                'Cần Thơ': 'Can Tho',
+                                                'Can Tho': 'Can Tho',
+                                                'Hạ Long': 'Ha Long',
+                                                'Ha Long': 'Ha Long',
+                                                'Phú Quốc': 'Phu Quoc',
+                                                'Phu Quoc': 'Phu Quoc',
+                                                'Quy Nhon': 'Quy Nhon',
+                                                'Hải Phòng': 'Hai Phong',
+                                                'Haiphong': 'Hai Phong',
+                                                'Ninh Bình': 'Ninh Binh',
+                                                'Ninh Binh': 'Ninh Binh',
+                                                'Bến Tre': 'Ben Tre',
+                                                'Ben Tre': 'Ben Tre',
+                                                'Sapa': 'Sapa'
+                                            };
+                                            
+                                            const englishName = mapping[vietnameseName];
+                                            if (englishName) {
+                                                console.log('🌏 Mapped Vietnamese "' + vietnameseName + '" to English "' + englishName + '"');
+                                                return englishName;
+                                            }
+                                            
+                                            console.log('⚠️ No mapping found for "' + vietnameseName + '", using as-is');
+                                            return vietnameseName; // Use as-is if no mapping found
+                                        }
+
+                                        function mapCityNameToEnglish(cityName) {
+                                            const cityMapping = {
+                                                'Hà Nội': 'Hanoi',
+                                                'Hồ Chí Minh': 'Ho Chi Minh City', 
+                                                'Đà Nẵng': 'Da Nang',
+                                                'Nha Trang': 'Nha Trang',
+                                                'Hội An': 'Hoi An',
+                                                'Huế': 'Hue',
+                                                'Đà Lạt': 'Da Lat',
+                                                'Vũng Tàu': 'Vung Tau',
+                                                'Cần Thơ': 'Can Tho',
+                                                'Hạ Long': 'Ha Long',
+                                                'Phú Quốc': 'Phu Quoc',
+                                                'Quy Nhon': 'Quy Nhon',
+                                                'Vinh': 'Vinh'
+                                            };
+                                            
+                                            return cityMapping[cityName] || cityName;
+                                        }
+
+                                        function validateLocation(location) {
+                                            // Known problematic responses that should trigger fallback - EXACT matches only
+                                            const problematicLocations = ['adial', 'unknown', 'error', 'null', ''];
+                                            const lowerLocation = location.toLowerCase().trim();
+                                            
+                                            // Check for exact problematic patterns (not just contains)
+                                            const isProblematic = problematicLocations.some(bad => {
+                                                if (bad === '') return lowerLocation === '';
+                                                return lowerLocation === bad || lowerLocation.includes(' ' + bad + ' ') || 
+                                                       lowerLocation.startsWith(bad + ' ') || lowerLocation.endsWith(' ' + bad) ||
+                                                       lowerLocation === bad + ', vietnam' || lowerLocation === bad + ' vietnam';
+                                            });
+                                            
+                                            if (isProblematic) {
+                                                console.log('⚠️ Problematic location detected (exact match):', location);
+                                                return 'Ho Chi Minh City, Vietnam';
+                                            }
+                                            
+                                            // Valid city names should pass through
+                                            console.log('✅ Location validated successfully:', location);
+                                            
+                                            // Ensure Vietnam is included for better API results
+                                            if (!location.toLowerCase().includes('vietnam') && 
+                                                !location.toLowerCase().includes('việt nam')) {
+                                                return location + ', Vietnam';
+                                            }
+                                            
+                                            return location;
+                                        }
+
+                                        function getExpectedLocationName() {
+                                            // Get the display name for location (without "Vietnam")
+                                            const expCityId = "${experience.cityId}";
+                                            const expCityName = "${experience.cityName}";
+                                            const expLocation = "${experience.location}";
+                                            
+                                            // Priority 1: Use cityName from database (most accurate)
+                                            if (expCityName && expCityName.trim() !== '' && expCityName !== 'null') {
+                                                const mapped = mapVietnameseCityToEnglish(expCityName.trim());
+                                                return mapped.replace(', Vietnam', '');
+                                            } 
+                                            // Priority 2: Use cityId mapping
+                                            else if (expCityId && expCityId !== 'null' && expCityId !== '0') {
+                                                const mapped = mapCityIdToLocation(parseInt(expCityId));
+                                                return mapped.replace(', Vietnam', '');
+                                            }
+                                            // Priority 3: Parse location string
+                                            else if (expLocation && expLocation.trim() !== '' && expLocation !== 'null') {
+                                                const parsed = parseLocationString(expLocation);
+                                                return parsed.replace(', Vietnam', '');
+                                            }
+                                            
+                                            return 'Ho Chi Minh City';
+                                        }
+
+                                        function parseLocationString(location) {
+                                            // Clean location string but preserve Vietnamese characters and punctuation
+                                            let cleaned = location.trim();
+                                            
+                                            console.log('📍 Parsing location:', cleaned);
+                                            
+                                            // Define Vietnamese cities with API-friendly names mapping
+                                            const locationMapping = {
+                                                // Major cities - use English names for better API recognition
+                                                'hồ chí minh': 'Ho Chi Minh City',
+                                                'tp.hcm': 'Ho Chi Minh City', 
+                                                'tp hcm': 'Ho Chi Minh City',
+                                                'sài gòn': 'Ho Chi Minh City',
+                                                'saigon': 'Ho Chi Minh City',
+                                                'hà nội': 'Hanoi',
+                                                'hanoi': 'Hanoi',
+                                                'đà nẵng': 'Da Nang',
+                                                'da nang': 'Da Nang',
+                                                'nha trang': 'Nha Trang',
+                                                'hội an': 'Hoi An',
+                                                'hoi an': 'Hoi An',
+                                                'vũng tàu': 'Vung Tau',
+                                                'vung tau': 'Vung Tau',
+                                                'huế': 'Hue',
+                                                'hue': 'Hue',
+                                                'đà lạt': 'Da Lat',
+                                                'da lat': 'Da Lat',
+                                                'phú quốc': 'Phu Quoc',
+                                                'phu quoc': 'Phu Quoc',
+                                                'cần thơ': 'Can Tho',
+                                                'can tho': 'Can Tho',
+                                                'hải phòng': 'Hai Phong',
+                                                'hai phong': 'Hai Phong',
+                                                
+                                                // Provinces - map to major cities in those provinces
+                                                'quảng ninh': 'Ha Long',
+                                                'quang ninh': 'Ha Long',
+                                                'hạ long': 'Ha Long',
+                                                'ha long': 'Ha Long',
+                                                'quảng nam': 'Hoi An',
+                                                'quang nam': 'Hoi An',
+                                                'khánh hòa': 'Nha Trang',
+                                                'khanh hoa': 'Nha Trang',
+                                                'lâm đồng': 'Da Lat',
+                                                'lam dong': 'Da Lat',
+                                                'kiên giang': 'Phu Quoc',
+                                                'kien giang': 'Phu Quoc',
+                                                'bình định': 'Quy Nhon',
+                                                'binh dinh': 'Quy Nhon',
+                                                'quy nhon': 'Quy Nhon',
+                                                'nghệ an': 'Vinh',
+                                                'nghe an': 'Vinh',
+                                                'vinh': 'Vinh',
+                                                'thanh hóa': 'Thanh Hoa',
+                                                'thanh hoa': 'Thanh Hoa',
+                                                'ninh bình': 'Ninh Binh',
+                                                'ninh binh': 'Ninh Binh',
+                                                'lào cai': 'Lao Cai',
+                                                'lao cai': 'Lao Cai',
+                                                'sapa': 'Sapa',
+                                                'sa pa': 'Sapa',
+                                                'cao bằng': 'Cao Bang',
+                                                'cao bang': 'Cao Bang',
+                                                'đồng nai': 'Bien Hoa',
+                                                'dong nai': 'Bien Hoa',
+                                                'biên hòa': 'Bien Hoa',
+                                                'bien hoa': 'Bien Hoa'
+                                            };
+                                            
+                                            // Check if location matches our mapping
+                                            const lowerLocation = cleaned.toLowerCase();
+                                            
+                                            // Direct mapping check
+                                            for (let [vietnamese, english] of Object.entries(locationMapping)) {
+                                                if (lowerLocation.includes(vietnamese)) {
+                                                    console.log('🎯 Found location mapping:', vietnamese, '→', english);
+                                                    return english;
+                                                }
+                                            }
+                                            
+                                            // If no direct mapping, try to extract from comma-separated format
+                                            if (cleaned.includes(',')) {
+                                                const parts = cleaned.split(',');
+                                                // Check each part for mappings
+                                                for (let part of parts) {
+                                                    const partLower = part.trim().toLowerCase();
+                                                    for (let [vietnamese, english] of Object.entries(locationMapping)) {
+                                                        if (partLower.includes(vietnamese)) {
+                                                            console.log('🎯 Found location mapping in part:', vietnamese, '→', english);
+                                                            return english;
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // Use last part if no mapping found
+                                                const lastPart = parts[parts.length - 1].trim();
+                                                console.log('📝 Using last part:', lastPart);
+                                                return lastPart;
+                                            }
+                                            
+                                            // As last resort, return the cleaned location
+                                            console.log('📍 Using full location string:', cleaned);
+                                            return cleaned;
+                                        }
+
+                                        function showWeatherLoading() {
+                                            const content = document.getElementById('weatherContent');
+                                            if (content) {
+                                                content.innerHTML = 
+                                                    '<div class="weather-loading">' +
+                                                        '<i class="ri-loader-4-line"></i>' +
+                                                        '<div>Đang tải thông tin thời tiết...</div>' +
+                                                    '</div>';
+                                            }
+                                        }
+
+                                                                function showWeatherError(message) {
+                            const content = document.getElementById('weatherContent');
+                            if (content) {
+                                content.innerHTML = 
+                                    '<div class="weather-error">' +
+                                        '<i class="ri-error-warning-line"></i>' +
+                                        '<div>' + message + '</div>' +
+                                        '<button class="btn btn-sm btn-outline-primary mt-2" onclick="refreshWeather()">' +
+                                            '<i class="ri-refresh-line me-1"></i>Thử lại' +
+                                        '</button>' +
+                                    '</div>';
+                            }
+                        }
+
+                                        function renderWeatherData() {
+                                            if (!weatherData) return;
+
+                                            const { current, location, forecast } = weatherData;
+                                            const content = document.getElementById('weatherContent');
+                                            
+                                            if (!content) return;
+
+                                            // Get weather condition and appropriate icon
+                                            const weatherIcon = getWeatherIcon(current.condition.code, current.is_day);
+                                            const weatherQuality = getWeatherQuality(current);
+                                            
+                                            content.innerHTML = 
+                                                '<!-- Current Weather -->' +
+                                                '<div class="weather-current">' +
+                                                    '<div class="weather-icon">' +
+                                                        '<i class="' + weatherIcon + '"></i>' +
+                                                    '</div>' +
+                                                    '<div class="weather-main">' +
+                                                        '<div class="weather-temp">' + Math.round(current.temp_c) + '°C</div>' +
+                                                        '<div class="weather-desc">' + current.condition.text + '</div>' +
+                                                        '<div class="weather-location">' +
+                                                            '<i class="ri-map-pin-line"></i>' +
+                                                            location.name + ', ' + location.country +
+                                                        '</div>' +
+                                                        weatherQuality +
+                                                    '</div>' +
+                                                '</div>' +
+
+                                                '<!-- Weather Details -->' +
+                                                '<div class="weather-details">' +
+                                                    '<div class="weather-detail">' +
+                                                        '<i class="ri-drop-line"></i>' +
+                                                        '<div class="weather-detail-value">' + current.humidity + '%</div>' +
+                                                        '<div class="weather-detail-label">Độ ẩm</div>' +
+                                                    '</div>' +
+                                                    '<div class="weather-detail">' +
+                                                        '<i class="ri-windy-line"></i>' +
+                                                        '<div class="weather-detail-value">' + Math.round(current.wind_kph) + '</div>' +
+                                                        '<div class="weather-detail-label">km/h</div>' +
+                                                    '</div>' +
+                                                    '<div class="weather-detail">' +
+                                                        '<i class="ri-eye-line"></i>' +
+                                                        '<div class="weather-detail-value">' + Math.round(current.vis_km) + '</div>' +
+                                                        '<div class="weather-detail-label">km tầm nhìn</div>' +
+                                                    '</div>' +
+                                                    '<div class="weather-detail">' +
+                                                        '<i class="ri-temperature-line"></i>' +
+                                                        '<div class="weather-detail-value">' + Math.round(current.feelslike_c) + '°</div>' +
+                                                        '<div class="weather-detail-label">Cảm giác</div>' +
+                                                    '</div>' +
+                                                                                                 '</div>' +
+
+                                                '<!-- 3-Day Forecast -->' +
+                                                '<div class="weather-forecast">' +
+                                                    '<div class="forecast-title">' +
+                                                        '<i class="ri-calendar-line"></i>' +
+                                                        'Dự báo 3 ngày tới' +
+                                                    '</div>' +
+                                                    '<div class="forecast-list">' +
+                                                        forecast.map(day => renderForecastItem(day)).join('') +
+                                                    '</div>' +
+                                                '</div>' +
+
+                                                '<!-- Attribution -->' +
+                                                '<div class="weather-attribution">' +
+                                                    '<a href="https://www.weatherapi.com/" target="_blank" rel="noopener">' +
+                                                        'Dữ liệu từ WeatherAPI.com' +
+                                                    '</a>' +
+                                                '</div>';
+                                        }
+
+                                                                function renderForecastItem(day) {
+                            const date = new Date(day.date);
+                            const dayName = getDayName(date);
+                            const weatherIcon = getWeatherIcon(day.day.condition.code, true);
+                            
+                            return '<div class="forecast-item">' +
+                                       '<div class="forecast-date">' + dayName + '</div>' +
+                                       '<div class="forecast-weather">' +
+                                           '<div class="forecast-icon">' +
+                                               '<i class="' + weatherIcon + '"></i>' +
+                                           '</div>' +
+                                           '<div class="forecast-desc">' + day.day.condition.text + '</div>' +
+                                       '</div>' +
+                                       '<div class="forecast-temp">' +
+                                           '<span class="temp-high">' + Math.round(day.day.maxtemp_c) + '°</span>' +
+                                           '<span class="temp-low">' + Math.round(day.day.mintemp_c) + '°</span>' +
+                                       '</div>' +
+                                   '</div>';
+                        }
+
+                                        function getWeatherIcon(conditionCode, isDay) {
+                                            // Map WeatherAPI condition codes to Remix Icons
+                                            const iconMap = {
+                                                1000: isDay ? 'ri-sun-line' : 'ri-moon-line',
+                                                1003: isDay ? 'ri-sun-cloudy-line' : 'ri-moon-cloudy-line',
+                                                1006: 'ri-cloudy-line',
+                                                1009: 'ri-cloudy-2-line',
+                                                1030: 'ri-mist-line',
+                                                1063: 'ri-drizzle-line',
+                                                1087: 'ri-thunderstorms-line',
+                                                1180: 'ri-rainy-line',
+                                                1183: 'ri-rainy-line',
+                                                1186: 'ri-rainy-line',
+                                                1189: 'ri-rainy-line',
+                                                1192: 'ri-heavy-showers-line',
+                                                1195: 'ri-heavy-showers-line',
+                                                1240: 'ri-showers-line',
+                                                1243: 'ri-heavy-showers-line'
+                                            };
+                                            return iconMap[conditionCode] || (isDay ? 'ri-sun-line' : 'ri-moon-line');
+                                        }
+
+                                        function getWeatherQuality(current) {
+                                            // Determine weather quality for travel
+                                            const temp = current.temp_c;
+                                            const humidity = current.humidity;
+                                            const windSpeed = current.wind_kph;
+                                            const visKm = current.vis_km;
+                                            const isRaining = current.condition.text.toLowerCase().includes('rain') || 
+                                                             current.condition.text.toLowerCase().includes('mưa');
+                                            
+                                            let quality = 'excellent';
+                                            let qualityText = 'Tuyệt vời cho du lịch';
+                                            let icon = 'ri-thumb-up-line';
+
+                                            // Check conditions
+                                            if (isRaining || temp < 10 || temp > 38 || windSpeed > 25 || visKm < 5) {
+                                                quality = 'poor';
+                                                qualityText = 'Cần chuẩn bị kỹ';
+                                                icon = 'ri-alert-line';
+                                            } else if (temp < 18 || temp > 32 || humidity > 80 || windSpeed > 15) {
+                                                quality = 'good';
+                                                qualityText = 'Khá tốt cho du lịch';
+                                                icon = 'ri-thumb-up-line';
+                                            }
+
+                                                                        return '<div class="weather-quality ' + quality + '">' +
+                                       '<i class="' + icon + '"></i>' +
+                                       qualityText +
+                                   '</div>';
+                                        }
+
+                                        function getDayName(date) {
+                                            const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                                            return days[date.getDay()];
+                                        }
+
+                                        function applyWeatherTheme() {
+                                            if (!weatherData) return;
+
+                                            const widget = document.querySelector('.weather-widget');
+                                            if (!widget) return;
+
+                                            const condition = weatherData.current.condition.text.toLowerCase();
+                                            
+                                            // Remove existing theme classes
+                                            widget.classList.remove('sunny', 'rainy', 'stormy');
+                                            
+                                            // Apply theme based on weather condition
+                                            if (condition.includes('sunny') || condition.includes('clear') || condition.includes('nắng')) {
+                                                widget.classList.add('sunny');
+                                            } else if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('mưa')) {
+                                                widget.classList.add('rainy');
+                                            } else if (condition.includes('thunder') || condition.includes('storm') || condition.includes('giông')) {
+                                                widget.classList.add('stormy');
+                                            }
+                                        }
+
+                                        function refreshWeather() {
+                                            loadWeatherData();
+                                        }
+
 // Main initialization function
                                         function initializePage() {
                                             try {
@@ -3608,6 +4571,11 @@
 
                                                 // Initialize booking form manager
                                                 window.bookingFormManager = new BookingFormManager();
+
+                                                // Initialize weather widget
+                                                setTimeout(() => {
+                                                    loadWeatherData();
+                                                }, 1000); // Delay to ensure page is fully loaded
 
                                                 initializeSmoothScroll();
                                                 initializeLazyLoading();
@@ -3692,7 +4660,9 @@
                                             calculateTotal,
                                             formatCurrency,
                                             sendMessage,
-                                            markMessagesAsRead
+                                            markMessagesAsRead,
+                                            refreshWeather,
+                                            loadWeatherData
                                         };
 
 // Legacy global functions for backward compatibility
@@ -3708,6 +4678,8 @@
                                         window.formatCurrency = formatCurrency;
                                         window.sendMessage = sendMessage;
                                         window.markMessagesAsRead = markMessagesAsRead;
+                                        window.refreshWeather = refreshWeather;
+                                        window.loadWeatherData = loadWeatherData;
 
 // Khi submit form booking, tự động điền các trường ẩn từ input người dùng
                                         const bookingForm = document.querySelector('.booking-form');

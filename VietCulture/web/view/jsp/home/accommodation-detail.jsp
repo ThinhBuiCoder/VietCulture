@@ -1301,6 +1301,121 @@
                     display: none;
                 }
             }
+
+            /* Map Container Styles */
+            .map-container {
+                height: 400px;
+                background: rgba(131, 197, 190, 0.2);
+                border-radius: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #6c757d;
+                border: 2px dashed var(--secondary-color);
+                overflow: hidden;
+            }
+
+            .map-container iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                border-radius: 10px;
+            }
+
+            /* Map Actions */
+            .map-actions .btn {
+                border-radius: 12px;
+                font-weight: 600;
+                padding: 15px 20px;
+                transition: var(--transition);
+            }
+
+            .map-actions .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(255, 56, 92, 0.3);
+            }
+
+            /* Location Actions */
+            .location-actions a {
+                font-size: 0.9rem;
+                transition: var(--transition);
+            }
+
+            .location-actions a:hover {
+                color: var(--primary-color) !important;
+                transform: translateY(-1px);
+            }
+
+            /* Location Info */
+            .location-info {
+                padding: 20px;
+                background: rgba(255, 255, 255, 0.8);
+                border-radius: 12px;
+                border: 1px solid rgba(0,0,0,0.1);
+            }
+
+            .location-info p {
+                margin-bottom: 15px;
+                font-size: 1.1rem;
+            }
+
+            .location-info strong {
+                color: var(--dark-color);
+                font-weight: 600;
+            }
+
+            #locationText {
+                color: var(--primary-color);
+                font-weight: 500;
+            }
+
+            /* Map fallback styles */
+            #mapFallback {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 2px dashed #dee2e6;
+                transition: all 0.3s ease;
+            }
+
+            #mapFallback:hover {
+                border-color: var(--primary-color);
+                background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%);
+            }
+
+            /* Copy button styles */
+            .btn-link {
+                color: var(--primary-color);
+                transition: var(--transition);
+            }
+
+            .btn-link:hover {
+                color: var(--dark-color);
+                transform: scale(1.1);
+            }
+
+            /* Responsive map styles */
+            @media (max-width: 768px) {
+                .map-container {
+                    height: 300px;
+                }
+
+                .location-info {
+                    padding: 15px;
+                }
+
+                .location-actions {
+                    text-align: center;
+                }
+
+                .location-actions a {
+                    display: block;
+                    margin: 5px 0;
+                }
+
+                .map-actions .btn {
+                    font-size: 0.9rem;
+                    padding: 12px 16px;
+                }
+            }
         </style>  
     </head>
     <body>
@@ -1689,18 +1804,70 @@
                             Vị trí
                         </h3>
 
-                        <p class="mb-3">
-                            <strong>Địa chỉ:</strong> ${accommodation.address}
-                            <c:if test="${not empty accommodation.cityName}">
-                                , ${accommodation.cityName}
-                            </c:if>
-                        </p>
+                        <div class="location-info mb-3">
+                            <p class="mb-2">
+                                <strong>Địa chỉ:</strong> 
+                                <span id="locationText">${accommodation.address}<c:if test="${not empty accommodation.cityName}">, ${accommodation.cityName}</c:if></span>
+                                <button class="btn btn-link btn-sm p-0 ms-2" onclick="copyLocation()" title="Copy địa chỉ">
+                                    <i class="ri-file-copy-line"></i>
+                                </button>
+                            </p>
+                            <div class="location-actions">
+                                <small class="text-muted">
+                                    <a href="javascript:void(0)" onclick="openInZalo()" class="text-decoration-none me-3">
+                                        <i class="ri-smartphone-line me-1"></i>Zalo Map
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="openInAppleMaps()" class="text-decoration-none me-3">
+                                        <i class="ri-map-2-line me-1"></i>Apple Maps
+                                    </a>
+                                    <a href="javascript:void(0)" onclick="copyLocation()" class="text-decoration-none">
+                                        <i class="ri-file-copy-line me-1"></i>Copy địa chỉ
+                                    </a>
+                                </small>
+                            </div>
+                        </div>
 
-                        <div class="map-container">
-                            <div class="text-center">
-                                <i class="ri-map-pin-line" style="font-size: 3rem; margin-bottom: 15px;"></i>
-                                <h5>Bản đồ sẽ được hiển thị ở đây</h5>
-                                <p class="text-muted">Tích hợp Google Maps hoặc OpenStreetMap</p>
+                        <!-- Map Container -->
+                        <div class="map-container mb-3">
+                            <!-- Enhanced Google Maps Embed - NO API KEY NEEDED -->
+                            <iframe 
+                                src="https://www.google.com/maps?q=${fn:escapeXml(accommodation.address)}${not empty accommodation.cityName ? ', ' : ''}${fn:escapeXml(accommodation.cityName)}, Việt Nam&output=embed&zoom=15" 
+                                width="100%" 
+                                height="400" 
+                                style="border:0; border-radius: 10px;" 
+                                allowfullscreen="" 
+                                loading="lazy" 
+                                referrerpolicy="no-referrer-when-downgrade"
+                                title="Bản đồ ${accommodation.name}">
+                            </iframe>
+                            <!-- Fallback for when iframe fails -->
+                            <div id="mapFallback" style="display: none; background: #f8f9fa; height: 400px; border-radius: 10px; border: 1px solid #ddd;">
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <div class="text-center">
+                                        <i class="ri-map-pin-line" style="font-size: 3rem; color: #FF385C; margin-bottom: 15px;"></i>
+                                        <h5>Bản đồ không khả dụng</h5>
+                                        <p class="text-muted mb-3">${accommodation.address}<c:if test="${not empty accommodation.cityName}">, ${accommodation.cityName}</c:if></p>
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="openInGoogleMaps()">
+                                                <i class="ri-external-link-line me-1"></i>Mở Google Maps
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="copyLocation()">
+                                                <i class="ri-file-copy-line me-1"></i>Copy địa chỉ
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Map Actions -->
+                        <div class="map-actions mb-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary btn-lg w-100" onclick="openGoogleMapsDirections()">
+                                        <i class="ri-direction-line me-2"></i>Chỉ đường
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2413,6 +2580,185 @@
                                     imageObserver.observe(img);
                                 });
         </script>
+
+        <!-- Map Helper Functions -->
+        <script>
+            // Accommodation location from JSP - Enhanced formatting with validation
+            const rawLocation = "${accommodation.address}" || "";
+            const cityName = "${accommodation.cityName}" || "";
+            const accommodationTitle = "${accommodation.name}" || "";
+            
+            // Create comprehensive address for better Google Maps recognition
+            function buildFullAddress() {
+                // Validate inputs first
+                if (!rawLocation || rawLocation.trim() === "" || rawLocation === "null") {
+                    console.error("❌ rawLocation validation failed:", rawLocation);
+                    return "Không có địa chỉ";
+                }
+                
+                let fullAddress = rawLocation.trim();
+                
+                // Add city if not already included and exists
+                if (cityName && cityName.trim() && !fullAddress.toLowerCase().includes(cityName.toLowerCase())) {
+                    fullAddress += ", " + cityName.trim();
+                }
+                
+                // Add country if not already included
+                if (!fullAddress.toLowerCase().includes("việt nam") && !fullAddress.toLowerCase().includes("vietnam")) {
+                    fullAddress += ", Việt Nam";
+                }
+                
+                return fullAddress;
+            }
+            
+            // Build the address with fallback
+            let accommodationLocation = buildFullAddress();
+            
+            // ENHANCED FALLBACK SYSTEM
+            if (!accommodationLocation || accommodationLocation === "Không có địa chỉ") {
+                console.error("❌ buildFullAddress() failed, trying fallbacks...");
+                
+                // Try cityName
+                if (cityName && cityName.trim() && cityName !== "${accommodation.cityName}") {
+                    accommodationLocation = cityName + ", Việt Nam";
+                    console.warn("⚠️ Using cityName fallback:", accommodationLocation);
+                }
+                // Try title as location
+                else if (accommodationTitle && accommodationTitle.trim() && accommodationTitle !== "${accommodation.name}") {
+                    accommodationLocation = accommodationTitle + ", Việt Nam";
+                    console.warn("⚠️ Using title fallback:", accommodationLocation);
+                }
+                // Ultimate fallback
+                else {
+                    accommodationLocation = "Việt Nam";
+                    console.warn("⚠️ Using ultimate fallback:", accommodationLocation);
+                    
+                    // Show user a helpful message
+                    setTimeout(() => {
+                        showToast('⚠️ Không tìm thấy địa chỉ cụ thể. Hãy dùng "Nhập địa chỉ thủ công"', 'warning', 5000);
+                    }, 2000);
+                }
+            }
+
+            // Open Google Maps with directions (Primary method)
+            function openGoogleMapsDirections() {
+                // Safety check and fallback
+                let addressToUse = accommodationLocation;
+                if (!addressToUse || addressToUse.trim() === "") {
+                    addressToUse = "Việt Nam"; // Ultimate fallback
+                    console.warn("🚨 No address available, using fallback");
+                    showToast('⚠️ Không có địa chỉ cụ thể, mở Google Maps Việt Nam', 'warning');
+                }
+                
+                const encodedLocation = encodeURIComponent(addressToUse);
+                
+                // ENHANCED FORMAT: Include current location detection
+                const mapsUrl = 'https://www.google.com/maps/dir//' + encodedLocation + '?hl=vi';
+                
+                console.log('🗺️ Opening Google Maps (Enhanced with Current Location):', {
+                    originalAddress: accommodationLocation,
+                    addressUsed: addressToUse,
+                    encodedAddress: encodedLocation,
+                    url: mapsUrl,
+                    urlLength: mapsUrl.length
+                });
+                
+                // Validate URL before opening
+                if (!mapsUrl || mapsUrl.length < 40 || !mapsUrl.includes('google.com/maps')) {
+                    console.error('❌ Invalid Google Maps URL:', mapsUrl);
+                    showToast('❌ Lỗi tạo URL Google Maps', 'error');
+                    return;
+                }
+                
+                window.open(mapsUrl, '_blank');
+                showToast('🎯 Google Maps: Tự động điền đích + detect vị trí hiện tại', 'success');
+                
+                // Enhanced instructions
+                setTimeout(() => {
+                    showToast('📍 Cho phép Google Maps truy cập vị trí để có directions tự động!', 'info');
+                }, 2000);
+                
+                setTimeout(() => {
+                    showToast('✅ Nếu không detect vị trí → Bấm "Your location" hoặc nhập địa chỉ xuất phát', 'info');
+                }, 4000);
+            }
+
+            // External map functions
+            function openInGoogleMaps() {
+                const encodedLocation = encodeURIComponent(accommodationLocation);
+                const mapsUrl = `https://www.google.com/maps/search/${encodedLocation}`;
+                window.open(mapsUrl, '_blank');
+                showToast('🗺️ Đã mở Google Maps', 'success');
+            }
+
+            function openInZalo() {
+                const encodedLocation = encodeURIComponent(accommodationLocation);
+                const zaloUrl = `https://zalo.me/maps/search/${encodedLocation}`;
+                window.open(zaloUrl, '_blank');
+                showToast('📱 Đã mở Zalo Map', 'success');
+            }
+
+            function openInAppleMaps() {
+                const encodedLocation = encodeURIComponent(accommodationLocation);
+                const appleMapsUrl = `maps://?q=${encodedLocation}`;
+                
+                // Try Apple Maps first, fallback to Google Maps on non-iOS
+                if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                    window.open(appleMapsUrl, '_blank');
+                    showToast('🍎 Đã mở Apple Maps', 'success');
+                } else {
+                    // Fallback to Google Maps for non-iOS devices
+                    openInGoogleMaps();
+                }
+            }
+
+            function copyLocation() {
+                const locationText = document.getElementById('locationText').textContent;
+                
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(locationText).then(() => {
+                        showToast('📋 Đã copy địa chỉ vào clipboard!', 'success');
+                    }).catch(() => {
+                        fallbackCopyTextToClipboard(locationText);
+                    });
+                } else {
+                    fallbackCopyTextToClipboard(locationText);
+                }
+            }
+
+            function fallbackCopyTextToClipboard(text) {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+
+                try {
+                    const successful = document.execCommand('copy');
+                    showToast(successful ? '📋 Đã copy địa chỉ!' : 'Không thể copy địa chỉ', successful ? 'success' : 'warning');
+                } catch (err) {
+                    showToast('Không thể copy địa chỉ', 'error');
+                }
+
+                document.body.removeChild(textArea);
+            }
+
+            // Export variables for debugging
+            window.debugVars = {
+                rawLocation: rawLocation,
+                cityName: cityName,
+                accommodationTitle: accommodationTitle,
+                accommodationLocation: accommodationLocation
+            };
+            
+            console.log("🏨 Accommodation map vars exported:", window.debugVars);
+
+        </script>
+        
         <!-- Modal chứa form đánh giá đặt ngay sau action-buttons -->
         <div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">

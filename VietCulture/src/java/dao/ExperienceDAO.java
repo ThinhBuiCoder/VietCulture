@@ -519,6 +519,147 @@ public class ExperienceDAO {
     }
 
     /**
+     * Tìm kiếm trải nghiệm nâng cao với khoảng cách (chỉ hiển thị công khai)
+     */
+    public List<Experience> searchExperiencesWithDistance(Integer categoryId, Integer regionId, Integer cityId,
+                                                         String search, String sort, Double userLat, Double userLng, 
+                                                         Double maxDistance, int offset, int limit) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT e.*, u.fullName as hostName, c.vietnameseName as cityName
+        """);
+        
+        // Add distance calculation if coordinates provided
+        if (userLat != null && userLng != null) {
+            sql.append(", (6371 * acos(cos(radians(?)) * cos(radians(COALESCE(e.latitude, 0))) * ");
+            sql.append("cos(radians(COALESCE(e.longitude, 0)) - radians(?)) + ");
+            sql.append("sin(radians(?)) * sin(radians(COALESCE(e.latitude, 0))))) AS distance ");
+        }
+        
+        sql.append("""
+            FROM Experiences e
+            LEFT JOIN Users u ON e.hostId = u.userId
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE e.adminApprovalStatus = 'APPROVED' AND e.isActive = 1
+        """);
+        
+        List<Object> parameters = new ArrayList<>();
+        
+        // Add coordinates for distance calculation
+        if (userLat != null && userLng != null) {
+            parameters.add(userLat);  // for cos(radians(?))
+            parameters.add(userLng);  // for cos(radians(?))  
+            parameters.add(userLat);  // for sin(radians(?))
+        }
+
+        if (categoryId != null) {
+            sql.append(" AND e.type = (SELECT name FROM Categories WHERE categoryId = ?)");
+            parameters.add(categoryId);
+        }
+        if (regionId != null) {
+            sql.append(" AND c.regionId = ?");
+            parameters.add(regionId);
+        }
+        if (cityId != null) {
+            sql.append(" AND e.cityId = ?");
+            parameters.add(cityId);
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (e.title LIKE ? OR e.description LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+        
+        // Add distance filter
+        if (userLat != null && userLng != null && maxDistance != null) {
+            sql.append(" AND (6371 * acos(cos(radians(?)) * cos(radians(COALESCE(e.latitude, 0))) * ");
+            sql.append("cos(radians(COALESCE(e.longitude, 0)) - radians(?)) + ");
+            sql.append("sin(radians(?)) * sin(radians(COALESCE(e.latitude, 0))))) <= ?");
+            parameters.add(userLat);
+            parameters.add(userLng);
+            parameters.add(userLat);
+            parameters.add(maxDistance);
+        }
+
+        // Apply sorting
+        if (userLat != null && userLng != null && "distance".equals(sort)) {
+            sql.append(" ORDER BY distance ASC");
+        } else if ("price-asc".equals(sort)) {
+            sql.append(" ORDER BY e.price ASC");
+        } else if ("price-desc".equals(sort)) {
+            sql.append(" ORDER BY e.price DESC");
+        } else if ("rating-desc".equals(sort)) {
+            sql.append(" ORDER BY e.averageRating DESC");
+        } else {
+            sql.append(" ORDER BY e.createdAt DESC");
+        }
+
+        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add(offset);
+        parameters.add(limit);
+
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+            
+            return executeQuery(ps);
+        }
+    }
+
+    /**
+     * Đếm kết quả tìm kiếm nâng cao với khoảng cách
+     */
+    public int getFilteredExperiencesCountWithDistance(Integer categoryId, Integer regionId, Integer cityId,
+                                                      String search, Double userLat, Double userLng, 
+                                                      Double maxDistance) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*)
+            FROM Experiences e
+            LEFT JOIN Cities c ON e.cityId = c.cityId
+            LEFT JOIN Regions r ON c.regionId = r.regionId
+            WHERE e.adminApprovalStatus = 'APPROVED' AND e.isActive = 1
+        """);
+        
+        List<Object> parameters = new ArrayList<>();
+
+        if (categoryId != null) {
+            sql.append(" AND e.type = (SELECT name FROM Categories WHERE categoryId = ?)");
+            parameters.add(categoryId);
+        }
+        if (regionId != null) {
+            sql.append(" AND c.regionId = ?");
+            parameters.add(regionId);
+        }
+        if (cityId != null) {
+            sql.append(" AND e.cityId = ?");
+            parameters.add(cityId);
+        }
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (e.title LIKE ? OR e.description LIKE ?)");
+            String searchPattern = "%" + search.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+        
+        // Add distance filter
+        if (userLat != null && userLng != null && maxDistance != null) {
+            sql.append(" AND (6371 * acos(cos(radians(?)) * cos(radians(COALESCE(e.latitude, 0))) * ");
+            sql.append("cos(radians(COALESCE(e.longitude, 0)) - radians(?)) + ");
+            sql.append("sin(radians(?)) * sin(radians(COALESCE(e.latitude, 0))))) <= ?");
+            parameters.add(userLat);
+            parameters.add(userLng);
+            parameters.add(userLat);
+            parameters.add(maxDistance);
+        }
+
+        return getCountWithParams(sql.toString(), parameters);
+    }
+
+    /**
      * CÁC PHƯƠNG THỨC ĐẾM
      */
     public int getPendingExperiencesCount() throws SQLException {

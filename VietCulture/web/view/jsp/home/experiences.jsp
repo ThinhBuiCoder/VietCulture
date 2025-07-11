@@ -11,8 +11,10 @@
     <title>Trải Nghiệm Du Lịch | VietCulture</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/view/assets/css/improved-styles.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/view/assets/css/enhanced-components.css" />
     <style>
         /* Heart/Favorite Button Styles */
         .favorite-btn {
@@ -476,8 +478,22 @@
 
         .search-form {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 1fr;
             gap: 20px;
+            align-items: start;
+        }
+
+        .search-row-main {
+            display: grid;
+            grid-template-columns: 2fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .search-row-filters {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
             align-items: end;
         }
 
@@ -509,7 +525,7 @@
         .search-form .btn-primary {
             background: var(--gradient-primary);
             border: none;
-            padding: 15px;
+            padding: 15px 25px;
             font-weight: 600;
             border-radius: 10px;
             display: flex;
@@ -518,11 +534,102 @@
             gap: 10px;
             transition: var(--transition);
             height: fit-content;
+            white-space: nowrap;
         }
 
         .search-form .btn-primary:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(255, 56, 92, 0.25);
+        }
+
+        /* Keyword search container styles */
+        .keyword-search-main {
+            width: 100%;
+        }
+
+        .keyword-search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 12px 16px;
+            background-color: white;
+            transition: all 0.3s ease;
+            min-height: 50px;
+        }
+
+        .keyword-search-container:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.2);
+        }
+
+        .keyword-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            padding: 0 10px;
+            font-size: 1.1rem;
+            background-color: transparent;
+            font-weight: 500;
+        }
+
+        .keyword-input::placeholder {
+            color: #999;
+            font-weight: 400;
+        }
+
+        /* Popular keywords styling */
+        .popular-keywords {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .keyword-label {
+            font-weight: 600;
+            color: #555;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .keyword-tag {
+            background-color: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .keyword-tag:hover {
+            background-color: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .search-row-main {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .search-row-filters {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .keyword-input {
+                font-size: 1rem;
+            }
         }
 
         /* Filters Section */
@@ -882,6 +989,184 @@
                 padding: 10px 0;
             }
         }
+
+        /* New styles for keyword search */
+        .keyword-search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 8px 12px;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+
+        .keyword-search-container:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.2);
+        }
+
+        .keyword-input {
+            flex-grow: 1;
+            border: none;
+            outline: none;
+            padding: 0 5px;
+            font-size: 0.9rem;
+            background-color: transparent;
+        }
+
+        .keyword-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+        }
+
+        .keyword-suggestions.show {
+            display: block;
+        }
+
+        .keyword-suggestions div {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .keyword-suggestions div:hover {
+            background-color: #f0f0f0;
+        }
+
+        .keyword-search-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: #6c757d;
+            transition: color 0.3s ease;
+        }
+
+        .keyword-search-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .popular-keywords {
+            margin-top: 15px;
+            padding: 10px 15px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .keyword-label {
+            font-weight: 600;
+            color: #555;
+            margin-right: 10px;
+        }
+
+        .keyword-tag {
+            background-color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .keyword-tag:hover {
+            background-color: #d0d0d0;
+        }
+
+        /* Distance filter styles */
+        .distance-filter-container {
+            position: relative;
+        }
+
+        .distance-status {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .distance-status.detecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .distance-status.enabled {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .distance-status.disabled {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .location-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .location-btn:hover {
+            color: var(--primary-color);
+            background-color: rgba(255, 56, 92, 0.1);
+        }
+
+        .location-btn.active {
+            color: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Update responsive design */
+        @media (max-width: 768px) {
+            .search-row-main {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .search-row-filters {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .keyword-input {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -997,57 +1282,112 @@
     <div class="container">
         <div class="search-container">
             <form class="search-form" method="GET" action="${pageContext.request.contextPath}/experiences">
-                <div class="form-group">
-                    <label for="categorySelect">Danh Mục</label>
-                    <select class="form-control" name="category" id="categorySelect">
-                        <option value="">Tất Cả Danh Mục</option>
-                        <c:forEach var="category" items="${categories}">
-                            <option value="${category.categoryId}" ${param.category == category.categoryId ? 'selected' : ''}>
-                                <c:choose>
-                                    <c:when test="${category.name == 'Food'}">Ẩm Thực</c:when>
-                                    <c:when test="${category.name == 'Culture'}">Văn Hóa</c:when>
-                                    <c:when test="${category.name == 'Adventure'}">Phiêu Lưu</c:when>
-                                    <c:when test="${category.name == 'History'}">Lịch Sử</c:when>
-                                    <c:otherwise>${category.name}</c:otherwise>
-                                </c:choose>
-                            </option>
-                        </c:forEach>
-                    </select>
+                <!-- Main Search Row: Keyword + Search Button -->
+                <div class="search-row-main">
+                    <div class="form-group keyword-search-main">
+                        <label for="keywordSearch">Từ Khóa Tìm Kiếm</label>
+                        <div class="keyword-search-container">
+                            <input type="text" 
+                                   class="keyword-input" 
+                                   name="search" 
+                                   id="keywordSearch"
+                                   value="${param.search}"
+                                   placeholder="Nhập từ khóa để tìm trải nghiệm tương tự..."
+                                   autocomplete="off">
+                            <div class="keyword-suggestions" id="keywordSuggestions"></div>
+                            <button type="button" class="keyword-search-btn" onclick="showPopularKeywords()">
+                                <i class="ri-search-2-line"></i>
+                            </button>
+                        </div>
+                        <div class="popular-keywords" id="popularKeywords" style="display: none;">
+                            <span class="keyword-label">Từ khóa phổ biến:</span>
+                            <span class="keyword-tag" onclick="selectKeyword('ẩm thực')">ẩm thực</span>
+                            <span class="keyword-tag" onclick="selectKeyword('văn hóa')">văn hóa</span>
+                            <span class="keyword-tag" onclick="selectKeyword('phiêu lưu')">phiêu lưu</span>
+                            <span class="keyword-tag" onclick="selectKeyword('thiên nhiên')">thiên nhiên</span>
+                            <span class="keyword-tag" onclick="selectKeyword('làng nghề')">làng nghề</span>
+                            <span class="keyword-tag" onclick="selectKeyword('festival')">festival</span>
+                            <span class="keyword-tag" onclick="selectKeyword('biển')">biển</span>
+                            <span class="keyword-tag" onclick="selectKeyword('núi')">núi</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ri-search-line"></i> Tìm Kiếm
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label for="regionSelect">Vùng Miền</label>
-                    <select class="form-control" name="region" id="regionSelect">
-                        <option value="">Chọn Vùng Miền</option>
-                        <c:forEach var="region" items="${regions}">
-                            <option value="${region.regionId}" ${param.region == region.regionId ? 'selected' : ''}>
-                                ${region.vietnameseName}
-                            </option>
-                        </c:forEach>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="citySelect">Thành Phố</label>
-                    <select class="form-control" name="city" id="citySelect" ${empty param.region ? 'disabled' : ''}>
-                        <option value="">Chọn Thành Phố</option>
-                        <c:if test="${not empty param.region}">
-                            <c:forEach var="region" items="${regions}">
-                                <c:if test="${region.regionId == param.region}">
-                                    <c:forEach var="city" items="${region.cities}">
-                                        <option value="${city.cityId}" ${param.city == city.cityId ? 'selected' : ''}>
-                                            ${city.vietnameseName}
-                                        </option>
-                                    </c:forEach>
-                                </c:if>
+                <!-- Filters Row: Category + Region + City + Distance -->
+                <div class="search-row-filters">
+                    <div class="form-group">
+                        <label for="categorySelect">Danh Mục</label>
+                        <select class="form-control" name="category" id="categorySelect">
+                            <option value="">Tất Cả Danh Mục</option>
+                            <c:forEach var="category" items="${categories}">
+                                <option value="${category.categoryId}" ${param.category == category.categoryId ? 'selected' : ''}>
+                                    <c:choose>
+                                        <c:when test="${category.name == 'Food'}">Ẩm Thực</c:when>
+                                        <c:when test="${category.name == 'Culture'}">Văn Hóa</c:when>
+                                        <c:when test="${category.name == 'Adventure'}">Phiêu Lưu</c:when>
+                                        <c:when test="${category.name == 'History'}">Lịch Sử</c:when>
+                                        <c:otherwise>${category.name}</c:otherwise>
+                                    </c:choose>
+                                </option>
                             </c:forEach>
-                        </c:if>
-                    </select>
-                </div>
+                        </select>
+                    </div>
 
-                <button type="submit" class="btn btn-primary">
-                    <i class="ri-search-line"></i> Tìm Kiếm
-                </button>
+                    <div class="form-group">
+                        <label for="regionSelect">Vùng Miền</label>
+                        <select class="form-control" name="region" id="regionSelect">
+                            <option value="">Chọn Vùng Miền</option>
+                            <c:forEach var="region" items="${regions}">
+                                <option value="${region.regionId}" ${param.region == region.regionId ? 'selected' : ''}>
+                                    ${region.vietnameseName}
+                                </option>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="citySelect">Thành Phố</label>
+                        <select class="form-control" name="city" id="citySelect" ${empty param.region ? 'disabled' : ''}>
+                            <option value="">Chọn Thành Phố</option>
+                            <c:if test="${not empty param.region}">
+                                <c:forEach var="region" items="${regions}">
+                                    <c:if test="${region.regionId == param.region}">
+                                        <c:forEach var="city" items="${region.cities}">
+                                            <option value="${city.cityId}" ${param.city == city.cityId ? 'selected' : ''}>
+                                                ${city.vietnameseName}
+                                            </option>
+                                        </c:forEach>
+                                    </c:if>
+                                </c:forEach>
+                            </c:if>
+                        </select>
+                    </div>
+
+                    <div class="form-group distance-filter-container">
+                        <label for="distanceSelect">Khoảng Cách</label>
+                        <div style="position: relative;">
+                            <select class="form-control" name="distance" id="distanceSelect" disabled>
+                                <option value="">Chọn khoảng cách</option>
+                                <option value="2" ${param.distance == '2' ? 'selected' : ''}>Trong 2km</option>
+                                <option value="5" ${param.distance == '5' ? 'selected' : ''}>Trong 5km</option>
+                                <option value="10" ${param.distance == '10' ? 'selected' : ''}>Trong 10km</option>
+                                <option value="20" ${param.distance == '20' ? 'selected' : ''}>Trong 20km</option>
+                                <option value="50" ${param.distance == '50' ? 'selected' : ''}>Trong 50km</option>
+                            </select>
+                            <button type="button" class="location-btn" id="locationBtn" onclick="requestLocation()" title="Bật định vị để lọc theo khoảng cách">
+                                <i class="ri-map-pin-line"></i>
+                            </button>
+                            <!-- Hidden inputs for coordinates -->
+                            <input type="hidden" name="lat" id="userLat" value="${param.lat}">
+                            <input type="hidden" name="lng" id="userLng" value="${param.lng}">
+                        </div>
+                        
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -1078,25 +1418,27 @@
     <!-- Main Content -->
     <div class="container">
         <!-- Results Count -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fade-up">
+        <div class="results-header fade-up">
+            <h3>
                 <c:choose>
                     <c:when test="${not empty experiences}">
+                        <i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>
                         ${fn:length(experiences)} trải nghiệm được tìm thấy
                     </c:when>
                     <c:otherwise>
+                        <i class="ri-map-pin-2-line me-2" style="color: var(--secondary-500);"></i>
                         Khám phá trải nghiệm
                     </c:otherwise>
                 </c:choose>
             </h3>
             
-            <div class="d-flex gap-2">
-                <select class="form-select" style="width: auto;" onchange="sortExperiences(this.value)">
+            <div class="d-flex align-items-center gap-3">
+                <select class="form-select" style="min-width: 180px;" onchange="sortExperiences(this.value)">
                     <option value="">Sắp xếp theo</option>
-                    <option value="price-asc" ${param.sort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                    <option value="price-desc" ${param.sort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
-                    <option value="rating" ${param.sort == 'rating' ? 'selected' : ''}>Đánh giá cao nhất</option>
-                    <option value="newest" ${param.sort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                    <option value="price-asc" ${param.sort == 'price-asc' ? 'selected' : ''}>Giá: Thấp → Cao</option>
+                    <option value="price-desc" ${param.sort == 'price-desc' ? 'selected' : ''}>Giá: Cao → Thấp</option>
+                    <option value="rating" ${param.sort == 'rating' ? 'selected' : ''}>⭐ Đánh giá cao nhất</option>
+                    <option value="newest" ${param.sort == 'newest' ? 'selected' : ''}>🆕 Mới nhất</option>
                 </select>
             </div>
         </div>
@@ -1375,7 +1717,16 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/view/assets/js/location-utils.js"></script>
     <script>
+        // JSP Variables for JavaScript use
+        const JSP_VARS = {
+            isLoggedIn: <c:choose><c:when test="${not empty sessionScope.user}">true</c:when><c:otherwise>false</c:otherwise></c:choose>,
+            userRole: '<c:out value="${sessionScope.user.role}" default="" />',
+            contextPath: '${pageContext.request.contextPath}',
+            canChat: <c:choose><c:when test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">true</c:when><c:otherwise>false</c:otherwise></c:choose>
+        };
+
         // Handle image error function
         function handleImageError(img) {
             const errorDiv = document.createElement('div');
@@ -1390,8 +1741,8 @@
         // Improved favorite functionality
         function toggleFavorite(button) {
             // Check if user is logged in and is TRAVELER
-            const isLoggedIn = ${not empty sessionScope.user};
-            const userRole = '${sessionScope.user.role}';
+            const isLoggedIn = JSP_VARS.isLoggedIn;
+            const userRole = JSP_VARS.userRole;
             
             if (!isLoggedIn) {
                 window.location.href = '${pageContext.request.contextPath}/login';
@@ -1682,7 +2033,7 @@
             console.log('Loading cities for region:', regionId);
             
             // First try to fetch from backend
-            fetch(`${pageContext.request.contextPath}/api/cities/region/${regionId}`)
+            fetch(JSP_VARS.contextPath + '/api/cities/region/' + regionId)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('API not available');
@@ -1769,106 +2120,65 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
             
-            // Create icon element
-            const iconElement = document.createElement('i');
+            let icon = '<i class="ri-check-line"></i>';
             if (type === 'error') {
-                iconElement.className = 'ri-error-warning-line';
-                iconElement.style.color = '#FF385C';
+                icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
             } else if (type === 'info') {
-                iconElement.className = 'ri-information-line';
-                iconElement.style.color = '#3498db';
-            } else if (type === 'warning') {
-                iconElement.className = 'ri-alert-line';
-                iconElement.style.color = '#f39c12';
-            } else {
-                iconElement.className = 'ri-check-line';
-                iconElement.style.color = '#4BB543';
+                icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
             }
             
-            // Create message span
-            const messageSpan = document.createElement('span');
-            messageSpan.textContent = message;
-            
-            // Append elements to toast
-            toast.appendChild(iconElement);
-            toast.appendChild(messageSpan);
+            toast.innerHTML = icon + '<span>' + message + '</span>';
             
             toastContainer.appendChild(toast);
             
-            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
             
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => {
-                    if (toastContainer.contains(toast)) {
+                    if (toast.parentNode) {
                         toastContainer.removeChild(toast);
                     }
-                }, 500);
+                }, 300);
             }, 3000);
         }
 
-        // Initialize page
+        // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing with fixed cities data...');
+            console.log('DOM loaded, initializing...');
             
-            // Set up region selection handler
+            // Load user favorites
+            loadUserFavorites();
+            
+            // Update message badge
+            updateMessageBadge();
+            
+            // Setup region/city functionality
             const regionSelect = document.getElementById('regionSelect');
-            const citySelect = document.getElementById('citySelect');
-            
-            if (regionSelect && citySelect) {
-                // Handle region selection
+            if (regionSelect) {
                 regionSelect.addEventListener('change', function() {
                     const selectedRegionId = this.value;
-                    console.log('Region changed to:', selectedRegionId);
-
+                    
                     if (selectedRegionId) {
                         loadCitiesForRegion(selectedRegionId);
                     } else {
+                        const citySelect = document.getElementById('citySelect');
                         citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
                         citySelect.disabled = true;
                     }
                 });
-
-                // Initialize with current selection if any
-                if (regionSelect.value) {
-                    const selectedRegionId = regionSelect.value;
-                    const currentCityId = '${param.city}';
-                    
-                    console.log('Initializing with pre-selected region:', selectedRegionId);
-                    
-                    loadCitiesForRegion(selectedRegionId);
-                    
-                    // Set selected city after a short delay
-                    setTimeout(() => {
-                        if (currentCityId) {
-                            const cityOption = citySelect.querySelector(`option[value="${currentCityId}"]`);
-                            if (cityOption) {
-                                cityOption.selected = true;
-                                console.log('Pre-selected city:', cityOption.textContent);
-                            }
-                        }
-                    }, 100);
-                }
             }
             
-            // Other initializations
+            // Setup keyword search functionality
+            setupKeywordSearch();
+            
+            // Initialize distance filter
+            initializeDistanceFilter();
+            
+            // Animate on load
             animateOnScroll();
-            loadUserFavorites();
-            updateMessageBadge();
-            setInterval(updateMessageBadge, 30000);
-            window.addEventListener('focus', updateMessageBadge);
-            
-            // Auto-focus search if coming from search
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('category') || urlParams.has('region') || urlParams.has('city')) {
-                const searchContainer = document.querySelector('.search-container');
-                if (searchContainer) {
-                    searchContainer.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
-                    });
-                }
-            }
             
             console.log('Initialization complete');
         });
@@ -1888,6 +2198,193 @@
 
         // Make debug function available globally
         window.debugExperiences = debugExperiences;
+
+        // ===== KEYWORD SEARCH FUNCTIONALITY =====
+        
+        // Show/hide popular keywords
+        function showPopularKeywords() {
+            const popularKeywords = document.getElementById('popularKeywords');
+            if (popularKeywords.style.display === 'none') {
+                popularKeywords.style.display = 'flex';
+            } else {
+                popularKeywords.style.display = 'none';
+            }
+        }
+
+        // Select a keyword and put it in search box
+        function selectKeyword(keyword) {
+            const keywordInput = document.getElementById('keywordSearch');
+            keywordInput.value = keyword;
+            
+            // Hide popular keywords
+            const popularKeywords = document.getElementById('popularKeywords');
+            popularKeywords.style.display = 'none';
+            
+            // Trigger search suggestions
+            handleKeywordInput();
+        }
+
+        // Handle keyword input and show suggestions
+        function handleKeywordInput() {
+            const keywordInput = document.getElementById('keywordSearch');
+            const suggestions = document.getElementById('keywordSuggestions');
+            const keyword = keywordInput.value.trim();
+            
+            if (keyword.length < 2) {
+                suggestions.classList.remove('show');
+                return;
+            }
+            
+            // Get suggestions from server
+            fetch('${pageContext.request.contextPath}/api/keyword-suggestions?q=' + encodeURIComponent(keyword))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.suggestions && data.suggestions.length > 0) {
+                        suggestions.innerHTML = '';
+                        data.suggestions.forEach(function(suggestion) {
+                            const div = document.createElement('div');
+                            div.textContent = suggestion;
+                            div.onclick = function() {
+                                keywordInput.value = suggestion;
+                                suggestions.classList.remove('show');
+                                // Optionally trigger search immediately
+                                // document.querySelector('.search-form').submit();
+                            };
+                            suggestions.appendChild(div);
+                        });
+                        suggestions.classList.add('show');
+                    } else {
+                        suggestions.classList.remove('show');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching suggestions:', error);
+                    suggestions.classList.remove('show');
+                });
+        }
+
+        // ===== DISTANCE FILTERING & GEOLOCATION =====
+        
+        let userLocation = {
+            lat: null,
+            lng: null,
+            enabled: false
+        };
+
+        // Request user location
+        function requestLocation() {
+            const btn = document.getElementById('locationBtn');
+            const status = document.getElementById('distanceStatus');
+            const distanceSelect = document.getElementById('distanceSelect');
+            
+            if (!navigator.geolocation) {
+                updateLocationStatus('disabled', 'Trình duyệt không hỗ trợ định vị');
+                return;
+            }
+
+            // Show loading state
+            btn.classList.add('active');
+            updateLocationStatus('detecting', 'Đang xác định vị trí...');
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    // Success
+                    userLocation.lat = position.coords.latitude;
+                    userLocation.lng = position.coords.longitude;
+                    userLocation.enabled = true;
+                    
+                    // Update UI
+                    btn.classList.remove('active');
+                    btn.classList.add('enabled');
+                    distanceSelect.disabled = false;
+                    
+                    // Update hidden inputs
+                    document.getElementById('userLat').value = userLocation.lat;
+                    document.getElementById('userLng').value = userLocation.lng;
+                    
+                    updateLocationStatus('enabled', 'Định vị thành công (±' + Math.round(position.coords.accuracy) + 'm)');
+                    
+                    console.log('Location acquired:', userLocation);
+                },
+                function(error) {
+                    // Error
+                    btn.classList.remove('active');
+                    updateLocationStatus('disabled', getLocationErrorMessage(error));
+                    console.error('Geolocation error:', error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000 // 5 minutes
+                }
+            );
+        }
+
+        // Update location status UI
+        function updateLocationStatus(type, message) {
+            const status = document.getElementById('distanceStatus');
+            status.className = 'distance-status ' + type;
+            status.innerHTML = '<i class="ri-information-line"></i> ' + message;
+        }
+
+        // Get user-friendly error message
+        function getLocationErrorMessage(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    return "Quyền truy cập vị trí bị từ chối";
+                case error.POSITION_UNAVAILABLE:
+                    return "Không thể xác định vị trí";
+                case error.TIMEOUT:
+                    return "Hết thời gian chờ định vị";
+                default:
+                    return "Lỗi không xác định khi định vị";
+            }
+        }
+
+        // Initialize distance filter if coordinates are available
+        function initializeDistanceFilter() {
+            const userLat = document.getElementById('userLat').value;
+            const userLng = document.getElementById('userLng').value;
+            
+            if (userLat && userLng) {
+                userLocation.lat = parseFloat(userLat);
+                userLocation.lng = parseFloat(userLng);
+                userLocation.enabled = true;
+                
+                const btn = document.getElementById('locationBtn');
+                const distanceSelect = document.getElementById('distanceSelect');
+                
+                btn.classList.add('enabled');
+                distanceSelect.disabled = false;
+                updateLocationStatus('enabled', 'Vị trí đã được lưu từ lần trước');
+            }
+        }
+
+        // Setup keyword search event listeners
+        function setupKeywordSearch() {
+            const keywordInput = document.getElementById('keywordSearch');
+            const suggestions = document.getElementById('keywordSuggestions');
+            
+            if (keywordInput) {
+                // Input event for suggestions
+                keywordInput.addEventListener('input', handleKeywordInput);
+                
+                // Click outside to hide suggestions
+                document.addEventListener('click', function(event) {
+                    if (!keywordInput.contains(event.target) && !suggestions.contains(event.target)) {
+                        suggestions.classList.remove('show');
+                    }
+                });
+                
+                // Enter key to submit form
+                keywordInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        suggestions.classList.remove('show');
+                        document.querySelector('.search-form').submit();
+                    }
+                });
+            }
+        }
     </script>
 
 </body>

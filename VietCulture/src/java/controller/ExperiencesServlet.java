@@ -88,8 +88,10 @@ public class ExperiencesServlet extends HttpServlet {
                     .forward(request, response);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Unexpected error in ExperiencesServlet", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Đã xảy ra lỗi không mong đợi.");
+            if (!response.isCommitted()) {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "Đã xảy ra lỗi không mong đợi.");
+            }
         }
     }
 
@@ -164,12 +166,22 @@ public class ExperiencesServlet extends HttpServlet {
         String filterParam = request.getParameter("filter");
         String searchParam = request.getParameter("search");
         String pageParam = request.getParameter("page");
+        
+        // Distance filtering parameters
+        String distanceParam = request.getParameter("distance");
+        String latParam = request.getParameter("lat");
+        String lngParam = request.getParameter("lng");
 
         // Parse parameters
         Integer categoryId = parseInteger(categoryParam);
         Integer regionId = parseInteger(regionParam);
         Integer cityId = parseInteger(cityParam);
         int currentPage = parseInteger(pageParam, DEFAULT_PAGE);
+        
+        // Parse distance filtering parameters
+        Double maxDistance = parseDouble(distanceParam);
+        Double userLat = parseDouble(latParam);
+        Double userLng = parseDouble(lngParam);
 
         // Validate page number
         if (currentPage < 1) {
@@ -189,10 +201,10 @@ public class ExperiencesServlet extends HttpServlet {
             regions = regionDAO.getAllRegions();
             categories = categoryDAO.getAllCategories();
 
-            // Get experiences based on filters
-            experiences = getFilteredExperiences(
+            // Get experiences based on filters (including distance)
+            experiences = getFilteredExperiencesWithDistance(
                     categoryId, regionId, cityId, sortParam, filterParam,
-                    searchParam, offset, DEFAULT_PAGE_SIZE
+                    searchParam, userLat, userLng, maxDistance, offset, DEFAULT_PAGE_SIZE
             );
 
             // Process experiences for list view
@@ -200,53 +212,54 @@ public class ExperiencesServlet extends HttpServlet {
                 processExperienceForList(experience);
             }
 
-            // Get total count for pagination
-            totalExperiences = getTotalFilteredExperiences(
-                    categoryId, regionId, cityId, filterParam, searchParam
+            // Get total count for pagination (including distance)
+            totalExperiences = getTotalFilteredExperiencesWithDistance(
+                    categoryId, regionId, cityId, filterParam, searchParam,
+                    userLat, userLng, maxDistance
             );
 
-        } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "Error getting experiences data", e);
-            // Continue with empty lists - error will be shown in JSP
-        }
+            // Calculate pagination info
+            int totalPages = (int) Math.ceil((double) totalExperiences / DEFAULT_PAGE_SIZE);
 
-        int totalPages = (int) Math.ceil((double) totalExperiences / DEFAULT_PAGE_SIZE);
+            // Set pagination attributes
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("totalExperiences", totalExperiences);
+            request.setAttribute("pageSize", DEFAULT_PAGE_SIZE);
+
+            // Create pagination URL with all current parameters including distance
+            StringBuilder paginationUrl = new StringBuilder("/experiences?");
+            appendParam(paginationUrl, "category", categoryParam);
+            appendParam(paginationUrl, "region", regionParam);
+            appendParam(paginationUrl, "city", cityParam);
+            appendParam(paginationUrl, "sort", sortParam);
+            appendParam(paginationUrl, "filter", filterParam);
+            appendParam(paginationUrl, "search", searchParam);
+            appendParam(paginationUrl, "distance", distanceParam);
+            appendParam(paginationUrl, "lat", latParam);
+            appendParam(paginationUrl, "lng", lngParam);
+
+            request.setAttribute("paginationUrl", paginationUrl.toString());
+
+            LOGGER.info("Loaded " + experiences.size() + " experiences for page " + currentPage);
+
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error loading experiences list", e);
+            // Set empty lists and error message
+            experiences = new ArrayList<>();
+            regions = new ArrayList<>();
+            categories = new ArrayList<>();
+            request.setAttribute("errorMessage", "Có lỗi xảy ra khi tải dữ liệu trải nghiệm.");
+        }
 
         // Set attributes for JSP
         request.setAttribute("experiences", experiences);
         request.setAttribute("regions", regions);
         request.setAttribute("categories", categories);
-        request.setAttribute("totalExperiences", totalExperiences);
-        request.setAttribute("currentPage", currentPage);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("pageSize", DEFAULT_PAGE_SIZE);
-
-        // Preserve search parameters for pagination
-        StringBuilder queryString = new StringBuilder();
-        appendParam(queryString, "category", categoryParam);
-        appendParam(queryString, "region", regionParam);
-        appendParam(queryString, "city", cityParam);
-        appendParam(queryString, "sort", sortParam);
-        appendParam(queryString, "filter", filterParam);
-        appendParam(queryString, "search", searchParam);
-
-        request.setAttribute("queryString", queryString.toString());
-
-        // Set filter parameters back to JSP for form state
-        request.setAttribute("selectedCategory", categoryParam);
-        request.setAttribute("selectedRegion", regionParam);
-        request.setAttribute("selectedCity", cityParam);
-        request.setAttribute("selectedSort", sortParam);
-        request.setAttribute("selectedFilter", filterParam);
-        request.setAttribute("searchKeyword", searchParam);
-
-        // Log request info
-        LOGGER.info("Experiences page accessed - Filters: category=" + categoryParam
-                + ", region=" + regionParam + ", city=" + cityParam
-                + ", page=" + currentPage + ", total=" + totalExperiences);
 
         // Forward to JSP
-        request.getRequestDispatcher("/view/jsp/home/experiences.jsp").forward(request, response);
+        request.getRequestDispatcher("/view/jsp/home/experiences.jsp")
+                .forward(request, response);
     }
 
     /**
@@ -325,13 +338,21 @@ public class ExperiencesServlet extends HttpServlet {
     }
 
     /**
-     * Get filtered experiences based on search criteria
+     * Get filtered experiences based on search criteria including distance
      */
-    private List<Experience> getFilteredExperiences(Integer categoryId, Integer regionId,
+    private List<Experience> getFilteredExperiencesWithDistance(Integer categoryId, Integer regionId,
             Integer cityId, String sort, String filter, String search,
+            Double userLat, Double userLng, Double maxDistance,
             int offset, int limit) throws SQLException {
 
         try {
+            // If we have distance filtering, use the new method
+            if (userLat != null && userLng != null && maxDistance != null) {
+                return experienceDAO.searchExperiencesWithDistance(categoryId, regionId, cityId,
+                        search, sort, userLat, userLng, maxDistance, offset, limit);
+            }
+            
+            // Otherwise use regular filtering
             // Apply filter logic
             if ("popular".equals(filter)) {
                 return experienceDAO.getPopularExperiences(offset, limit);
@@ -348,33 +369,37 @@ public class ExperiencesServlet extends HttpServlet {
             }
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting filtered experiences", e);
+            LOGGER.log(Level.SEVERE, "Error getting filtered experiences with distance", e);
             throw e;
         }
     }
 
     /**
-     * Get total count of filtered experiences for pagination
+     * Get total count of filtered experiences for pagination including distance
      */
-    private int getTotalFilteredExperiences(Integer categoryId, Integer regionId,
-            Integer cityId, String filter, String search) throws SQLException {
+    private int getTotalFilteredExperiencesWithDistance(Integer categoryId, Integer regionId,
+            Integer cityId, String filter, String search,
+            Double userLat, Double userLng, Double maxDistance) throws SQLException {
 
         try {
-            if ("popular".equals(filter)) {
-                return experienceDAO.getPopularExperiencesCount();
-            } else if ("newest".equals(filter)) {
-                return experienceDAO.getNewestExperiencesCount();
-            } else if ("top-rated".equals(filter)) {
-                return experienceDAO.getTopRatedExperiencesCount();
-            } else if ("low-price".equals(filter)) {
-                return experienceDAO.getLowPriceExperiencesCount();
+            // If we have distance filtering, use the new method
+            if (userLat != null && userLng != null && maxDistance != null) {
+                return experienceDAO.getFilteredExperiencesCountWithDistance(categoryId, regionId, cityId,
+                        search, userLat, userLng, maxDistance);
+            }
+            
+            // Otherwise use regular counting
+            if ("popular".equals(filter) || "newest".equals(filter) || 
+                "top-rated".equals(filter) || "low-price".equals(filter)) {
+                // For these filters, we need to count all and apply business logic
+                // This is simplified - in a real app you'd have specific count methods
+                return experienceDAO.getFilteredExperiencesCount(categoryId, regionId, cityId, search);
             } else {
-                return experienceDAO.getFilteredExperiencesCount(categoryId, regionId,
-                        cityId, search);
+                return experienceDAO.getFilteredExperiencesCount(categoryId, regionId, cityId, search);
             }
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting filtered experiences count", e);
+            LOGGER.log(Level.SEVERE, "Error getting count of filtered experiences with distance", e);
             throw e;
         }
     }
@@ -397,6 +422,28 @@ public class ExperiencesServlet extends HttpServlet {
             return Integer.parseInt(param.trim());
         } catch (NumberFormatException e) {
             LOGGER.log(Level.WARNING, "Invalid integer parameter: " + param);
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Parse double parameter with default value
+     */
+    private Double parseDouble(String param) {
+        return parseDouble(param, null);
+    }
+
+    /**
+     * Parse double parameter with default value
+     */
+    private Double parseDouble(String param, Double defaultValue) {
+        if (param == null || param.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Double.parseDouble(param.trim());
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid double parameter: " + param);
             return defaultValue;
         }
     }
