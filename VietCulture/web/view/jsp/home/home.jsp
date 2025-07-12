@@ -1,7 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
-
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -13,74 +12,435 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
         <style>
+            /* Travel Chat Widget Styles */
+            .travel-chat-wrapper {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 2000;
+                font-family: 'Inter', sans-serif;
+            }
+            
+            .travel-chat-container {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 20px;
+                box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+                overflow: hidden;
+                transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+                display: flex;
+                flex-direction: column;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            .travel-chat-container.minimized {
+                width: 70px;
+                height: 70px;
+                border-radius: 50%;
+                cursor: pointer;
+                animation: chatPulse 3s infinite;
+            }
+            
+            .travel-chat-container.maximized {
+                width: 420px;
+                height: 600px;
+                border-radius: 20px;
+                animation: none;
+            }
+            
+            .travel-chat-header {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                padding: 20px;
+                text-align: center;
+                cursor: pointer;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 70px;
+                border-radius: 20px 20px 0 0;
+                transition: all 0.3s ease;
+            }
+            
+            .travel-chat-container.minimized .travel-chat-header {
+                border-radius: 50%;
+                padding: 0;
+                height: 70px;
+            }
+            
+            .chat-header-content {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-direction: column;
+            }
+            
+            .travel-chat-container.minimized .chat-header-content {
+                display: none;
+            }
+            
+            .chat-title {
+                font-weight: 600;
+                font-size: 16px;
+                margin: 0;
+            }
+            
+            .chat-subtitle {
+                font-size: 12px;
+                opacity: 0.9;
+                margin: 0;
+            }
+            
+            .chat-icon {
+                font-size: 28px;
+                animation: bounce 2s infinite;
+            }
+            
+            .travel-chat-container.maximized .chat-icon {
+                display: none;
+            }
+            
+            .travel-chat-messages {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+                background: #f8f9fa;
+                display: none;
+                max-height: 400px;
+                min-height: 300px;
+            }
+            
+            .travel-chat-container.maximized .travel-chat-messages {
+                display: block;
+            }
+            
+            .travel-message {
+                margin-bottom: 15px;
+                animation: fadeInUp 0.3s ease-out;
+            }
+            
+            .travel-message.user {
+                text-align: right;
+            }
+            
+            .travel-message.ai {
+                text-align: left;
+            }
+            
+            .message-bubble {
+                display: inline-block;
+                max-width: 85%;
+                padding: 12px 16px;
+                border-radius: 18px;
+                font-size: 14px;
+                line-height: 1.4;
+                word-wrap: break-word;
+                white-space: pre-wrap;
+                position: relative;
+            }
+            
+            .user .message-bubble {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-bottom-right-radius: 6px;
+            }
+            
+            .ai .message-bubble {
+                background: white;
+                color: #333;
+                border: 1px solid #e9ecef;
+                border-bottom-left-radius: 6px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            
+            .message-timestamp {
+                font-size: 11px;
+                color: #666;
+                margin-top: 4px;
+            }
+            
+            .travel-chat-input {
+                display: none;
+                padding: 20px;
+                background: white;
+                border-top: 1px solid #e9ecef;
+                border-radius: 0 0 20px 20px;
+            }
+            
+            .travel-chat-container.maximized .travel-chat-input {
+                display: block;
+            }
+            
+            .input-group {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .travel-input {
+                flex: 1;
+                padding: 12px 16px;
+                border: 2px solid #e9ecef;
+                border-radius: 25px;
+                outline: none;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                font-family: 'Inter', sans-serif;
+            }
+            
+            .travel-input:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+            
+            .send-button {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 45px;
+                height: 45px;
+                cursor: pointer;
+                font-size: 18px;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            
+            .send-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            }
+            
+            .send-button:active {
+                transform: scale(0.95);
+            }
+            
+            .send-button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+            
+            .typing-indicator {
+                display: none;
+                padding: 10px 16px;
+                margin: 10px 0;
+                background: white;
+                border-radius: 18px;
+                border-bottom-left-radius: 6px;
+                max-width: 80%;
+                border: 1px solid #e9ecef;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            
+            .typing-dots {
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+            
+            .typing-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #667eea;
+                animation: typingDots 1.5s infinite;
+            }
+            
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.3s;
+            }
+            
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.6s;
+            }
+            
+            .quick-actions {
+                display: none;
+                padding: 15px 20px;
+                background: #f8f9fa;
+                border-top: 1px solid #e9ecef;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .travel-chat-container.maximized .quick-actions {
+                display: flex;
+            }
+            
+            .quick-action-btn {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                border: none;
+                border-radius: 15px;
+                padding: 6px 12px;
+                font-size: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 500;
+            }
+            
+            .quick-action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+            }
+            
+            /* Scrollbar Styles */
+            .travel-chat-messages::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .travel-chat-messages::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+            
+            .travel-chat-messages::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 10px;
+            }
+            
+            .travel-chat-messages::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+            
+            /* Chat Animations */
+            @keyframes chatPulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+                }
+                70% {
+                    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+                }
+            }
+            
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-10px);
+                }
+                60% {
+                    transform: translateY(-5px);
+                }
+            }
+            
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes typingDots {
+                0%, 60%, 100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+                30% {
+                    transform: scale(1.3);
+                    opacity: 0.7;
+                }
+            }
+            
+            /* Responsive for chat */
+            @media (max-width: 480px) {
+                .travel-chat-container.maximized {
+                    width: calc(100vw - 20px);
+                    height: calc(100vh - 40px);
+                    border-radius: 15px;
+                    right: 10px;
+                    bottom: 10px;
+                }
+                
+                .travel-chat-wrapper {
+                    right: 10px;
+                    bottom: 10px;
+                }
+            }
+
+            /* Existing styles from home.jsp */
             .nav-chat-link {
-    position: relative;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
+                position: relative;
+                color: rgba(255,255,255,0.7);
+                text-decoration: none;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+            }
 
-.nav-chat-link:hover {
-    color: var(--primary-color) !important;
-    background-color: rgba(255, 56, 92, 0.1);
-    transform: translateY(-1px);
-}
+            .nav-chat-link:hover {
+                color: var(--primary-color) !important;
+                background-color: rgba(255, 56, 92, 0.1);
+                transform: translateY(-1px);
+            }
 
-.message-badge {
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    background: #FF385C;
-    color: white;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    font-weight: 600;
-    border: 2px solid #10466C;
-    animation: pulse 2s infinite;
-}
+            .message-badge {
+                position: absolute;
+                top: -2px;
+                right: -2px;
+                background: #FF385C;
+                color: white;
+                border-radius: 50%;
+                width: 16px;
+                height: 16px;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.6rem;
+                font-weight: 600;
+                border: 2px solid #10466C;
+                animation: pulse 2s infinite;
+            }
 
-.message-badge.show {
-    display: flex;
-}
+            .message-badge.show {
+                display: flex;
+            }
 
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
-    }
-    70% {
-        box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
-    }
-}
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 0 rgba(255, 56, 92, 0.7);
+                }
+                70% {
+                    box-shadow: 0 0 0 10px rgba(255, 56, 92, 0);
+                }
+                100% {
+                    box-shadow: 0 0 0 0 rgba(255, 56, 92, 0);
+                }
+            }
+
             .success-card {
                 border-left: 4px solid #28a745;
                 animation: fadeInUp 0.6s ease-out;
             }
+
             .category-icon {
                 width: 60px;
                 height: 60px;
                 margin-bottom: 15px;
-                border-radius: 50%; /* Làm tròn hình ảnh */
-                object-fit: cover; /* Đảm bảo hình ảnh không bị méo */
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Thêm bóng đổ */
-                transition: transform 0.3s ease; /* Hiệu ứng hover */
+                border-radius: 50%;
+                object-fit: cover;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                transition: transform 0.3s ease;
             }
 
             .category-item:hover .category-icon {
-                transform: scale(1.1); /* Phóng to khi hover */
+                transform: scale(1.1);
             }
 
             .success-icon {
@@ -95,23 +455,14 @@
                 font-size: 1.2em;
             }
 
-            @keyframes fadeInUp {
-                from {
-                    transform: translateY(30px);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
             .dropdown-item {
-                color: #10466C ;
+                color: #10466C;
             }
 
             .dropdown-item i {
-                color: #10466C ;
+                color: #10466C;
             }
+
             .navbar-brand img {
                 height: 50px !important;
                 width: auto !important;
@@ -120,6 +471,7 @@
                 object-fit: contain !important;
                 display: inline-block !important;
             }
+
             :root {
                 --primary-color: #FF385C;
                 --secondary-color: #83C5BE;
@@ -191,7 +543,7 @@
                 top: 0;
                 left: 0;
                 width: 100%;
-                background-color: #10466C; /* Thay đổi màu nền */
+                background-color: #10466C;
                 backdrop-filter: blur(10px);
                 box-shadow: var(--shadow-sm);
                 z-index: 1000;
@@ -201,7 +553,7 @@
 
             .custom-navbar.scrolled {
                 padding: 10px 0;
-                background-color: #10466C; /* Giữ nguyên màu navbar */
+                background-color: #10466C;
                 box-shadow: var(--shadow-md);
             }
 
@@ -216,11 +568,9 @@
                 align-items: center;
                 font-weight: 700;
                 font-size: 1.3rem;
-                color: white; /* Đổi màu chữ thành trắng để dễ đọc */
+                color: white;
                 text-decoration: none;
             }
-
-
 
             .nav-center {
                 display: flex;
@@ -232,18 +582,17 @@
             }
 
             .nav-center-item {
-                color: rgba(255,255,255,0.7); /* Màu chữ nhạt hơn */
+                color: rgba(255,255,255,0.7);
                 text-decoration: none;
             }
 
             .nav-center-item:hover {
-                color: white; /* Màu chữ trắng khi hover */
+                color: white;
             }
 
             .nav-center-item.active {
                 color: var(--primary-color);
             }
-
 
             .nav-center-item img {
                 height: 24px;
@@ -262,7 +611,7 @@
             }
 
             .nav-right a {
-                color: rgba(255,255,255,0.7); /* Màu chữ nhạt hơn */
+                color: rgba(255,255,255,0.7);
                 text-decoration: none;
             }
 
@@ -283,7 +632,7 @@
             }
 
             .nav-right .menu-icon {
-                border: 1px solid rgba(255,255,255,0.2); /* Viền nhạt màu trắng */
+                border: 1px solid rgba(255,255,255,0.2);
                 padding: 8px;
                 border-radius: 50%;
                 display: flex;
@@ -293,26 +642,27 @@
                 transition: var(--transition);
                 box-shadow: var(--shadow-sm);
                 position: relative;
-                background-color: rgba(255,255,255,0.1); /* Nền nhẹ */
-                color: white; /* Màu icon trắng */
+                background-color: rgba(255,255,255,0.1);
+                color: white;
             }
 
             .nav-right .menu-icon:hover {
-                background: rgba(255,255,255,0.2); /* Nền sáng hơn khi hover */
+                background: rgba(255,255,255,0.2);
                 transform: translateY(-2px);
                 box-shadow: var(--shadow-md);
             }
+
             .nav-right .menu-icon i {
-                color: white; /* Đảm bảo icon luôn trắng */
+                color: white;
             }
 
             .dropdown-menu-custom {
                 position: absolute;
                 top: 100%;
                 right: 0;
-                background-color: white; /* Thay đổi màu nền thành trắng */
+                background-color: white;
                 border-radius: var(--border-radius);
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2); /* Tăng độ mờ của shadow */
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
                 width: 250px;
                 padding: 15px;
                 display: none;
@@ -321,7 +671,7 @@
                 opacity: 0;
                 transform: translateY(10px);
                 transition: var(--transition);
-                border: 1px solid rgba(0,0,0,0.1); /* Thêm viền nhẹ */
+                border: 1px solid rgba(0,0,0,0.1);
             }
 
             .dropdown-menu-custom.show {
@@ -336,22 +686,22 @@
                 align-items: center;
                 padding: 12px 15px;
                 text-decoration: none;
-                color: #10466C; /* Đổi màu chữ thành màu navbar */
+                color: #10466C;
                 transition: var(--transition);
                 border-radius: 10px;
                 margin-bottom: 5px;
             }
 
             .dropdown-menu-custom a:hover {
-                background-color: rgba(16, 70, 108, 0.05); /* Màu nền nhẹ của navbar */
-                color: #10466C; /* Giữ nguyên màu chữ khi hover */
+                background-color: rgba(16, 70, 108, 0.05);
+                color: #10466C;
                 transform: translateX(3px);
             }
 
             .dropdown-menu-custom a i {
                 margin-right: 12px;
                 font-size: 18px;
-                color: #10466C; /* Màu icon theo navbar */
+                color: #10466C;
             }
 
             /* Hero Section */
@@ -445,12 +795,6 @@
             .category-item:hover {
                 transform: translateY(-5px);
                 box-shadow: var(--shadow-md);
-            }
-
-            .category-icon {
-                width: 60px;
-                height: 60px;
-                margin-bottom: 15px;
             }
 
             .category-item h5 {
@@ -1031,7 +1375,6 @@
     </head>
     <body>
 
-
         <%-- Debugging Information (can be removed in production) --%>
         <div style="display:none;">
             Logged In: ${not empty sessionScope.user}
@@ -1062,112 +1405,107 @@
         </c:if>
 
         <!-- Navigation -->
-        <%-- Navigation (modified to work with servlet-based authentication) --%>
-   <nav class="custom-navbar">
-    <div class="container">
-        <a href="${pageContext.request.contextPath}/" class="navbar-brand">
-            <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
-            <span>VIETCULTURE</span>
-        </a>
+        <nav class="custom-navbar">
+            <div class="container">
+                <a href="${pageContext.request.contextPath}/" class="navbar-brand">
+                    <img src="https://github.com/ThinhBuiCoder/VietCulture/blob/main/VietCulture/build/web/view/assets/home/img/logo1.jpg?raw=true" alt="VietCulture Logo">
+                    <span>VIETCULTURE</span>
+                </a>
 
-        <div class="nav-center">
-            <a href="#home" class="nav-center-item">
-                Trang Chủ
-            </a>
-            <a href="/Travel/experiences" class="nav-center-item">
-                Trải Nghiệm
-            </a>
-            <a href="/Travel/accommodations" class="nav-center-item">
-                Lưu Trú
-            </a>
-        </div>
+                <div class="nav-center">
+                    <a href="#home" class="nav-center-item">
+                        Trang Chủ
+                    </a>
+                    <a href="/Travel/experiences" class="nav-center-item">
+                        Trải Nghiệm
+                    </a>
+                    <a href="/Travel/accommodations" class="nav-center-item">
+                        Lưu Trú
+                    </a>
+                </div>
 
-        <div class="nav-right">
-            <%-- Conditional rendering based on user authentication --%>
-            <c:choose>
-                <c:when test="${not empty sessionScope.user}">
-                    <!-- Icon tin nhắn cố định cho HOST và TRAVELER -->
-                    <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
-                        <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
-                            <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
-                            <!-- Badge đỏ sẽ được thêm bằng JavaScript -->
-                        </a>
-                    </c:if>
-                    
-                    <div class="dropdown">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
-                            <i class="ri-user-line" style="color: white;"></i> 
-                            ${sessionScope.user.fullName}
-                        </a>
-                        <ul class="dropdown-menu">
-                            <%-- Role-based dashboard access --%>
-                            <c:if test="${sessionScope.user.role == 'ADMIN'}">
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
-                                        <i class="ri-dashboard-line"></i> Quản Trị
-                                    </a>
-                                </li>
-                            </c:if>
-                            <c:if test="${sessionScope.user.role == 'HOST'}">
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
-                                        <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
-                                        <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
-                                    </a>
-                                </li>
-                            </c:if>
-                            <c:if test="${sessionScope.user.role == 'TRAVELER'}">
-                                <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
-                                        <i class="ri-vip-crown-line"></i> Nâng Lên Host
-                                    </a>
-                                </li>
+                <div class="nav-right">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user}">
+                            <!-- Icon tin nhắn cố định cho HOST và TRAVELER -->
+                            <c:if test="${sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER'}">
+                                <a href="${pageContext.request.contextPath}/chat" class="nav-chat-link me-3">
+                                    <i class="ri-message-3-line" style="font-size: 1.2rem; color: rgba(255,255,255,0.7);"></i>
+                                    <!-- Badge đỏ sẽ được thêm bằng JavaScript -->
+                                </a>
                             </c:if>
                             
-                            <%-- Common profile options --%>
-                            <li>
-                                <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
-                                    <i class="ri-user-settings-line"></i> Hồ Sơ
+                            <div class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" style="color: white;">
+                                    <i class="ri-user-line" style="color: white;"></i> 
+                                    ${sessionScope.user.fullName}
                                 </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
-                                    <i class="ri-logout-circle-r-line"></i> Đăng Xuất
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </c:when>
-                <c:otherwise>
-                    <%-- Not logged in state --%>
-                    <i class="ri-global-line globe-icon me-3"></i>
-                    <div class="menu-icon">
-                        <i class="ri-menu-line"></i>
-                        <div class="dropdown-menu-custom">
-                            <a href="#help-center">
-                                <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
-                            </a>
-                            <a href="${pageContext.request.contextPath}/contact">
-                                <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
-                            </a>
-                            <a href="${pageContext.request.contextPath}/login" class="nav-link">
-                                <i class="ri-login-circle-line" style="color: #10466C;"></i> Đăng Nhập
-                            </a>
-                            <a href="${pageContext.request.contextPath}/register">
-                                <i class="ri-user-add-line" style="color: #10466C;"></i>Đăng Ký
-                            </a>
-                        </div>
-                    </div>
-                </c:otherwise>
-            </c:choose>
-        </div>
-    </div>
-</nav>
+                                <ul class="dropdown-menu">
+                                    <c:if test="${sessionScope.user.role == 'ADMIN'}">
+                                        <li>
+                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/admin/dashboard" style="color: #10466C; font-weight: 600;">
+                                                <i class="ri-dashboard-line"></i> Quản Trị
+                                            </a>
+                                        </li>
+                                    </c:if>
+                                    <c:if test="${sessionScope.user.role == 'HOST'}">
+                                        <li>
+                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/Travel/create_service" style="color: #10466C; font-weight: 600;">
+                                                <i class="ri-add-circle-line"></i> Tạo Dịch Vụ
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/host/services/manage" style="color: #10466C; font-weight: 600;">
+                                                <i class="ri-settings-4-line"></i> Quản Lý Dịch Vụ
+                                            </a>
+                                        </li>
+                                    </c:if>
+                                    <c:if test="${sessionScope.user.role == 'TRAVELER'}">
+                                        <li>
+                                            <a class="dropdown-item" href="${pageContext.request.contextPath}/traveler/upgrade-to-host" style="color: #10466C; font-weight: 600;">
+                                                <i class="ri-vip-crown-line"></i> Nâng Lên Host
+                                            </a>
+                                        </li>
+                                    </c:if>
+                                    
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/profile" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-user-settings-line"></i> Hồ Sơ
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="${pageContext.request.contextPath}/logout" style="color: #10466C; font-weight: 600;">
+                                            <i class="ri-logout-circle-r-line"></i> Đăng Xuất
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <i class="ri-global-line globe-icon me-3"></i>
+                            <div class="menu-icon">
+                                <i class="ri-menu-line"></i>
+                                <div class="dropdown-menu-custom">
+                                    <a href="#help-center">
+                                        <i class="ri-question-line" style="color: #10466C;"></i>Trung tâm Trợ giúp
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/contact">
+                                        <i class="ri-contacts-line" style="color: #10466C;"></i>Liên Hệ
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/login" class="nav-link">
+                                        <i class="ri-login-circle-line" style="color: #10466C;"></i> Đăng Nhập
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/register">
+                                        <i class="ri-user-add-line" style="color: #10466C;"></i>Đăng Ký
+                                    </a>
+                                </div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+        </nav>
 
         <!-- Hero Section -->
         <section class="hero-section" id="home">
@@ -1213,7 +1551,6 @@
                     <c:if test="${empty categories}">
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Food">
-                                <!-- Hình ảnh ẩm thực Việt Nam -->
                                 <img src="https://media-cdn-v2.laodong.vn/Storage/NewsPortal/2023/9/29/1247753/Am-Thuc-Viet-Nam.jpeg" alt="Food" class="category-icon">
                                 <h5>Ẩm Thực</h5>
                                 <p>Khám phá nền ẩm thực địa phương & học nấu ăn</p>
@@ -1222,7 +1559,6 @@
 
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Culture">
-                                <!-- Hình ảnh văn hóa truyền thống -->
                                 <img src="http://files.auditnews.vn/2023/03/02/van-hoa.png" alt="Culture" class="category-icon">
                                 <h5>Văn Hóa</h5>
                                 <p>Trải nghiệm văn hóa & lễ hội địa phương</p>
@@ -1231,7 +1567,6 @@
 
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="Adventure">
-                                <!-- Hình ảnh phiêu lưu -->
                                 <img src="https://img.thuthuatphanmem.vn/uploads/2018/10/26/nhung-anh-dep-ve-viet-nam_055420259.jpg" alt="Adventure" class="category-icon">
                                 <h5>Phiêu Lưu</h5>
                                 <p>Khám phá thiên nhiên & hoạt động thể thao</p>
@@ -1240,17 +1575,12 @@
 
                         <div class="col-md-3 col-6 mb-4 stagger-item">
                             <div class="category-item" data-category="History">
-                                <!-- Hình ảnh lịch sử -->
                                 <img src="https://images.unsplash.com/photo-1568849676085-51415703900f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400&q=80" alt="History" class="category-icon">
                                 <h5>Lịch Sử</h5>
                                 <p>Tham quan di tích lịch sử & địa điểm văn hóa</p>
                             </div>
                         </div>
                     </c:if>
-
-
-
-
                 </div>
             </div>
         </section>
@@ -1295,7 +1625,6 @@
                         <div class="col-md-4 mb-4 stagger-item">
                             <div class="card-item h-100">
                                 <div class="card-image">
-                                    <!-- Hình ảnh Miền Bắc: Vịnh Hạ Long -->
                                     <img src="https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Miền Bắc">
                                     <div class="card-badge">Miền Bắc</div>
                                 </div>
@@ -1319,7 +1648,6 @@
                         <div class="col-md-4 mb-4 stagger-item">
                             <div class="card-item h-100">
                                 <div class="card-image">
-                                    <!-- Hình ảnh Miền Trung: Hội An -->
                                     <img src="https://drt.danang.vn/content/images/2024/07/diem-check-in-hoi-an-1.jpg" alt="Miền Trung">
                                     <div class="card-badge">Miền Trung</div>
                                 </div>
@@ -1343,7 +1671,6 @@
                         <div class="col-md-4 mb-4 stagger-item">
                             <div class="card-item h-100">
                                 <div class="card-image">
-                                    <!-- Hình ảnh Miền Nam: Đồng bằng sông Cửu Long -->
                                     <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Miền Nam">
                                     <div class="card-badge">Miền Nam</div>
                                 </div>
@@ -1367,8 +1694,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- Main Content Tabs -->
 
         <!-- Testimonials Section -->
         <section class="py-5 bg-light">
@@ -1563,367 +1888,560 @@
             </div>
         </footer>
 
+        <!-- Travel Chat Widget -->
+        <div class="travel-chat-wrapper">
+            <div class="travel-chat-container minimized" id="travelChatContainer">
+                <div class="travel-chat-header" onclick="toggleTravelChat()">
+                    <div class="chat-header-content">
+                        <div class="chat-title">VietCulture</div>
+                        <div class="chat-subtitle">Hỗ trợ du lịch 24/7</div>
+                    </div>
+                    <div class="chat-icon">💬️️</div>
+                </div>
+                
+                <div class="travel-chat-messages" id="travelChatMessages">
+                    <!-- Welcome message -->
+                    <div class="travel-message ai">
+                        <div class="message-bubble">
+                            Xin chào! Tôi là trợ lý du lịch của bạn. Tôi có thể giúp bạn:
+                            🏠 Tìm kiếm nơi lưu trú
+                            🎯 Khám phá trải nghiệm thú vị
+                            🌍 Tư vấn điểm đến
+                            💰 Tìm theo ngân sách
+                            
+                            Bạn muốn đi du lịch ở đâu?
+                        </div>
+                        <div class="message-timestamp">Vừa xong</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Hà Nội')">🏛️ Hà Nội</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Đà Nẵng')">🏖️ Đà Nẵng</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Hội An')">🏮 Hội An</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Phú Quốc')">🏝️ Phú Quốc</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('trải nghiệm ẩm thực')">🍜 Ẩm thực</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('phổ biến')">🔥 Phổ biến</button>
+                </div>
+                
+                <div class="typing-indicator" id="typingIndicator">
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+                
+                <div class="travel-chat-input">
+                    <form id="travelChatForm" class="input-group">
+                        <input type="text" 
+                               id="travelMessageInput" 
+                               class="travel-input" 
+                               placeholder="Nhập tin nhắn..." 
+                               autocomplete="off" 
+                               required>
+                        <button type="submit" class="send-button">
+                            <span>➤</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast Notification Container -->
         <div class="toast-container"></div>
 
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
-                            // Dropdown menu
-                            const menuIcon = document.querySelector('.menu-icon');
-                            const dropdownMenu = document.querySelector('.dropdown-menu-custom');
-
-                            if (menuIcon && dropdownMenu) {
-                                // Toggle dropdown on click
-                                menuIcon.addEventListener('click', function (e) {
-                                    e.stopPropagation();
-                                    dropdownMenu.classList.toggle('show');
-                                });
-
-                                // Close dropdown when clicking outside
-                                document.addEventListener('click', function () {
-                                    dropdownMenu.classList.remove('show');
-                                });
-
-                                // Prevent dropdown from closing when clicking inside
-                                dropdownMenu.addEventListener('click', function (e) {
-                                    e.stopPropagation();
-                                });
-                            }
-
-                            // Navbar scroll effect
-                            window.addEventListener('scroll', function () {
-                                const navbar = document.querySelector('.custom-navbar');
-                                if (window.scrollY > 50) {
-                                    navbar.classList.add('scrolled');
-                                } else {
-                                    navbar.classList.remove('scrolled');
-                                }
-
-                                // Animate elements when they come into view
-                                animateOnScroll();
-                            });
-
-                            // Animate elements when they come into view
-                            function animateOnScroll() {
-                                const fadeElements = document.querySelectorAll('.fade-up');
-
-                                fadeElements.forEach(element => {
-                                    const elementTop = element.getBoundingClientRect().top;
-                                    const elementVisible = 150;
-
-                                    if (elementTop < window.innerHeight - elementVisible) {
-                                        element.classList.add('active');
-
-                                        // Stagger child elements if any
-                                        const staggerItems = element.querySelectorAll('.stagger-item');
-                                        staggerItems.forEach((item, index) => {
-                                            setTimeout(() => {
-                                                item.style.opacity = 1;
-                                                item.style.transform = 'translateY(0)';
-                                            }, 150 * index);
-                                        });
-                                    }
-                                });
-                            }
-
-                            // Cities data from backend - will be populated by controller
-                            const citiesData = {};
-            <c:forEach var="region" items="${regions}">
-                            citiesData['${region.regionId}'] = [
-                <c:forEach var="city" items="${region.cities}" varStatus="status">
-                            {id: '${city.cityId}', name: '${city.name}', vietnameseName: '${city.vietnameseName}'}<c:if test="${!status.last}">,</c:if>
-                </c:forEach>
-                            ];
-            </c:forEach>
-
-                            // Handle region selection for experiences
-                            const regionSelect = document.getElementById('regionSelect');
-                            if (regionSelect) {
-                                regionSelect.addEventListener('change', function () {
-                                    const citySelect = document.getElementById('citySelect');
-                                    const selectedRegionId = this.value;
-
-                                    // Clear previous options
-                                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
-
-                                    // If valid region is selected
-                                    if (citiesData[selectedRegionId]) {
-                                        citySelect.disabled = false;
-                                        citiesData[selectedRegionId].forEach(city => {
-                                            const option = document.createElement('option');
-                                            option.value = city.id;
-                                            option.textContent = city.vietnameseName;
-                                            citySelect.appendChild(option);
-                                        });
-                                    } else {
-                                        citySelect.disabled = true;
-                                    }
-                                });
-                            }
-
-                            // Handle region selection for accommodations
-                            const accommodationRegionSelect = document.getElementById('accommodationRegionSelect');
-                            if (accommodationRegionSelect) {
-                                accommodationRegionSelect.addEventListener('change', function () {
-                                    const citySelect = document.getElementById('accommodationCitySelect');
-                                    const selectedRegionId = this.value;
-
-                                    // Clear previous options
-                                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
-
-                                    // If valid region is selected
-                                    if (citiesData[selectedRegionId]) {
-                                        citySelect.disabled = false;
-                                        citiesData[selectedRegionId].forEach(city => {
-                                            const option = document.createElement('option');
-                                            option.value = city.id;
-                                            option.textContent = city.vietnameseName;
-                                            citySelect.appendChild(option);
-                                        });
-                                    } else {
-                                        citySelect.disabled = true;
-                                    }
-                                });
-                            }
-
-                            // Increase guests function for experiences
-                            function increaseGuests() {
-                                const guestInput = document.getElementById('guests');
-                                let currentGuests = parseInt(guestInput.value);
-                                if (currentGuests < 10) {
-                                    guestInput.value = currentGuests + 1;
-                                }
-                            }
-
-                            // Decrease guests function for experiences
-                            function decreaseGuests() {
-                                const guestInput = document.getElementById('guests');
-                                let currentGuests = parseInt(guestInput.value);
-                                if (currentGuests > 1) {
-                                    guestInput.value = currentGuests - 1;
-                                }
-                            }
-
-                            // Increase guests function for accommodations
-                            function increaseAccommodationGuests() {
-                                const guestInput = document.getElementById('accommodationGuests');
-                                let currentGuests = parseInt(guestInput.value);
-                                if (currentGuests < 10) {
-                                    guestInput.value = currentGuests + 1;
-                                }
-                            }
-
-                            // Decrease guests function for accommodations
-                            function decreaseAccommodationGuests() {
-                                const guestInput = document.getElementById('accommodationGuests');
-                                let currentGuests = parseInt(guestInput.value);
-                                if (currentGuests > 1) {
-                                    guestInput.value = currentGuests - 1;
-                                }
-                            }
-
-                            // Filter by region function (used in Regions section)
-                            function filterByRegion(regionName) {
-                                let regionId = '';
-                                // Nếu có biến regions từ backend
-                                <c:if test="${not empty regions}">
-                                    <c:forEach var="region" items="${regions}">
-                                        if ('${region.name}' === regionName) {
-                                            regionId = '${region.regionId}';
-                                        }
-                                    </c:forEach>
-                                </c:if>
-                                // Nếu không có regions (dùng mặc định)
-                                if (!regionId) {
-                                    if (regionName === 'North') regionId = '1';
-                                    else if (regionName === 'Central') regionId = '2';
-                                    else if (regionName === 'South') regionId = '3';
-                                }
-                                if (regionId) {
-                                    window.location.href = '${pageContext.request.contextPath}/experiences?region=' + regionId;
-                                }
-                            }
-
-                            // Copy experience function
-                            function copyExperience(experienceName) {
-                                navigator.clipboard.writeText(experienceName)
-                                        .then(() => {
-                                            showToast(`Đã sao chép "${experienceName}"`, 'success');
-                                        })
-                                        .catch(err => {
-                                            showToast('Không thể sao chép: ' + err, 'error');
-                                        });
-                            }
-
-                            // Copy accommodation function
-                            function copyAccommodation(accommodationName) {
-                                navigator.clipboard.writeText(accommodationName)
-                                        .then(() => {
-                                            showToast(`Đã sao chép "${accommodationName}"`, 'success');
-                                        })
-                                        .catch(err => {
-                                            showToast('Không thể sao chép: ' + err, 'error');
-                                        });
-                            }
-
-                            // Show toast notification
-                            function showToast(message, type = 'success') {
-                                const toastContainer = document.querySelector('.toast-container');
-
-                                const toast = document.createElement('div');
-                                toast.className = 'toast';
-
-                                let icon = '<i class="ri-check-line"></i>';
-                                if (type === 'error') {
-                                    icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
-                                } else if (type === 'info') {
-                                    icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
-                                }
-
-                                toast.innerHTML = `${icon}<span>${message}</span>`;
-
-                                toastContainer.appendChild(toast);
-
-                                // Show toast
-                                setTimeout(() => {
-                                    toast.classList.add('show');
-                                }, 10);
-
-                                // Hide toast after 3 seconds
-                                setTimeout(() => {
-                                    toast.classList.remove('show');
-                                    setTimeout(() => {
-                                        if (toastContainer.contains(toast)) {
-                                            toastContainer.removeChild(toast);
-                                        }
-                                    }, 500);
-                                }, 3000);
-                            }
-
-                            // Initialize animations on page load
-                            document.addEventListener('DOMContentLoaded', function () {
-                                // Add js-enabled class to body to activate JavaScript animations
-                                document.body.classList.add('js-enabled');
-
-                                // Force display all cards to ensure they're visible
-                                setTimeout(function () {
-                                    document.querySelectorAll('.stagger-item').forEach(item => {
-                                        item.style.opacity = 1;
-                                        item.style.transform = 'translateY(0)';
-                                    });
-                                }, 500);
-
-                                // Initial animation check
-                                animateOnScroll();
-
-                                // Initialize staggered items
-                                const staggerItems = document.querySelectorAll('.stagger-item');
-                                staggerItems.forEach((item, index) => {
-                                    item.style.transitionDelay = `${index * 0.1}s`;
-                                });
-
-                                // Smooth scroll for nav links
-                                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                                    anchor.addEventListener('click', function (e) {
-                                        e.preventDefault();
-
-                                        const targetId = this.getAttribute('href').substring(1);
-                                        if (targetId === '')
-                                            return;
-
-                                        const targetElement = document.getElementById(targetId);
-                                        if (targetElement) {
-                                            window.scrollTo({
-                                                top: targetElement.offsetTop - 100,
-                                                behavior: 'smooth'
-                                            });
-                                        }
-                                    });
-                                });
-
-                                // Category filter functionality
-                                document.querySelectorAll('.category-item').forEach(category => {
-                                    category.addEventListener('click', function (event) {
-                                        event.preventDefault(); // Ngăn hành vi mặc định
-                                        const categoryValue = this.getAttribute('data-category');
-                                        let categoryId = '';
-            <c:forEach var="category" items="${categories}">
-                                        if ('${category.name}' === categoryValue) {
-                                            categoryId = '${category.categoryId}';
-                                        }
-            </c:forEach>
-                                        // Nếu không có categories từ backend (danh mục mặc định)
-                                        if (!categoryId) {
-                                            if (categoryValue === 'Food') categoryId = '1';
-                                            else if (categoryValue === 'Culture') categoryId = '2';
-                                            else if (categoryValue === 'Adventure') categoryId = '3';
-                                            else if (categoryValue === 'History') categoryId = '4';
-                                        }
-                                        if (categoryId) {
-                                            window.location.href = '${pageContext.request.contextPath}/experiences?category=' + categoryId;
-                                        } else {
-                                            console.log('Không tìm thấy categoryId cho', categoryValue);
-                                        }
-                                    });
-                                });
-                            });
-                            
-function updateMessageBadge() {
-    <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
-        fetch('${pageContext.request.contextPath}/chat/api/unread-count')
-            .then(response => response.json())
-            .then(data => {
-                const unreadCount = data.unreadCount || 0;
-                const chatLink = document.querySelector('.nav-chat-link');
+            // Travel Chat Widget JavaScript
+            let isChatOpen = false;
+            const chatContainer = document.getElementById('travelChatContainer');
+            const chatMessages = document.getElementById('travelChatMessages');
+            const chatForm = document.getElementById('travelChatForm');
+            const messageInput = document.getElementById('travelMessageInput');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            // Toggle chat window
+            function toggleTravelChat() {
+                isChatOpen = !isChatOpen;
                 
-                if (chatLink) {
-                    // Tìm hoặc tạo badge
-                    let badge = chatLink.querySelector('.message-badge');
-                    
-                    if (unreadCount > 0) {
-                        if (!badge) {
-                            // Tạo badge mới
-                            badge = document.createElement('span');
-                            badge.className = 'message-badge';
-                            chatLink.appendChild(badge);
-                        }
-                        
-                        // Cập nhật số lượng và hiển thị
-                        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                        badge.classList.add('show');
-                    } else {
-                        // Ẩn badge nếu không có tin nhắn
-                        if (badge) {
-                            badge.classList.remove('show');
-                        }
-                    }
+                if (isChatOpen) {
+                    chatContainer.classList.remove('minimized');
+                    chatContainer.classList.add('maximized');
+                    messageInput.focus();
+                    scrollToBottom();
+                } else {
+                    chatContainer.classList.remove('maximized');
+                    chatContainer.classList.add('minimized');
                 }
-            })
-            .catch(error => {
-                console.error('Error getting unread count:', error);
+            }
+            
+            // Send quick message
+            function sendQuickMessage(message) {
+                messageInput.value = message;
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+            
+            // Add message to chat
+            function addTravelMessage(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `travel-message ${sender}`;
+                
+                const messageBubble = document.createElement('div');
+                messageBubble.className = 'message-bubble';
+                
+                // Process message content for images and formatting
+                const processedContent = processMessageContent(content);
+                messageBubble.innerHTML = processedContent;
+                
+                const timestamp = document.createElement('div');
+                timestamp.className = 'message-timestamp';
+                timestamp.textContent = new Date().toLocaleTimeString('vi-VN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                messageDiv.appendChild(messageBubble);
+                messageDiv.appendChild(timestamp);
+                
+                chatMessages.appendChild(messageDiv);
+                scrollToBottom();
+            }
+            
+            // Process message content for better display
+            function processMessageContent(content) {
+                // Handle image URLs
+                const imageRegex = /📸\s*([^\s\n]+\.(jpg|jpeg|png|gif|webp))/gi;
+                content = content.replace(imageRegex, (match, url) => {
+                    return `<br><img src="${url}" alt="Image" style="max-width: 100%; height: auto; border-radius: 8px; margin: 5px 0;" onerror="this.style.display='none'">`;
+                });
+                
+                // Handle emojis and formatting
+                content = content.replace(/\n/g, '<br>');
+                
+                // Highlight prices
+                content = content.replace(/(\d+(?:\.\d+)?)\s*VNĐ/g, '<strong style="color: #667eea;">$1 VNĐ</strong>');
+                
+                // Highlight ratings
+                content = content.replace(/⭐\s*(\d+(?:\.\d+)?)/g, '⭐ <strong style="color: #ffa500;">$1</strong>');
+                
+                return content;
+            }
+            
+            // Show typing indicator
+            function showTypingIndicator() {
+                typingIndicator.style.display = 'block';
+                scrollToBottom();
+            }
+            
+            // Hide typing indicator
+            function hideTypingIndicator() {
+                typingIndicator.style.display = 'none';
+            }
+            
+            // Scroll to bottom of chat
+            function scrollToBottom() {
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            }
+            
+            // Handle form submission
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const message = messageInput.value.trim();
+                if (!message) return;
+                
+                // Add user message
+                addTravelMessage(message, 'user');
+                messageInput.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Send message to TravelChatServlet
+                fetch('${pageContext.request.contextPath}/travel-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'message=' + encodeURIComponent(message)
+                })
+                .then(response => response.text())
+                .then(data => {
+                    hideTypingIndicator();
+                    addTravelMessage(data, 'ai');
+                })
+                .catch(error => {
+                    hideTypingIndicator();
+                    addTravelMessage('Xin lỗi, có lỗi xảy ra. Vui lòng thử lại sau.', 'ai');
+                    console.error('Error:', error);
+                });
             });
-    </c:if>
-}
+            
 
-// Cập nhật DOMContentLoaded hiện có
-document.addEventListener('DOMContentLoaded', function () {
-    // ... các code hiện có ...
-    
-    // Thêm vào cuối function DOMContentLoaded
-    updateMessageBadge();
-    
-    // Cập nhật badge mỗi 30 giây
-    setInterval(updateMessageBadge, 30000);
-    
-    // Cập nhật badge khi focus vào trang
-    window.addEventListener('focus', updateMessageBadge);
-    
-    // ... phần còn lại của code hiện có ...
-});
-                            // Add JSTL functions
-            <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+            
+            // Handle Enter key
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    chatForm.dispatchEvent(new Event('submit'));
+                }
+            });
+            
+            // Prevent chat from closing when clicking inside
+            chatContainer.addEventListener('click', function(e) {
+                if (isChatOpen && e.target !== chatContainer.querySelector('.travel-chat-header')) {
+                    e.stopPropagation();
+                }
+            });
+            
+            // Initialize chat with suggestions
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(() => {
+                    addTravelMessage('Để bắt đầu, bạn có thể thử:\n• "Du lịch Hà Nội"\n• "Trải nghiệm ẩm thực"\n• "Homestay Đà Nẵng"\n• "Dưới 500k"\n• "Địa điểm phổ biến"', 'ai');
+                }, 2000);
+            });
+
+            // Original home.jsp JavaScript
+            // Dropdown menu
+            const menuIcon = document.querySelector('.menu-icon');
+            const dropdownMenu = document.querySelector('.dropdown-menu-custom');
+
+            if (menuIcon && dropdownMenu) {
+                // Toggle dropdown on click
+                menuIcon.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function () {
+                    dropdownMenu.classList.remove('show');
+                });
+
+                // Prevent dropdown from closing when clicking inside
+                dropdownMenu.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            // Navbar scroll effect
+            window.addEventListener('scroll', function () {
+                const navbar = document.querySelector('.custom-navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+
+                // Animate elements when they come into view
+                animateOnScroll();
+            });
+
+            // Animate elements when they come into view
+            function animateOnScroll() {
+                const fadeElements = document.querySelectorAll('.fade-up');
+
+                fadeElements.forEach(element => {
+                    const elementTop = element.getBoundingClientRect().top;
+                    const elementVisible = 150;
+
+                    if (elementTop < window.innerHeight - elementVisible) {
+                        element.classList.add('active');
+
+                        // Stagger child elements if any
+                        const staggerItems = element.querySelectorAll('.stagger-item');
+                        staggerItems.forEach((item, index) => {
+                            setTimeout(() => {
+                                item.style.opacity = 1;
+                                item.style.transform = 'translateY(0)';
+                            }, 150 * index);
+                        });
+                    }
+                });
+            }
+
+            // Cities data from backend
+            const citiesData = {};
+            <c:forEach var="region" items="${regions}">
+                citiesData['${region.regionId}'] = [
+                    <c:forEach var="city" items="${region.cities}" varStatus="status">
+                        {id: '${city.cityId}', name: '${city.name}', vietnameseName: '${city.vietnameseName}'}<c:if test="${!status.last}">,</c:if>
+                    </c:forEach>
+                ];
+            </c:forEach>
+
+            // Handle region selection for experiences
+            const regionSelect = document.getElementById('regionSelect');
+            if (regionSelect) {
+                regionSelect.addEventListener('change', function () {
+                    const citySelect = document.getElementById('citySelect');
+                    const selectedRegionId = this.value;
+
+                    // Clear previous options
+                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+
+                    // If valid region is selected
+                    if (citiesData[selectedRegionId]) {
+                        citySelect.disabled = false;
+                        citiesData[selectedRegionId].forEach(city => {
+                            const option = document.createElement('option');
+                            option.value = city.id;
+                            option.textContent = city.vietnameseName;
+                            citySelect.appendChild(option);
+                        });
+                    } else {
+                        citySelect.disabled = true;
+                    }
+                });
+            }
+
+            // Handle region selection for accommodations
+            const accommodationRegionSelect = document.getElementById('accommodationRegionSelect');
+            if (accommodationRegionSelect) {
+                accommodationRegionSelect.addEventListener('change', function () {
+                    const citySelect = document.getElementById('accommodationCitySelect');
+                    const selectedRegionId = this.value;
+
+                    // Clear previous options
+                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+
+                    // If valid region is selected
+                    if (citiesData[selectedRegionId]) {
+                        citySelect.disabled = false;
+                        citiesData[selectedRegionId].forEach(city => {
+                            const option = document.createElement('option');
+                            option.value = city.id;
+                            option.textContent = city.vietnameseName;
+                            citySelect.appendChild(option);
+                        });
+                    } else {
+                        citySelect.disabled = true;
+                    }
+                });
+            }
+
+            // Increase/decrease guests functions
+            function increaseGuests() {
+                const guestInput = document.getElementById('guests');
+                let currentGuests = parseInt(guestInput.value);
+                if (currentGuests < 10) {
+                    guestInput.value = currentGuests + 1;
+                }
+            }
+
+            function decreaseGuests() {
+                const guestInput = document.getElementById('guests');
+                let currentGuests = parseInt(guestInput.value);
+                if (currentGuests > 1) {
+                    guestInput.value = currentGuests - 1;
+                }
+            }
+
+            function increaseAccommodationGuests() {
+                const guestInput = document.getElementById('accommodationGuests');
+                let currentGuests = parseInt(guestInput.value);
+                if (currentGuests < 10) {
+                    guestInput.value = currentGuests + 1;
+                }
+            }
+
+            function decreaseAccommodationGuests() {
+                const guestInput = document.getElementById('accommodationGuests');
+                let currentGuests = parseInt(guestInput.value);
+                if (currentGuests > 1) {
+                    guestInput.value = currentGuests - 1;
+                }
+            }
+
+            // Filter by region function
+            function filterByRegion(regionName) {
+                let regionId = '';
+                <c:if test="${not empty regions}">
+                    <c:forEach var="region" items="${regions}">
+                        if ('${region.name}' === regionName) {
+                            regionId = '${region.regionId}';
+                        }
+                    </c:forEach>
+                </c:if>
+                if (!regionId) {
+                    if (regionName === 'North') regionId = '1';
+                    else if (regionName === 'Central') regionId = '2';
+                    else if (regionName === 'South') regionId = '3';
+                }
+                if (regionId) {
+                    window.location.href = '${pageContext.request.contextPath}/experiences?region=' + regionId;
+                }
+            }
+
+            // Copy functions
+            function copyExperience(experienceName) {
+                navigator.clipboard.writeText(experienceName)
+                    .then(() => {
+                        showToast(`Đã sao chép "${experienceName}"`, 'success');
+                    })
+                    .catch(err => {
+                        showToast('Không thể sao chép: ' + err, 'error');
+                    });
+            }
+
+            function copyAccommodation(accommodationName) {
+                navigator.clipboard.writeText(accommodationName)
+                    .then(() => {
+                        showToast(`Đã sao chép "${accommodationName}"`, 'success');
+                    })
+                    .catch(err => {
+                        showToast('Không thể sao chép: ' + err, 'error');
+                    });
+            }
+
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                const toastContainer = document.querySelector('.toast-container');
+
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+
+                let icon = '<i class="ri-check-line"></i>';
+                if (type === 'error') {
+                    icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
+                } else if (type === 'info') {
+                    icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
+                }
+
+                toast.innerHTML = `${icon}<span>${message}</span>`;
+
+                toastContainer.appendChild(toast);
+
+                // Show toast
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+
+                // Hide toast after 3 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toastContainer.contains(toast)) {
+                            toastContainer.removeChild(toast);
+                        }
+                    }, 500);
+                }, 3000);
+            }
+
+            // Message badge update function
+            function updateMessageBadge() {
+                <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
+                    fetch('${pageContext.request.contextPath}/chat/api/unread-count')
+                        .then(response => response.json())
+                        .then(data => {
+                            const unreadCount = data.unreadCount || 0;
+                            const chatLink = document.querySelector('.nav-chat-link');
+                            
+                            if (chatLink) {
+                                // Tìm hoặc tạo badge
+                                let badge = chatLink.querySelector('.message-badge');
+                                
+                                if (unreadCount > 0) {
+                                    if (!badge) {
+                                        // Tạo badge mới
+                                        badge = document.createElement('span');
+                                        badge.className = 'message-badge';
+                                        chatLink.appendChild(badge);
+                                    }
+                                    
+                                    // Cập nhật số lượng và hiển thị
+                                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                                    badge.classList.add('show');
+                                } else {
+                                    // Ẩn badge nếu không có tin nhắn
+                                    if (badge) {
+                                        badge.classList.remove('show');
+                                    }
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error getting unread count:', error);
+                        });
+                </c:if>
+            }
+
+            // Initialize everything on page load
+            document.addEventListener('DOMContentLoaded', function () {
+                // Add js-enabled class to body
+                document.body.classList.add('js-enabled');
+
+                // Force display all cards
+                setTimeout(function () {
+                    document.querySelectorAll('.stagger-item').forEach(item => {
+                        item.style.opacity = 1;
+                        item.style.transform = 'translateY(0)';
+                    });
+                }, 500);
+
+                // Initial animation check
+                animateOnScroll();
+
+                // Initialize staggered items
+                const staggerItems = document.querySelectorAll('.stagger-item');
+                staggerItems.forEach((item, index) => {
+                    item.style.transitionDelay = `${index * 0.1}s`;
+                });
+
+                // Smooth scroll for nav links
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+
+                        const targetId = this.getAttribute('href').substring(1);
+                        if (targetId === '') return;
+
+                        const targetElement = document.getElementById(targetId);
+                        if (targetElement) {
+                            window.scrollTo({
+                                top: targetElement.offsetTop - 100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    });
+                });
+
+                // Category filter functionality
+                document.querySelectorAll('.category-item').forEach(category => {
+                    category.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const categoryValue = this.getAttribute('data-category');
+                        let categoryId = '';
+                        <c:forEach var="category" items="${categories}">
+                            if ('${category.name}' === categoryValue) {
+                                categoryId = '${category.categoryId}';
+                            }
+                        </c:forEach>
+                        if (!categoryId) {
+                            if (categoryValue === 'Food') categoryId = '1';
+                            else if (categoryValue === 'Culture') categoryId = '2';
+                            else if (categoryValue === 'Adventure') categoryId = '3';
+                            else if (categoryValue === 'History') categoryId = '4';
+                        }
+                        if (categoryId) {
+                            window.location.href = '${pageContext.request.contextPath}/experiences?category=' + categoryId;
+                        }
+                    });
+                });
+
+                // Update message badge
+                updateMessageBadge();
+                
+                // Update badge every 30 seconds
+                setInterval(updateMessageBadge, 30000);
+                
+                // Update badge when focus on page
+                window.addEventListener('focus', updateMessageBadge);
+            });
         </script>
-        
     </body>
 </html>

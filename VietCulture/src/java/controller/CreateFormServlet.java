@@ -293,6 +293,10 @@ private void handleCreateExperience(HttpServletRequest request, HttpServletRespo
         String bedroomsStr = request.getParameter("bedrooms");
         String bathroomsStr = request.getParameter("bathrooms");
         
+        // Set maxOccupancy from form
+        int maxGuests = (maxGuestsStr != null && !maxGuestsStr.isEmpty()) ? Integer.parseInt(maxGuestsStr) : 2;
+        accommodation.setMaxOccupancy(maxGuests);
+        
         // For DAO compatibility, use numberOfRooms instead of separate bedrooms/bathrooms
         int bedrooms = (bedroomsStr != null && !bedroomsStr.isEmpty()) ? Integer.parseInt(bedroomsStr) : 1;
         accommodation.setNumberOfRooms(bedrooms);

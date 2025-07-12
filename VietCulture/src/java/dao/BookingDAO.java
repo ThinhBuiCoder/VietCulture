@@ -212,13 +212,18 @@ public class BookingDAO {
 
         int maxGroupSize = experience.getMaxGroupSize();
 
-        // Đếm số người đã đặt trong cùng ngày và khung giờ
+        // SỬA: Sử dụng query an toàn hơn để tránh lỗi JSON parsing
         String sql = """
             SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
             FROM Bookings b
             WHERE b.experienceId = ? 
             AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
-            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END = ?
             AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         """;
 
@@ -396,7 +401,12 @@ public class BookingDAO {
         Map<String, Integer> stats = new HashMap<>();
 
         String sql = """
-            SELECT JSON_VALUE(b.contactInfo, '$.timeSlot') as timeSlot,
+            SELECT CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END as timeSlot,
                    SUM(b.numberOfPeople) as bookedPeople
             FROM Bookings b
             WHERE b.experienceId = ?
@@ -428,6 +438,115 @@ public class BookingDAO {
         stats.putIfAbsent("evening", 0);
 
         return stats;
+    }
+
+    /**
+     * Lấy thông tin chi tiết về tình trạng slot của experience
+     *
+     * @param experienceId ID experience
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @param requestedPeople Số người yêu cầu
+     * @return Thông tin chi tiết về tình trạng slot
+     */
+    public SlotAvailabilityInfo getSlotAvailabilityInfo(int experienceId, Date bookingDate, String timeSlot, int requestedPeople) throws SQLException {
+        // Lấy thông tin experience
+        ExperienceDAO experienceDAO = new ExperienceDAO();
+        Experience experience = experienceDAO.getExperienceById(experienceId);
+
+        if (experience == null || !experience.isActive()) {
+            return new SlotAvailabilityInfo(false, 0, 0, 0, "Trải nghiệm không tồn tại hoặc đã bị vô hiệu hóa.");
+        }
+
+        int maxGroupSize = experience.getMaxGroupSize();
+        int bookedPeople = getBookedPeopleCount(experienceId, bookingDate, timeSlot);
+        int availableSlots = maxGroupSize - bookedPeople;
+        boolean isAvailable = availableSlots >= requestedPeople;
+
+        String message;
+        if (isAvailable) {
+            message = String.format("Còn %d chỗ trống cho khung giờ %s.", availableSlots, getTimeSlotDisplayName(timeSlot));
+        } else {
+            message = String.format("Chỉ còn %d chỗ trống (cần %d chỗ) cho khung giờ %s. Vui lòng chọn ít người hơn hoặc khung giờ khác.", 
+                availableSlots, requestedPeople, getTimeSlotDisplayName(timeSlot));
+        }
+
+        return new SlotAvailabilityInfo(isAvailable, maxGroupSize, bookedPeople, availableSlots, message);
+    }
+
+    /**
+     * Lấy số người đã đặt cho experience trong ngày và khung giờ cụ thể
+     */
+    private int getBookedPeopleCount(int experienceId, Date bookingDate, String timeSlot) throws SQLException {
+        String sql = """
+            SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ? 
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("bookedPeople");
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Chuyển đổi timeSlot thành tên hiển thị
+     */
+    private String getTimeSlotDisplayName(String timeSlot) {
+        if (timeSlot == null) return "không xác định";
+        
+        switch (timeSlot.toLowerCase()) {
+            case "morning":
+                return "Sáng (9:00)";
+            case "afternoon":
+                return "Chiều (14:00)";
+            case "evening":
+                return "Tối (18:00)";
+            default:
+                return timeSlot;
+        }
+    }
+
+    /**
+     * Class chứa thông tin chi tiết về tình trạng slot
+     */
+    public static class SlotAvailabilityInfo {
+        private final boolean available;
+        private final int maxGroupSize;
+        private final int bookedPeople;
+        private final int availableSlots;
+        private final String message;
+
+        public SlotAvailabilityInfo(boolean available, int maxGroupSize, int bookedPeople, int availableSlots, String message) {
+            this.available = available;
+            this.maxGroupSize = maxGroupSize;
+            this.bookedPeople = bookedPeople;
+            this.availableSlots = availableSlots;
+            this.message = message;
+        }
+
+        public boolean isAvailable() { return available; }
+        public int getMaxGroupSize() { return maxGroupSize; }
+        public int getBookedPeople() { return bookedPeople; }
+        public int getAvailableSlots() { return availableSlots; }
+        public String getMessage() { return message; }
     }
 
     /**
@@ -867,21 +986,58 @@ public class BookingDAO {
 
         int totalRooms = accommodation.getNumberOfRooms();
 
-        // Đếm số phòng đã được đặt trong khoảng thời gian này, lock dòng booking liên quan
+        // SỬA: Sử dụng query an toàn hơn để tránh lỗi JSON parsing
         String sql = """
-        SELECT ISNULL(SUM(CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)), 0) as bookedRooms
+        SELECT ISNULL(SUM(
+            CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)
+                ELSE 0
+            END
+        ), 0) as bookedRooms
         FROM Bookings b WITH (UPDLOCK, ROWLOCK)
         WHERE b.accommodationId = ? 
         AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         AND (
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
             OR
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
             OR
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END >= ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END <= ?)
         )
         """;
 
@@ -979,19 +1135,56 @@ public class BookingDAO {
      */
     public int getBookedRoomsCount(int accommodationId, Date checkInDate, Date checkOutDate) throws SQLException {
         String sql = """
-        SELECT ISNULL(SUM(CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)), 0) as bookedRooms
+        SELECT ISNULL(SUM(
+            CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)
+                ELSE 0
+            END
+        ), 0) as bookedRooms
         FROM Bookings b
         WHERE b.accommodationId = ?
         AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
         AND (
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
             OR
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
             OR
-            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
-             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END >= ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END <= ?)
         )
     """;
 
@@ -1013,6 +1206,65 @@ public class BookingDAO {
         }
 
         return 0;
+    }
+
+    /**
+     * Lấy thông tin chi tiết về tình trạng phòng của accommodation
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày check-in
+     * @param checkOutDate Ngày check-out
+     * @param requestedRooms Số phòng yêu cầu
+     * @return Thông tin chi tiết về tình trạng phòng
+     */
+    public RoomAvailabilityInfo getRoomAvailabilityInfo(int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        // Lấy thông tin accommodation
+        AccommodationDAO accommodationDAO = new AccommodationDAO();
+        Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
+
+        if (accommodation == null || !accommodation.isActive()) {
+            return new RoomAvailabilityInfo(false, 0, 0, 0, "Chỗ lưu trú không tồn tại hoặc đã bị vô hiệu hóa.");
+        }
+
+        int totalRooms = accommodation.getNumberOfRooms();
+        int bookedRooms = getBookedRoomsCount(accommodationId, checkInDate, checkOutDate);
+        int availableRooms = totalRooms - bookedRooms;
+        boolean isAvailable = availableRooms >= requestedRooms;
+
+        String message;
+        if (isAvailable) {
+            message = String.format("Còn %d phòng trống cho khoảng thời gian này.", availableRooms);
+        } else {
+            message = String.format("Chỉ còn %d phòng trống (cần %d phòng). Vui lòng chọn ít phòng hơn hoặc thay đổi ngày.", 
+                availableRooms, requestedRooms);
+        }
+
+        return new RoomAvailabilityInfo(isAvailable, totalRooms, bookedRooms, availableRooms, message);
+    }
+
+    /**
+     * Class chứa thông tin chi tiết về tình trạng phòng
+     */
+    public static class RoomAvailabilityInfo {
+        private final boolean available;
+        private final int totalRooms;
+        private final int bookedRooms;
+        private final int availableRooms;
+        private final String message;
+
+        public RoomAvailabilityInfo(boolean available, int totalRooms, int bookedRooms, int availableRooms, String message) {
+            this.available = available;
+            this.totalRooms = totalRooms;
+            this.bookedRooms = bookedRooms;
+            this.availableRooms = availableRooms;
+            this.message = message;
+        }
+
+        public boolean isAvailable() { return available; }
+        public int getTotalRooms() { return totalRooms; }
+        public int getBookedRooms() { return bookedRooms; }
+        public int getAvailableRooms() { return availableRooms; }
+        public String getMessage() { return message; }
     }
 
     /**

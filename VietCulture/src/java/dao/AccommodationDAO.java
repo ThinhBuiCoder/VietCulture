@@ -25,7 +25,7 @@ public class AccommodationDAO {
     public Accommodation getAccommodationById(int accommodationId) throws SQLException {
         String sql = """
             SELECT a.accommodationId, a.hostId, a.name, a.description, a.cityId, a.address,
-                   a.type, a.numberOfRooms, a.amenities, a.pricePerNight, a.images,
+                   a.type, a.numberOfRooms, a.maxOccupancy,a.amenities, a.pricePerNight, a.images,
                    a.createdAt, a.isActive, a.averageRating, a.totalBookings,
                    a.adminApprovalStatus, a.adminApprovedBy, a.adminApprovedAt,
                    a.adminRejectReason, a.adminNotes,
@@ -60,7 +60,7 @@ public class AccommodationDAO {
     public int createAccommodation(Accommodation accommodation) throws SQLException {
         String sql = """
             INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
-                                       numberOfRooms, amenities, pricePerNight, images, 
+                                       numberOfRooms, maxOccupancy, amenities, pricePerNight, images, 
                                        isActive, adminApprovalStatus, averageRating, totalBookings)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
@@ -75,13 +75,14 @@ public class AccommodationDAO {
             ps.setString(5, accommodation.getAddress());
             ps.setString(6, accommodation.getType());
             ps.setInt(7, accommodation.getNumberOfRooms());
-            ps.setString(8, accommodation.getAmenities());
-            ps.setDouble(9, accommodation.getPricePerNight());
-            ps.setString(10, accommodation.getImages());
-            ps.setBoolean(11, accommodation.isActive()); // Host muốn hiện/ẩn
-            ps.setString(12, "PENDING"); // Chờ admin duyệt
-            ps.setDouble(13, 0.0); // averageRating default
-            ps.setInt(14, 0); // totalBookings default
+             ps.setInt(8, accommodation.getMaxOccupancy());
+            ps.setString(9, accommodation.getAmenities());
+            ps.setDouble(10, accommodation.getPricePerNight());
+            ps.setString(11, accommodation.getImages());
+            ps.setBoolean(12, accommodation.isActive()); // Host muốn hiện/ẩn
+            ps.setString(13, "PENDING"); // Chờ admin duyệt
+            ps.setDouble(14, 0.0); // averageRating default
+            ps.setInt(15, 0); // totalBookings default
 
             int affectedRows = ps.executeUpdate();
 
@@ -1238,6 +1239,7 @@ public class AccommodationDAO {
         accommodation.setAddress(rs.getString("address"));
         accommodation.setType(rs.getString("type"));
         accommodation.setNumberOfRooms(rs.getInt("numberOfRooms"));
+        accommodation.setMaxOccupancy(rs.getInt("maxOccupancy"));
         accommodation.setAmenities(rs.getString("amenities"));
         accommodation.setPricePerNight(rs.getDouble("pricePerNight"));
         accommodation.setImages(rs.getString("images"));

@@ -328,17 +328,20 @@ public class BookingServlet extends HttpServlet {
         // Kiểm tra phòng trống accommodation NGAY TẠI ĐÂY nếu là accommodation
         if (formData.hasAccommodation() && formData.isValid()) {
             try (java.sql.Connection conn = utils.DBUtils.getConnection()) {
-                boolean enoughRooms = bookingDAO.isAccommodationRoomAvailable(conn,
+                // SỬA: Sử dụng method mới để lấy thông tin chi tiết
+                BookingDAO.RoomAvailabilityInfo availabilityInfo = bookingDAO.getRoomAvailabilityInfo(
                     formData.getAccommodationId(),
                     formData.getCheckInDate() != null ? new java.sql.Date(formData.getCheckInDate().getTime()) : null,
                     formData.getCheckOutDate() != null ? new java.sql.Date(formData.getCheckOutDate().getTime()) : null,
                     formData.getRoomQuantity()
                 );
-                if (!enoughRooms) {
-                    formData.addError("Không còn đủ phòng cho khoảng thời gian này. Vui lòng chọn lại!");
+                
+                if (!availabilityInfo.isAvailable()) {
+                    formData.addError(availabilityInfo.getMessage());
                 }
             } catch (Exception e) {
-                formData.addError("Lỗi kiểm tra phòng trống: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Error checking room availability", e);
+                formData.addError("Không thể kiểm tra tình trạng phòng. Vui lòng thử lại sau.");
             }
         }
 
@@ -414,15 +417,16 @@ public class BookingServlet extends HttpServlet {
             }
 
             // 4. Check slot availability
-            boolean slotAvailable = bookingDAO.isExperienceSlotAvailable(
+            // SỬA: Sử dụng method mới để lấy thông tin chi tiết
+            BookingDAO.SlotAvailabilityInfo slotInfo = bookingDAO.getSlotAvailabilityInfo(
                 formData.getExperienceId(), 
                 new java.sql.Date(formData.getBookingDate().getTime()), 
                 formData.getTimeSlot(), 
                 formData.getNumberOfPeople()
             );
             
-            if (!slotAvailable) {
-                return ValidationResult.error("Slot đã hết chỗ. Vui lòng chọn ngày hoặc khung giờ khác.");
+            if (!slotInfo.isAvailable()) {
+                return ValidationResult.error(slotInfo.getMessage());
             }
 
             // 5. Check for conflicting bookings (same date, same timeslot)
@@ -913,18 +917,21 @@ public class BookingServlet extends HttpServlet {
             }
             // 4. Kiểm tra phòng còn trống
             BookingDAO bookingDAO = new BookingDAO();
-            boolean enoughRooms = bookingDAO.isAccommodationRoomAvailable(
+            // SỬA: Sử dụng method mới để lấy thông tin chi tiết
+            BookingDAO.RoomAvailabilityInfo availabilityInfo = bookingDAO.getRoomAvailabilityInfo(
                 formData.getAccommodationId(),
                 formData.getCheckInDate() != null ? new java.sql.Date(formData.getCheckInDate().getTime()) : null,
                 formData.getCheckOutDate() != null ? new java.sql.Date(formData.getCheckOutDate().getTime()) : null,
                 formData.getRoomQuantity()
             );
-            if (!enoughRooms) {
-                formData.addError("Không còn đủ phòng cho khoảng thời gian này.");
+            
+            if (!availabilityInfo.isAvailable()) {
+                formData.addError(availabilityInfo.getMessage());
             }
         }
     } catch (Exception e) {
-        formData.addError("Lỗi kiểm tra phòng trống: " + e.getMessage());
+        LOGGER.log(Level.SEVERE, "Error checking room availability", e);
+        formData.addError("Không thể kiểm tra tình trạng phòng. Vui lòng thử lại sau.");
     }
     // 5. Không đặt trùng chính mình cùng thời gian (dùng DAO để kiểm tra chính xác)
     try {

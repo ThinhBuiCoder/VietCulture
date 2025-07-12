@@ -1731,8 +1731,15 @@
                 {
                 "accommodationId": ${accommodation.accommodationId},
                 "pricePerNight": ${accommodation.pricePerNight},
-                "name": "${accommodation.name}"
+                "name": "${accommodation.name}",
+                "maxOccupancy": ${accommodation.maxOccupancy},
+                "numberOfRooms": ${accommodation.numberOfRooms}
                 }
+            </script>
+            <!-- Debug info -->
+            <script>
+                console.log('JSP Debug - accommodation.maxOccupancy:', '${accommodation.maxOccupancy}');
+                console.log('JSP Debug - accommodation.numberOfRooms:', '${accommodation.numberOfRooms}');
             </script>
         </c:if>
 
@@ -1886,7 +1893,9 @@
                                         const dataScript = document.getElementById('accommodationData');
                                         if (dataScript) {
                                             try {
-                                                return JSON.parse(dataScript.textContent);
+                                                const parsedData = JSON.parse(dataScript.textContent);
+                                                console.log('Parsed accommodation data:', parsedData);
+                                                return parsedData;
                                             } catch (e) {
                                                 console.warn('Error parsing accommodation data:', e);
                                             }
@@ -1896,7 +1905,7 @@
                                             accommodationId: 1,
                                             pricePerNight: 700000,
                                             name: 'Accommodation',
-                                            maxOccupancy: 4,
+                                            maxOccupancy: 2,
                                             numberOfRooms: 5
                                         };
                                     }
@@ -2135,14 +2144,30 @@
                                     if (!roomQuantitySelect || !guestsSelect)
                                         return;
 
-                                    // Get max guests per room from service data
-                                    const maxGuestsPerRoom = currentServiceData?.maxOccupancy || 4;
+                                    // Get service data for accommodation
+                                    console.log('currentServiceData:', currentServiceData);
+                                    const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                    const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                    console.log('Total rooms:', totalRooms, 'Total max occupancy:', totalMaxOccupancy);
 
                                     roomQuantitySelect.addEventListener('change', function () {
                                         const selectedRooms = parseInt(this.value) || 0;
 
                                         if (selectedRooms > 0) {
+                                            // SỬA LOGIC: Tính số khách tối đa dựa trên tỷ lệ phòng được chọn
+                                            const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                            const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                            
+                                            // Tính số khách tối đa cho số phòng được chọn
+                                            const maxGuestsPerRoom = Math.floor(totalMaxOccupancy / totalRooms);
                                             const maxGuests = selectedRooms * maxGuestsPerRoom;
+                                            
+                                            // Debug logging
+                                            console.log('Room quantity changed:', selectedRooms);
+                                            console.log('Total rooms available:', totalRooms);
+                                            console.log('Total max occupancy:', totalMaxOccupancy);
+                                            console.log('Max guests per room:', maxGuestsPerRoom);
+                                            console.log('Total max guests for selected rooms:', maxGuests);
 
                                             // Update guest options with proper formatting
                                             updateGuestOptions(selectedRooms, maxGuests);
@@ -2154,7 +2179,7 @@
 
                                             // Show room info
                                             if (roomGuestInfoText && roomGuestInfo) {
-                                                roomGuestInfoText.textContent = `${selectedRooms} phòng được chọn - Mỗi phòng tối đa ${maxGuestsPerRoom} khách`;
+                                                roomGuestInfoText.textContent = `${selectedRooms} phòng được chọn - Mỗi phòng tối đa ${maxGuestsPerRoom} khách (tổng ${totalMaxOccupancy} khách cho ${totalRooms} phòng)`;
                                                 roomGuestInfo.style.display = 'block';
                                             }
 
@@ -2188,6 +2213,10 @@
                                         const selectedGuests = parseInt(this.value) || 0;
 
                                         if (selectedRooms > 0) {
+                                            // SỬA LOGIC: Tính số khách tối đa dựa trên tỷ lệ phòng được chọn
+                                            const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                            const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                            const maxGuestsPerRoom = Math.floor(totalMaxOccupancy / totalRooms);
                                             const maxGuests = selectedRooms * maxGuestsPerRoom;
 
                                             if (selectedGuests > maxGuests) {
@@ -2216,8 +2245,9 @@
                                     defaultOption.textContent = 'Chọn số khách';
                                     guestsSelect.appendChild(defaultOption);
 
-                                    // Add options 1-20
-                                    for (let i = 1; i <= 20; i++) {
+                                    // SỬA LOGIC: Add options based on total maxOccupancy
+                                    const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                    for (let i = 1; i <= totalMaxOccupancy; i++) {
                                         const option = document.createElement('option');
                                         option.value = i;
                                         option.textContent = i + ' khách';
@@ -2228,6 +2258,12 @@
                                 document.addEventListener('DOMContentLoaded', function () {
                                     // Ensure proper initialization
                                     setTimeout(function () {
+                                        // Ensure currentServiceData is initialized first
+                                        if (!currentServiceData) {
+                                            currentServiceData = getServiceData();
+                                            console.log('Re-initialized currentServiceData:', currentServiceData);
+                                        }
+                                        
                                         initializeRoomGuestLogic();
 
                                         // Verify initial guest options are correct
@@ -2249,6 +2285,9 @@
                                     if (!guestsSelect)
                                         return;
 
+                                    // Debug logging
+                                    console.log('updateGuestOptions called:', { roomCount, maxGuests });
+
                                     // Keep current selection if valid
                                     const currentValue = guestsSelect.value;
 
@@ -2268,11 +2307,12 @@
                                     defaultOption.textContent = 'Chọn số khách';
                                     guestsSelect.appendChild(defaultOption);
 
-                                    // Add new options based on room limit
-                                    for (let i = 1; i <= Math.min(maxGuests, 20); i++) {
+                                    // Add new options based on room limit - CHỈ tạo options từ 1 đến maxGuests
+                                    console.log('Creating options from 1 to', maxGuests);
+                                    for (let i = 1; i <= maxGuests; i++) {
                                         const option = document.createElement('option');
                                         option.value = i;
-                                        option.textContent = i + ' khách'; // Fixed: Ensure proper text format
+                                        option.textContent = i + ' khách';
 
                                         // Restore selection if still valid
                                         if (currentValue == i && i <= maxGuests) {
@@ -2465,7 +2505,10 @@
                                     // Check room quantity limit
                                     const roomQuantity = parseInt(roomQuantitySelect?.value) || 0;
                                     if (roomQuantity > 0) {
-                                        const maxGuestsPerRoom = currentServiceData?.maxOccupancy || 4;
+                                        // SỬA LOGIC: Tính số khách tối đa dựa trên tỷ lệ phòng được chọn
+                                        const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                        const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                        const maxGuestsPerRoom = Math.floor(totalMaxOccupancy / totalRooms);
                                         const maxGuests = roomQuantity * maxGuestsPerRoom;
 
                                         if (parseInt(guests) > maxGuests) {
@@ -3032,7 +3075,10 @@
                                             updatePriceCalculation(totalRoomNights, pricePerNight);
 
                                             // Show room-guest relationship info
-                                            const maxGuestsPerRoom = ${not empty accommodation ? accommodation.maxOccupancy : 4};
+                                            // SỬA LOGIC: Tính số khách tối đa dựa trên tỷ lệ phòng được chọn
+                                            const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                            const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                            const maxGuestsPerRoom = Math.floor(totalMaxOccupancy / totalRooms);
                                             const maxTotalGuests = roomQuantity * maxGuestsPerRoom;
                                             const occupancyPercentage = Math.round((guests / maxTotalGuests) * 100);
 
@@ -3057,9 +3103,12 @@
                                     const roomQuantity = parseInt(roomQuantitySelect.value) || 0;
                                     const guests = parseInt(guestsSelect.value) || 0;
 
-                                    if (roomQuantity > 0 && guests > 0) {
-                                        const maxGuestsPerRoom = ${not empty accommodation ? accommodation.maxOccupancy : 4};
-                                        const maxTotalGuests = roomQuantity * maxGuestsPerRoom;
+                                                                            if (roomQuantity > 0 && guests > 0) {
+                                            // SỬA LOGIC: Tính số khách tối đa dựa trên tỷ lệ phòng được chọn
+                                            const totalRooms = currentServiceData?.numberOfRooms || 1;
+                                            const totalMaxOccupancy = currentServiceData?.maxOccupancy || 2;
+                                            const maxGuestsPerRoom = Math.floor(totalMaxOccupancy / totalRooms);
+                                            const maxTotalGuests = roomQuantity * maxGuestsPerRoom;
 
                                         if (guests > maxTotalGuests) {
                                             // Reset guests selection
