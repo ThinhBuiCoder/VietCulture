@@ -831,6 +831,26 @@
             box-shadow: 0 3px 10px rgba(0, 109, 119, 0.3);
         }
 
+        .distance-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .distance-badge i {
+            font-size: 0.8rem;
+        }
+
         .card-content {
             padding: 25px;
             text-align: left;
@@ -1830,384 +1850,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Initialize distance filter component
-        let distanceFilter;
-        let allExperiences = [];
-        let totalExperiencesCount = 0;
-        let originalResultsTitle = '';
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Save original total count and title
-            const resultsTitle = document.getElementById('resultsTitle');
-            if (resultsTitle) {
-                originalResultsTitle = resultsTitle.innerHTML;
-                // Extract total count from title text
-                const titleText = resultsTitle.textContent;
-                const match = titleText.match(/(\d+)\s+trải nghiệm/);
-                if (match) {
-                    totalExperiencesCount = parseInt(match[1]);
-                }
-            }
-            // Collect all experiences data for client-side filtering
-            <c:if test="${not empty experiences}">
-                allExperiences = [
-                    <c:forEach var="experience" items="${experiences}" varStatus="status">
-                        {
-                            id: ${experience.experienceId},
-                            title: "${fn:escapeXml(experience.title)}",
-                            location: "${fn:escapeXml(experience.location)}",
-                            cityName: "${fn:escapeXml(experience.cityName)}",
-                            price: ${experience.price},
-                            rating: ${experience.averageRating},
-                            totalBookings: ${experience.totalBookings},
-                            firstImage: "${not empty experience.firstImage ? experience.firstImage : ''}",
-                            images: "${not empty experience.images ? experience.images : ''}",
-                            type: "${experience.type}",
-                            difficulty: "${experience.difficulty}",
-                            element: null // Will be set later
-                        }<c:if test="${not status.last}">,</c:if>
-                    </c:forEach>
-                ];
-            </c:if>
-            
-            // Initialize simple distance filter
-            initializeSimpleDistanceFilter();
-            
-            // Store references to DOM elements for each experience
-            const experienceCards = document.querySelectorAll('.card-item');
-            experienceCards.forEach((card, index) => {
-                if (allExperiences[index]) {
-                    allExperiences[index].element = card;
-                }
-            });
-        });
-        
-        // Filter experiences by distance
-        async function filterExperiencesByDistance(maxDistance) {
-            if (!distanceFilter || !distanceFilter.isLocationEnabled) {
-                showAllExperiences();
-                return;
-            }
-            
-            try {
-                const filteredExperiences = await distanceFilter.filterItems(allExperiences, 'location');
-                
-                // Hide all experiences first
-                hideAllExperiences();
-                
-                // Show filtered experiences
-                let visibleCount = 0;
-                filteredExperiences.forEach(exp => {
-                    if (exp.element) {
-                        exp.element.style.display = 'block';
-                        
-                        // Add distance badge
-                        const distanceBadge = exp.element.querySelector('.distance-badge');
-                        if (distanceBadge) {
-                            distanceBadge.remove();
-                        }
-                        
-                        if (exp.distance !== undefined) {
-                            const badge = document.createElement('div');
-                            badge.className = 'distance-badge';
-                                                         badge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(exp.distance);
-                            exp.element.querySelector('.card-image').appendChild(badge);
-                        }
-                        
-                        visibleCount++;
-                    }
-                });
-                
-                // Update results count
-                updateResultsCount(visibleCount, 'trải nghiệm trong bán kính ' + maxDistance + 'km');
-                
-            } catch (error) {
-                console.error('Error filtering experiences:', error);
-                showAllExperiences();
-            }
-        }
-        
-        // Show all experiences
-        function showAllExperiences() {
-            const experienceCards = document.querySelectorAll('.card-item');
-            experienceCards.forEach(card => {
-                card.style.display = 'block';
-                
-                // Remove distance badges
-                const distanceBadge = card.querySelector('.distance-badge');
-                if (distanceBadge) {
-                    distanceBadge.remove();
-                }
-            });
-            
-            updateResultsCount(allExperiences.length, 'trải nghiệm được tìm thấy');
-        }
-        
-        // Hide all experiences
-        function hideAllExperiences() {
-            const experienceCards = document.querySelectorAll('.card-item');
-            experienceCards.forEach(card => {
-                card.style.display = 'none';
-            });
-        }
-        
-                     // Update results count
-             function updateResultsCount(visibleCount, suffix) {
-                 const resultsHeader = document.querySelector('#resultsTitle');
-                 if (resultsHeader) {
-                     if (suffix.includes('trong bán kính')) {
-                         // When filtering by distance, show filtered count and total
-                         resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
-                             visibleCount + '/' + totalExperiencesCount + ' ' + suffix;
-                     } else {
-                         // When showing all, show original title or total count
-                         if (originalResultsTitle) {
-                             resultsHeader.innerHTML = originalResultsTitle;
-                         } else {
-                             resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
-                                 totalExperiencesCount + ' trải nghiệm được tìm thấy';
-                         }
-                     }
-                 }
-             }
-        
-        // Format distance
-        function formatDistance(distance) {
-            if (distance < 1) {
-                return Math.round(distance * 1000) + 'm';
-            }
-            return distance.toFixed(1) + 'km';
-        }
-        
-        // Simple distance filter initialization
-        function initializeSimpleDistanceFilter() {
-            const locationToggle = document.getElementById('locationToggle');
-            const distanceControls = document.getElementById('distanceControls');
-            const distanceSlider = document.getElementById('distanceSlider');
-            const distanceValue = document.getElementById('distanceValue');
-            const locationStatus = document.getElementById('locationStatus');
-            
-            if (!locationToggle || !distanceControls || !distanceSlider || !distanceValue) {
-                console.log('Distance filter elements not found');
-                return;
-            }
-            
-            let userLocation = null;
-            let isLocationEnabled = false;
-            
-            // Location toggle handler
-            locationToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    distanceControls.classList.remove('d-none');
-                    requestUserLocation();
-                } else {
-                    distanceControls.classList.add('d-none');
-                    isLocationEnabled = false;
-                    showAllExperiences();
-                }
-            });
-            
-            // Distance slider handler
-            distanceSlider.addEventListener('input', function() {
-                distanceValue.textContent = this.value;
-            });
-            
-            distanceSlider.addEventListener('change', function() {
-                if (isLocationEnabled && userLocation) {
-                    filterByDistance(parseInt(this.value));
-                }
-            });
-            
-            // Request user location
-            function requestUserLocation() {
-                locationStatus.innerHTML = '<i class="ri-loader-4-line"></i> Đang lấy vị trí...';
-                
-                if (!navigator.geolocation) {
-                    locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> Trình duyệt không hỗ trợ định vị';
-                    locationToggle.checked = false;
-                    distanceControls.classList.add('d-none');
-                    return;
-                }
-                
-                navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        userLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        isLocationEnabled = true;
-                        locationStatus.innerHTML = '<i class="ri-map-pin-line text-success"></i> Đã lấy vị trí thành công';
-                        
-                        // Start filtering with current distance
-                        filterByDistance(parseInt(distanceSlider.value));
-                    },
-                    function(error) {
-                        let errorMessage = 'Không thể lấy vị trí';
-                        if (error.code === 1) errorMessage = 'Bạn đã từ chối truy cập vị trí';
-                        
-                        locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> ' + errorMessage;
-                        locationToggle.checked = false;
-                        distanceControls.classList.add('d-none');
-                    }
-                );
-            }
-            
-                         // Filter experiences by distance
-             async function filterByDistance(maxDistance) {
-                 if (!userLocation || !isLocationEnabled) return;
-                 
-                 const experienceCards = document.querySelectorAll('.card-item');
-                 let visibleCount = 0;
-                 
-                 for (let i = 0; i < experienceCards.length; i++) {
-                     const card = experienceCards[i];
-                     
-                     // Get experience data
-                     const experienceData = allExperiences[i];
-                     if (!experienceData || !experienceData.location) {
-                         card.style.display = 'none';
-                         continue;
-                     }
-                     
-                     // Get coordinates for experience location
-                     const experienceCoords = await getCoordinatesFromAddress(experienceData.location);
-                     
-                     if (experienceCoords) {
-                         // Calculate real distance
-                         const distance = calculateDistance(userLocation, experienceCoords);
-                         
-                         if (distance <= maxDistance) {
-                             card.style.display = 'block';
-                             visibleCount++;
-                             
-                             // Add distance badge with real distance
-                             let distanceBadge = card.querySelector('.distance-badge');
-                             if (distanceBadge) {
-                                 distanceBadge.remove();
-                             }
-                             
-                             const badge = document.createElement('div');
-                             badge.className = 'distance-badge';
-                             badge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(distance);
-                             card.querySelector('.card-image').appendChild(badge);
-                         } else {
-                             card.style.display = 'none';
-                         }
-                     } else {
-                         // If can't geocode, hide the experience
-                         card.style.display = 'none';
-                     }
-                 }
-                 
-                 updateResultsCount(visibleCount, 'trải nghiệm trong bán kính ' + maxDistance + 'km');
-             }
-             
-             // Calculate distance between two coordinates using Haversine formula
-             function calculateDistance(coord1, coord2) {
-                 const R = 6371; // Earth's radius in kilometers
-                 const dLat = toRadians(coord2.lat - coord1.lat);
-                 const dLng = toRadians(coord2.lng - coord1.lng);
-                 
-                 const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                           Math.cos(toRadians(coord1.lat)) * Math.cos(toRadians(coord2.lat)) *
-                           Math.sin(dLng/2) * Math.sin(dLng/2);
-                 
-                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                 return R * c;
-             }
-             
-             // Convert degrees to radians
-             function toRadians(degrees) {
-                 return degrees * (Math.PI / 180);
-             }
-             
-             // Get coordinates from address using fallback Vietnam cities data
-             async function getCoordinatesFromAddress(address) {
-                 if (!address || address.trim() === '') {
-                     return null;
-                 }
-                 
-                 // Vietnam cities coordinates fallback
-                 const vietnamCities = {
-                     'hà nội': { lat: 21.0285, lng: 105.8542 },
-                     'hanoi': { lat: 21.0285, lng: 105.8542 },
-                     'hồ chí minh': { lat: 10.8231, lng: 106.6297 },
-                     'ho chi minh': { lat: 10.8231, lng: 106.6297 },
-                     'đà nẵng': { lat: 16.0471, lng: 108.2068 },
-                     'da nang': { lat: 16.0471, lng: 108.2068 },
-                     'hải phòng': { lat: 20.8449, lng: 106.6881 },
-                     'hai phong': { lat: 20.8449, lng: 106.6881 },
-                     'cần thơ': { lat: 10.0452, lng: 105.7469 },
-                     'can tho': { lat: 10.0452, lng: 105.7469 },
-                     'nha trang': { lat: 12.2388, lng: 109.1967 },
-                     'hội an': { lat: 15.8801, lng: 108.3380 },
-                     'hoi an': { lat: 15.8801, lng: 108.3380 },
-                     'sapa': { lat: 22.3380, lng: 103.8438 },
-                     'sa pa': { lat: 22.3380, lng: 103.8438 },
-                     'đà lạt': { lat: 11.9404, lng: 108.4583 },
-                     'da lat': { lat: 11.9404, lng: 108.4583 },
-                     'phú quốc': { lat: 10.2899, lng: 103.9840 },
-                     'phu quoc': { lat: 10.2899, lng: 103.9840 },
-                     'vịnh hạ long': { lat: 20.9101, lng: 107.1839 },
-                     'ha long': { lat: 20.9101, lng: 107.1839 },
-                     'hạ long': { lat: 20.9101, lng: 107.1839 },
-                     'ninh bình': { lat: 20.2540, lng: 105.9750 },
-                     'ninh binh': { lat: 20.2540, lng: 105.9750 },
-                     'quảng bình': { lat: 17.4677, lng: 106.6220 },
-                     'quang binh': { lat: 17.4677, lng: 106.6220 },
-                     'huế': { lat: 16.4637, lng: 107.5909 },
-                     'hue': { lat: 16.4637, lng: 107.5909 },
-                     'quy nhơn': { lat: 13.7563, lng: 109.2297 },
-                     'quy nhon': { lat: 13.7563, lng: 109.2297 },
-                     'vũng tàu': { lat: 10.4109, lng: 107.1361 },
-                     'vung tau': { lat: 10.4109, lng: 107.1361 },
-                     'bến tre': { lat: 10.2415, lng: 106.3759 },
-                     'ben tre': { lat: 10.2415, lng: 106.3759 }
-                 };
-                 
-                 const addressLower = address.toLowerCase().trim();
-                 
-                 // Check for exact matches first
-                 if (vietnamCities[addressLower]) {
-                     return vietnamCities[addressLower];
-                 }
-                 
-                 // Check for partial matches
-                 for (const [city, coords] of Object.entries(vietnamCities)) {
-                     if (addressLower.includes(city) || city.includes(addressLower)) {
-                         return coords;
-                     }
-                 }
-                 
-                 // Default fallback to Ho Chi Minh City if no match found
-                 return { lat: 10.8231, lng: 106.6297 };
-             }
-        }
-    </script>
-    
-    <style>
-        /* Distance badge styling */
-        .distance-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            z-index: 5;
-        }
-        
-        .distance-badge i {
-            font-size: 0.8rem;
-        }
-    </style>
-    <script>
         // JSP Variables for JavaScript use
         const JSP_VARS = {
             isLoggedIn: <c:choose><c:when test="${not empty sessionScope.user}">true</c:when><c:otherwise>false</c:otherwise></c:choose>,
@@ -2220,364 +1862,8 @@
         function handleImageError(img) {
             const errorDiv = document.createElement('div');
             errorDiv.className = 'image-error';
-            errorDiv.innerHTML = `
-                <i class="ri-image-off-line"></i>
-                <span>Không tải được ảnh</span>
-            `;
+            errorDiv.innerHTML = '<i class="ri-image-off-line"></i><span>Không tải được ảnh</span>';
             img.parentNode.replaceChild(errorDiv, img);
-        }
-
-        // Improved favorite functionality
-        function toggleFavorite(button) {
-            // Check if user is logged in and is TRAVELER
-            const isLoggedIn = JSP_VARS.isLoggedIn;
-            const userRole = JSP_VARS.userRole;
-            
-            if (!isLoggedIn) {
-                window.location.href = '${pageContext.request.contextPath}/login';
-                return;
-            }
-            
-            if (userRole !== 'TRAVELER') {
-                showToast('Chỉ có Traveler mới có thể lưu yêu thích', 'error');
-                return;
-            }
-            
-            const experienceId = button.getAttribute('data-experience-id');
-            const accommodationId = button.getAttribute('data-accommodation-id');
-            const itemType = button.getAttribute('data-type');
-            const icon = button.querySelector('i');
-            
-            // Debug logging
-            console.log('Toggle favorite called with:', {
-                experienceId: experienceId,
-                accommodationId: accommodationId,
-                itemType: itemType
-            });
-            
-            // Validate data
-            if (!itemType || (itemType !== 'experience' && itemType !== 'accommodation')) {
-                showToast('Loại dữ liệu không hợp lệ', 'error');
-                return;
-            }
-            
-            if ((itemType === 'experience' && !experienceId) || 
-                (itemType === 'accommodation' && !accommodationId)) {
-                showToast('Thiếu ID của mục yêu thích', 'error');
-                return;
-            }
-            
-            // Prevent multiple clicks
-            if (button.disabled) {
-                console.log('Button already disabled, ignoring click');
-                return;
-            }
-            
-            // Add loading animation and disable button
-            button.classList.add('adding');
-            button.disabled = true;
-            
-            // Prepare request data
-            const requestData = {
-                itemType: itemType
-            };
-            
-            // Add the appropriate ID based on type
-            if (itemType === 'experience' && experienceId) {
-                requestData.experienceId = parseInt(experienceId);
-            } else if (itemType === 'accommodation' && accommodationId) {
-                requestData.accommodationId = parseInt(accommodationId);
-            }
-            
-            console.log('Sending request data:', requestData);
-            
-            // Make AJAX request to toggle favorite
-            fetch('${pageContext.request.contextPath}/favorites/toggle', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(requestData)
-            })
-            .then(response => {
-                console.log('Response status:', response.status);
-                
-                // Always remove loading state
-                button.classList.remove('adding');
-                button.disabled = false;
-                
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        showToast('Vui lòng đăng nhập lại', 'error');
-                        setTimeout(() => {
-                            window.location.href = '${pageContext.request.contextPath}/login';
-                        }, 2000);
-                        return;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Response data:', data);
-                
-                if (data.success) {
-                    if (data.isFavorited) {
-                        button.classList.add('active');
-                        icon.className = 'ri-heart-fill';
-                        showToast('Đã thêm vào danh sách yêu thích ❤️', 'success');
-                    } else {
-                        button.classList.remove('active');
-                        icon.className = 'ri-heart-line';
-                        showToast('Đã xóa khỏi danh sách yêu thích', 'info');
-                    }
-                } else {
-                    showToast(data.message || 'Có lỗi xảy ra khi xử lý yêu thích', 'error');
-                    console.error('Server error:', data);
-                }
-            })
-            .catch(error => {
-                // Ensure loading state is removed
-                button.classList.remove('adding');
-                button.disabled = false;
-                
-                console.error('Error:', error);
-                showToast('Không thể kết nối đến máy chủ. Vui lòng thử lại.', 'error');
-            });
-        }
-
-        // Load user favorites on page load
-        function loadUserFavorites() {
-            const isLoggedIn = ${not empty sessionScope.user};
-            const userRole = '${sessionScope.user.role}';
-            
-            if (!isLoggedIn || userRole !== 'TRAVELER') {
-                console.log('User not logged in or not TRAVELER, skipping favorites load');
-                return;
-            }
-            
-            console.log('Loading user favorites...');
-            
-            fetch('${pageContext.request.contextPath}/favorites/list', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('HTTP error! status: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Favorites loaded:', data);
-                
-                if (data.success && data.experienceIds) {
-                    // Mark experience favorites
-                    data.experienceIds.forEach(experienceId => {
-                        const button = document.querySelector('button[data-experience-id="' + experienceId + '"][data-type="experience"]');
-                        if (button) {
-                            button.classList.add('active');
-                            const icon = button.querySelector('i');
-                            if (icon) {
-                                icon.className = 'ri-heart-fill';
-                            }
-                            console.log('Marked experience as favorite:', experienceId);
-                        }
-                    });
-                }
-                
-                if (data.success && data.accommodationIds) {
-                    // Mark accommodation favorites (if any accommodations on this page)
-                    data.accommodationIds.forEach(accommodationId => {
-                        const button = document.querySelector(`button[data-accommodation-id="${accommodationId}"][data-type="accommodation"]`);
-                        if (button) {
-                            button.classList.add('active');
-                            const icon = button.querySelector('i');
-                            if (icon) {
-                                icon.className = 'ri-heart-fill';
-                            }
-                            console.log('Marked accommodation as favorite:', accommodationId);
-                        }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error loading favorites:', error);
-                // Don't show error toast for this as it's not critical
-            });
-        }
-
-        // Update message badge
-        function updateMessageBadge() {
-            <c:if test="${not empty sessionScope.user && (sessionScope.user.role == 'HOST' || sessionScope.user.role == 'TRAVELER')}">
-                fetch('${pageContext.request.contextPath}/chat/api/unread-count')
-                    .then(response => response.json())
-                    .then(data => {
-                        const unreadCount = data.unreadCount || 0;
-                        const chatLink = document.querySelector('.nav-chat-link');
-                        
-                        if (chatLink) {
-                            let badge = chatLink.querySelector('.message-badge');
-                            
-                            if (unreadCount > 0) {
-                                if (!badge) {
-                                    badge = document.createElement('span');
-                                    badge.className = 'message-badge';
-                                    chatLink.appendChild(badge);
-                                }
-                                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                                badge.classList.add('show');
-                            } else {
-                                if (badge) {
-                                    badge.classList.remove('show');
-                                }
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error getting unread count:', error);
-                    });
-            </c:if>
-        }
-
-        // Dropdown menu functionality
-        const menuIcon = document.querySelector('.menu-icon');
-        const dropdownMenu = document.querySelector('.dropdown-menu-custom');
-
-        if (menuIcon && dropdownMenu) {
-            menuIcon.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownMenu.classList.toggle('show');
-            });
-
-            document.addEventListener('click', function() {
-                dropdownMenu.classList.remove('show');
-            });
-
-            dropdownMenu.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-        }
-        
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.custom-navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-            
-            animateOnScroll();
-        });
-
-        // Animate elements when they come into view
-        function animateOnScroll() {
-            const fadeElements = document.querySelectorAll('.fade-up');
-            
-            fadeElements.forEach(element => {
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 150;
-                
-                if (elementTop < window.innerHeight - elementVisible) {
-                    element.classList.add('active');
-                }
-            });
-        }
-
-        // Cities data - USE FIXED DATA SINCE BACKEND IS EMPTY
-        console.log('Using fixed cities data since backend has empty cities');
-        const citiesData = {
-            '1': [
-                {id: '1', name: 'Hanoi', vietnameseName: 'Hà Nội'},
-                {id: '2', name: 'Haiphong', vietnameseName: 'Hải Phòng'},
-                {id: '3', name: 'Sapa', vietnameseName: 'Sa Pa'},
-                {id: '4', name: 'Ha Long', vietnameseName: 'Hạ Long'},
-                {id: '5', name: 'Ninh Binh', vietnameseName: 'Ninh Bình'}
-            ],
-            '2': [
-                {id: '6', name: 'Da Nang', vietnameseName: 'Đà Nẵng'},
-                {id: '7', name: 'Hue', vietnameseName: 'Huế'},
-                {id: '8', name: 'Hoi An', vietnameseName: 'Hội An'},
-                {id: '9', name: 'Nha Trang', vietnameseName: 'Nha Trang'},
-                {id: '10', name: 'Quy Nhon', vietnameseName: 'Quy Nhơn'}
-            ],
-            '3': [
-                {id: '11', name: 'Ho Chi Minh City', vietnameseName: 'TP.HCM'},
-                {id: '12', name: 'Vung Tau', vietnameseName: 'Vũng Tàu'},
-                {id: '13', name: 'Can Tho', vietnameseName: 'Cần Thơ'},
-                {id: '14', name: 'Phu Quoc', vietnameseName: 'Phú Quốc'},
-                {id: '15', name: 'Da Lat', vietnameseName: 'Đà Lạt'},
-                {id: '16', name: 'Ben Tre', vietnameseName: 'Bến Tre'}
-            ]
-        };
-
-        console.log('Fixed cities data loaded:', citiesData);
-
-        // Function to load cities via AJAX
-        function loadCitiesForRegion(regionId) {
-            console.log('Loading cities for region:', regionId);
-            
-            // First try to fetch from backend
-            fetch(JSP_VARS.contextPath + '/api/cities/region/' + regionId)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('API not available');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Cities loaded from API:', data);
-                    if (data && data.length > 0) {
-                        citiesData[regionId] = data;
-                        updateCitySelect(regionId);
-                    } else {
-                        // Use fixed data if API returns empty
-                        updateCitySelect(regionId);
-                    }
-                })
-                .catch(error => {
-                    console.log('API not available, using fixed data:', error.message);
-                    // Use fixed data
-                    updateCitySelect(regionId);
-                });
-        }
-
-        // Function to update city select options
-        function updateCitySelect(regionId) {
-            const citySelect = document.getElementById('citySelect');
-            const cities = citiesData[regionId] || [];
-            
-            console.log('Updating city select for region', regionId, 'with', cities.length, 'cities');
-            
-            // Clear existing options
-            citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
-            
-            if (cities.length > 0) {
-                citySelect.disabled = false;
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.id;
-                    option.textContent = city.vietnameseName || city.name;
-                    citySelect.appendChild(option);
-                });
-                console.log('Successfully added', cities.length, 'cities');
-            } else {
-                citySelect.disabled = true;
-                console.log('No cities available for region', regionId);
-            }
-        }
-
-        // Sort experiences function
-        function sortExperiences(sortValue) {
-            if (sortValue) {
-                const url = new URL(window.location);
-                url.searchParams.set('sort', sortValue);
-                window.location = url;
-            }
         }
 
         // Copy experience function
@@ -2631,62 +1917,1011 @@
                         toastContainer.removeChild(toast);
                     }
                 }, 300);
-            }, 3000);
+                         }, 3000);
+         }
+
+        // Improved favorite functionality
+        function toggleFavorite(button) {
+            // Check if user is logged in and is TRAVELER
+            const isLoggedIn = JSP_VARS.isLoggedIn;
+            const userRole = JSP_VARS.userRole;
+            
+            if (!isLoggedIn) {
+                window.location.href = JSP_VARS.contextPath + '/login';
+                return;
+            }
+            
+            if (userRole !== 'TRAVELER') {
+                showToast('Chỉ có Traveler mới có thể lưu yêu thích', 'error');
+                return;
+            }
+            
+            const experienceId = button.getAttribute('data-experience-id');
+            const accommodationId = button.getAttribute('data-accommodation-id');
+            const itemType = button.getAttribute('data-type');
+            const icon = button.querySelector('i');
+            
+            // Validate data
+            if (!itemType || (itemType !== 'experience' && itemType !== 'accommodation')) {
+                showToast('Loại dữ liệu không hợp lệ', 'error');
+                return;
+            }
+            
+            if ((itemType === 'experience' && !experienceId) || 
+                (itemType === 'accommodation' && !accommodationId)) {
+                showToast('Thiếu ID của mục yêu thích', 'error');
+                return;
+            }
+            
+            // Prevent multiple clicks
+            if (button.disabled) {
+                return;
+            }
+            
+            // Add loading animation and disable button
+            button.classList.add('adding');
+            button.disabled = true;
+            
+            // Prepare request data
+            const requestData = {
+                itemType: itemType
+            };
+            
+            // Add the appropriate ID based on type
+            if (itemType === 'experience' && experienceId) {
+                requestData.experienceId = parseInt(experienceId);
+            } else if (itemType === 'accommodation' && accommodationId) {
+                requestData.accommodationId = parseInt(accommodationId);
+            }
+            
+            // Make AJAX request to toggle favorite
+            fetch(JSP_VARS.contextPath + '/favorites/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                // Always remove loading state
+                button.classList.remove('adding');
+                button.disabled = false;
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showToast('Vui lòng đăng nhập lại', 'error');
+                        setTimeout(() => {
+                            window.location.href = JSP_VARS.contextPath + '/login';
+                        }, 2000);
+                        return;
+                    }
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    if (data.isFavorited) {
+                        button.classList.add('active');
+                        icon.className = 'ri-heart-fill';
+                        showToast('Đã thêm vào danh sách yêu thích ❤️', 'success');
+                    } else {
+                        button.classList.remove('active');
+                        icon.className = 'ri-heart-line';
+                        showToast('Đã xóa khỏi danh sách yêu thích', 'info');
+                    }
+                } else {
+                    showToast(data.message || 'Có lỗi xảy ra khi xử lý yêu thích', 'error');
+                }
+            })
+            .catch(error => {
+                // Ensure loading state is removed
+                button.classList.remove('adding');
+                button.disabled = false;
+                
+                console.error('Error:', error);
+                showToast('Không thể kết nối đến máy chủ. Vui lòng thử lại.', 'error');
+            });
         }
 
-        // Initialize everything when DOM is loaded
+        // Load user favorites on page load
+        function loadUserFavorites() {
+            const isLoggedIn = JSP_VARS.isLoggedIn;
+            const userRole = JSP_VARS.userRole;
+            
+            if (!isLoggedIn || userRole !== 'TRAVELER') {
+                return;
+            }
+            
+            fetch(JSP_VARS.contextPath + '/favorites/list', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('HTTP error! status: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.experienceIds) {
+                    // Mark experience favorites
+                    data.experienceIds.forEach(experienceId => {
+                        const button = document.querySelector('button[data-experience-id="' + experienceId + '"][data-type="experience"]');
+                        if (button) {
+                            button.classList.add('active');
+                            const icon = button.querySelector('i');
+                            if (icon) {
+                                icon.className = 'ri-heart-fill';
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading favorites:', error);
+            });
+        }
+
+        // Initialize distance filter component
+        let distanceFilter;
+        let allExperiences = [];
+        let allExperiencesFromAllPages = []; // Store all experiences from all pages
+        let totalExperiencesCount = 0;
+        let originalResultsTitle = '';
+        let isDistanceFilterActive = false;
+        let currentFilteredExperiences = [];
+        let itemsPerPage = 10; // Default items per page
+        let currentDistanceFilterPage = 1;
+        
+        // Vietnam cities coordinates for fallback
+        const vietnamCities = {
+            "Hồ Chí Minh": { lat: 10.8231, lng: 106.6297 },
+            "Hà Nội": { lat: 21.0285, lng: 105.8542 },
+            "Đà Nẵng": { lat: 16.0544, lng: 108.2022 },
+            "Nha Trang": { lat: 12.2388, lng: 109.1967 },
+            "Hội An": { lat: 15.8801, lng: 108.335 },
+            "Hạ Long": { lat: 20.9101, lng: 107.1839 },
+            "Huế": { lat: 16.4637, lng: 107.5909 },
+            "Đà Lạt": { lat: 11.9404, lng: 108.4583 },
+            "Cần Thơ": { lat: 10.0452, lng: 105.7469 },
+            "Vũng Tàu": { lat: 10.4113, lng: 107.1362 },
+            "Phú Quốc": { lat: 10.2899, lng: 103.9840 },
+            "Sapa": { lat: 22.3380, lng: 103.8438 },
+            "Ninh Bình": { lat: 20.2506, lng: 105.9744 },
+            "Cao Bằng": { lat: 22.6663, lng: 106.2529 },
+            "Lạng Sơn": { lat: 21.8533, lng: 106.7614 },
+            "Quảng Ninh": { lat: 21.0069, lng: 107.2925 },
+            "Thanh Hóa": { lat: 19.8069, lng: 105.7851 },
+            "Nghệ An": { lat: 19.2342, lng: 104.9200 },
+            "Hà Tĩnh": { lat: 18.3430, lng: 105.9005 },
+            "Quảng Bình": { lat: 17.4677, lng: 106.6222 },
+            "Quảng Trị": { lat: 16.7403, lng: 107.1858 },
+            "Thừa Thiên Huế": { lat: 16.4637, lng: 107.5909 },
+            "Quảng Nam": { lat: 15.5394, lng: 108.0191 },
+            "Quảng Ngãi": { lat: 15.1214, lng: 108.8044 },
+            "Bình Định": { lat: 13.7763, lng: 109.2177 },
+            "Phú Yên": { lat: 13.0881, lng: 109.0929 },
+            "Khánh Hòa": { lat: 12.2388, lng: 109.1967 },
+            "Ninh Thuận": { lat: 11.5752, lng: 108.9229 },
+            "Bình Thuận": { lat: 11.0904, lng: 108.0721 },
+            "Kon Tum": { lat: 14.3497, lng: 108.0130 },
+            "Gia Lai": { lat: 13.9833, lng: 108.0000 },
+            "Đắk Lắk": { lat: 12.7100, lng: 108.2378 },
+            "Đắk Nông": { lat: 12.2646, lng: 107.6098 },
+            "Lâm Đồng": { lat: 11.5752, lng: 108.1429 },
+            "Bình Phước": { lat: 11.7511, lng: 106.7234 },
+            "Tây Ninh": { lat: 11.3100, lng: 106.1000 },
+            "Bình Dương": { lat: 11.3254, lng: 106.4770 },
+            "Đồng Nai": { lat: 10.9571, lng: 106.8438 },
+            "Bà Rịa - Vũng Tàu": { lat: 10.4113, lng: 107.1362 },
+            "Long An": { lat: 10.6956, lng: 106.2431 },
+            "Tiền Giang": { lat: 10.3632, lng: 106.3600 },
+            "Bến Tre": { lat: 10.2431, lng: 106.3757 },
+            "Trà Vinh": { lat: 9.9478, lng: 106.3267 },
+            "Vĩnh Long": { lat: 10.2397, lng: 105.9571 },
+            "Đồng Tháp": { lat: 10.6637, lng: 105.6357 },
+            "An Giang": { lat: 10.5215, lng: 105.1258 },
+            "Kiên Giang": { lat: 10.0125, lng: 105.0806 },
+            "Cà Mau": { lat: 9.1767, lng: 105.1524 },
+            "Bạc Liêu": { lat: 9.2945, lng: 105.7244 },
+            "Sóc Trăng": { lat: 9.6003, lng: 105.9800 },
+            "Hậu Giang": { lat: 9.7570, lng: 105.6412 }
+        };
+        
+        // Calculate distance between two coordinates using Haversine formula
+        function calculateDistance(coord1, coord2) {
+            const R = 6371; // Earth's radius in km
+            
+            const lat1 = coord1.lat * Math.PI / 180;
+            const lat2 = coord2.lat * Math.PI / 180;
+            const deltaLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+            const deltaLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+            
+            const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                      Math.cos(lat1) * Math.cos(lat2) *
+                      Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c;
+            
+            return distance;
+        }
+        
+        // Get coordinates from address (with fallback to Vietnam cities)
+        async function getCoordinatesFromAddress(address) {
+            try {
+                // First try to find exact match in Vietnam cities
+                const cleanAddress = address.trim();
+                
+                // Check for exact match
+                if (vietnamCities[cleanAddress]) {
+                    return vietnamCities[cleanAddress];
+                }
+                
+                // Check for partial match
+                for (const cityName in vietnamCities) {
+                    if (cleanAddress.toLowerCase().includes(cityName.toLowerCase()) || 
+                        cityName.toLowerCase().includes(cleanAddress.toLowerCase())) {
+                        return vietnamCities[cityName];
+                    }
+                }
+                
+                // If no match found, try geocoding API (optional)
+                // For now, return null to skip this experience
+                return null;
+                
+            } catch (error) {
+                console.error('Error getting coordinates for address:', address, error);
+                return null;
+            }
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing...');
+            // Save original total count and title
+            const resultsTitle = document.getElementById('resultsTitle');
+            if (resultsTitle) {
+                originalResultsTitle = resultsTitle.innerHTML;
+                // Extract total count from title text
+                const titleText = resultsTitle.textContent;
+                const match = titleText.match(/(\d+)\s+trải nghiệm/);
+                if (match) {
+                    totalExperiencesCount = parseInt(match[1]);
+                }
+            }
+            
+            // Save original pagination
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.setAttribute('data-original-pagination', paginationContainer.innerHTML);
+            }
+            
+            // Initialize empty experiences array - will be populated from DOM
+            allExperiences = [];
+            
+            // Initialize simple distance filter
+            initializeSimpleDistanceFilter();
+            
+            // Extract experience data from DOM cards
+            const experienceCards = document.querySelectorAll('.card-item');
+            experienceCards.forEach((card, index) => {
+                const experience = extractExperienceDataFromCard(card);
+                if (experience) {
+                    // Clone the original card element for restoration
+                    experience.element = card.cloneNode(true);
+                    allExperiences.push(experience);
+                }
+            });
+            
+            // Copy initial experiences to all experiences array
+            allExperiencesFromAllPages = [...allExperiences];
+            
+            // Detect items per page from current display
+            const currentDisplayedItems = document.querySelectorAll('.card-item').length;
+            if (currentDisplayedItems > 0) {
+                itemsPerPage = currentDisplayedItems;
+            }
             
             // Load user favorites
             loadUserFavorites();
             
-            // Update message badge
-            updateMessageBadge();
-            
-            // Setup region/city functionality
-            const regionSelect = document.getElementById('regionSelect');
-            if (regionSelect) {
-                regionSelect.addEventListener('change', function() {
-                    const selectedRegionId = this.value;
-                    
-                    if (selectedRegionId) {
-                        loadCitiesForRegion(selectedRegionId);
-                    } else {
-                        const citySelect = document.getElementById('citySelect');
-                        citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
-                        citySelect.disabled = true;
-                    }
-                });
-            }
-            
             // Setup keyword search functionality
             setupKeywordSearch();
             
-            // Initialize distance filter
-            initializeDistanceFilter();
-            
             // Animate on load
             animateOnScroll();
-            
-            console.log('Initialization complete');
         });
-
-        // Debug function
-        function debugExperiences() {
-            console.log('=== DEBUG INFO ===');
-            console.log('Cities data:', citiesData);
-            console.log('Region select:', document.getElementById('regionSelect'));
-            console.log('City select:', document.getElementById('citySelect'));
+        
+        // Extract experience data from a DOM card
+        function extractExperienceDataFromCard(card) {
+            try {
+                const titleElement = card.querySelector('h5');
+                const locationElement = card.querySelector('.location span');
+                const priceElement = card.querySelector('.price');
+                const ratingElement = card.querySelector('.rating span');
+                const imageElement = card.querySelector('.card-image img');
+                const typeElement = card.querySelector('.card-badge');
+                const difficultyElement = card.querySelector('.difficulty-badge');
+                const viewButton = card.querySelector('a[href*="/experiences/"]');
+                
+                if (!titleElement || !viewButton) {
+                    return null;
+                }
+                
+                return {
+                    id: extractExperienceId(card),
+                    title: titleElement.textContent.trim(),
+                    location: locationElement ? locationElement.textContent.trim() : '',
+                    cityName: locationElement ? locationElement.textContent.trim() : '',
+                    price: extractPrice(priceElement),
+                    rating: extractRating(ratingElement),
+                    totalBookings: 0,
+                    firstImage: imageElement ? imageElement.src.split('/').pop() : '',
+                    images: imageElement ? imageElement.src.split('/').pop() : '',
+                    type: typeElement ? typeElement.textContent.trim() : '',
+                    difficulty: difficultyElement ? difficultyElement.textContent.trim() : '',
+                    element: null
+                };
+            } catch (error) {
+                console.error('Error extracting experience data from card:', error);
+                return null;
+            }
+        }
+        
+        // Load all experiences from all pages
+        async function loadAllExperiences() {
+            if (allExperiencesFromAllPages.length >= totalExperiencesCount) {
+                return allExperiencesFromAllPages;
+            }
             
-            // Test each region
-            Object.keys(citiesData).forEach(regionId => {
-                console.log(`Testing region ${regionId}:`, citiesData[regionId]);
+            try {
+                const allExperiences = [];
+                const totalPages = Math.ceil(totalExperiencesCount / itemsPerPage);
+                
+                // Create promises for all pages
+                const pagePromises = [];
+                for (let page = 1; page <= totalPages; page++) {
+                    pagePromises.push(loadExperiencesFromPage(page));
+                }
+                
+                // Wait for all pages to load
+                const pageResults = await Promise.all(pagePromises);
+                
+                // Combine all results
+                pageResults.forEach(pageExperiences => {
+                    allExperiences.push(...pageExperiences);
+                });
+                
+                allExperiencesFromAllPages = allExperiences;
+                return allExperiences;
+                
+            } catch (error) {
+                console.error('Error loading all experiences:', error);
+                return allExperiencesFromAllPages;
+            }
+        }
+        
+        // Load experiences from a specific page
+        async function loadExperiencesFromPage(pageNumber) {
+            try {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('page', pageNumber);
+                
+                const response = await fetch(currentUrl.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract experiences data from the page
+                const experienceCards = doc.querySelectorAll('.card-item');
+                const pageExperiences = [];
+                
+                experienceCards.forEach((card, index) => {
+                    const titleElement = card.querySelector('h5');
+                    const locationElement = card.querySelector('.location span');
+                    const priceElement = card.querySelector('.price');
+                    const ratingElement = card.querySelector('.rating span');
+                    const imageElement = card.querySelector('.card-image img');
+                    const typeElement = card.querySelector('.card-badge');
+                    const difficultyElement = card.querySelector('.difficulty-badge');
+                    
+                    if (titleElement) {
+                        const experience = {
+                            id: extractExperienceId(card),
+                            title: titleElement.textContent.trim(),
+                            location: locationElement ? locationElement.textContent.trim() : '',
+                            cityName: locationElement ? locationElement.textContent.trim() : '',
+                            price: extractPrice(priceElement),
+                            rating: extractRating(ratingElement),
+                            totalBookings: 0,
+                            firstImage: imageElement ? imageElement.src.split('/').pop() : '',
+                            images: imageElement ? imageElement.src.split('/').pop() : '',
+                            type: typeElement ? typeElement.textContent.trim() : '',
+                            difficulty: difficultyElement ? difficultyElement.textContent.trim() : '',
+                            element: card.cloneNode(true)
+                        };
+                        
+                        pageExperiences.push(experience);
+                    }
+                });
+                
+                return pageExperiences;
+                
+            } catch (error) {
+                console.error(`Error loading page ${pageNumber}:`, error);
+                return [];
+            }
+        }
+        
+        // Helper functions to extract data from DOM elements
+        function extractExperienceId(card) {
+            const viewButton = card.querySelector('a[href*="/experiences/"]');
+            if (viewButton) {
+                const href = viewButton.getAttribute('href');
+                const match = href.match(/\/experiences\/(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }
+            return 0;
+        }
+        
+        function extractPrice(priceElement) {
+            if (!priceElement) return 0;
+            const text = priceElement.textContent;
+            if (text.includes('Miễn phí')) return 0;
+            const match = text.match(/[\d,]+/);
+            return match ? parseInt(match[0].replace(/,/g, '')) : 0;
+        }
+        
+        function extractRating(ratingElement) {
+            if (!ratingElement) return 0;
+            const text = ratingElement.textContent;
+            const match = text.match(/[\d.]+/);
+            return match ? parseFloat(match[0]) : 0;
+        }
+        
+        // Filter experiences by distance with proper pagination
+        async function filterExperiencesByDistance(maxDistance) {
+            if (!distanceFilter || !distanceFilter.isLocationEnabled || !distanceFilter.userLocation) {
+                showToast('Vui lòng cho phép truy cập vị trí để lọc theo khoảng cách', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading state
+                showLoadingState();
+                
+                // Load all experiences from all pages
+                const allExperiences = await loadAllExperiences();
+                
+                if (allExperiences.length === 0) {
+                    showToast('Không tìm thấy trải nghiệm nào để lọc', 'error');
+                    return;
+                }
+                
+                // Filter by distance
+                const filteredExperiences = await filterExperiencesByDistanceFromList(allExperiences, maxDistance);
+                
+                // Sort by distance
+                filteredExperiences.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+                
+                // Store filtered experiences
+                currentFilteredExperiences = filteredExperiences;
+                isDistanceFilterActive = true;
+                currentDistanceFilterPage = 1;
+                
+                if (filteredExperiences.length === 0) {
+                    showNoDistanceResults(maxDistance);
+                } else {
+                    // Display first page of filtered results
+                    displayFilteredExperiences(currentDistanceFilterPage);
+                    
+                    // Update results count
+                    updateResultsCount(filteredExperiences.length, 'trải nghiệm trong bán kính ' + maxDistance + 'km');
+                    
+                    // Create pagination for filtered results
+                    createDistanceFilterPagination(filteredExperiences.length, maxDistance);
+                    
+                    showToast('Tìm thấy ' + filteredExperiences.length + ' trải nghiệm trong bán kính ' + maxDistance + 'km', 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error filtering experiences:', error);
+                showToast('Có lỗi xảy ra khi lọc theo khoảng cách: ' + error.message, 'error');
+                // Don't call showAllExperiences() here, just hide loading
+            } finally {
+                hideLoadingState();
+            }
+        }
+        
+        // Filter experiences by distance from a list
+        async function filterExperiencesByDistanceFromList(experiences, maxDistance) {
+            const filteredExperiences = [];
+            
+            for (const experience of experiences) {
+                if (!experience.location) continue;
+                
+                // Get coordinates for experience location
+                const experienceCoords = await getCoordinatesFromAddress(experience.location);
+                
+                if (experienceCoords) {
+                    // Calculate distance
+                    const distance = calculateDistance(distanceFilter.userLocation, experienceCoords);
+                    
+                    if (distance <= maxDistance) {
+                        experience.distance = distance;
+                        filteredExperiences.push(experience);
+                    }
+                }
+            }
+            
+            return filteredExperiences;
+        }
+        
+        // Display filtered experiences with pagination
+        function displayFilteredExperiences(page) {
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageExperiences = currentFilteredExperiences.slice(startIndex, endIndex);
+            
+            // Clear current display
+            const container = document.querySelector('.cards-grid');
+            container.innerHTML = '';
+            
+            // Add filtered experiences
+            pageExperiences.forEach(experience => {
+                const card = createExperienceCard(experience);
+                container.appendChild(card);
             });
+            
+            // Update page number
+            currentDistanceFilterPage = page;
+        }
+        
+        // Create experience card element
+        function createExperienceCard(experience) {
+            const card = document.createElement('div');
+            card.className = 'card-item';
+            
+            // Create card image
+            const cardImage = document.createElement('div');
+            cardImage.className = 'card-image';
+            
+            // Add favorite button if user is logged in
+            const isLoggedIn = JSP_VARS.isLoggedIn;
+            if (isLoggedIn) {
+                const favoriteBtn = document.createElement('button');
+                favoriteBtn.className = 'favorite-btn';
+                favoriteBtn.setAttribute('data-experience-id', experience.id);
+                favoriteBtn.setAttribute('data-type', 'experience');
+                favoriteBtn.setAttribute('onclick', 'toggleFavorite(this)');
+                favoriteBtn.innerHTML = '<i class="ri-heart-line"></i>';
+                cardImage.appendChild(favoriteBtn);
+            }
+            
+            // Add image or placeholder
+            const imageUrl = experience.firstImage || experience.images ? 
+                JSP_VARS.contextPath + '/images/experiences/' + (experience.firstImage || experience.images) : '';
+            
+            if (imageUrl) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = experience.title;
+                img.setAttribute('onerror', 'handleImageError(this)');
+                cardImage.appendChild(img);
+            } else {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'no-image-placeholder';
+                placeholder.innerHTML = '<i class="ri-image-line"></i><span>Không có ảnh</span>';
+                cardImage.appendChild(placeholder);
+            }
+            
+            // Add type badge
+            const typeBadge = document.createElement('div');
+            typeBadge.className = 'card-badge';
+            typeBadge.textContent = experience.type;
+            cardImage.appendChild(typeBadge);
+            
+            // Add difficulty badge if exists
+            if (experience.difficulty) {
+                const difficultyBadge = document.createElement('div');
+                difficultyBadge.className = 'difficulty-badge';
+                difficultyBadge.textContent = experience.difficulty;
+                cardImage.appendChild(difficultyBadge);
+            }
+            
+            // Add distance badge if exists
+            if (experience.distance !== undefined) {
+                const distanceBadge = document.createElement('div');
+                distanceBadge.className = 'distance-badge';
+                distanceBadge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(experience.distance);
+                cardImage.appendChild(distanceBadge);
+            }
+            
+            // Create card content
+            const cardContent = document.createElement('div');
+            cardContent.className = 'card-content';
+            
+            // Title
+            const title = document.createElement('h5');
+            title.textContent = experience.title;
+            cardContent.appendChild(title);
+            
+            // Location
+            const location = document.createElement('div');
+            location.className = 'location';
+            location.innerHTML = '<i class="ri-map-pin-line"></i><span>' + (experience.cityName || experience.location) + '</span>';
+            cardContent.appendChild(location);
+            
+            // Footer with price and rating
+            const cardFooter = document.createElement('div');
+            cardFooter.className = 'card-footer';
+            
+            // Price
+            const price = document.createElement('div');
+            price.className = 'price';
+            if (experience.price === 0) {
+                price.textContent = 'Miễn phí';
+            } else {
+                price.innerHTML = new Intl.NumberFormat('vi-VN').format(experience.price) + ' VNĐ <small>/người</small>';
+            }
+            cardFooter.appendChild(price);
+            
+            // Rating
+            if (experience.rating > 0) {
+                const rating = document.createElement('div');
+                rating.className = 'rating';
+                rating.innerHTML = '<i class="ri-star-fill"></i><span>' + experience.rating.toFixed(1) + '</span>';
+                cardFooter.appendChild(rating);
+            }
+            
+            cardContent.appendChild(cardFooter);
+            
+            // Action buttons
+            const cardAction = document.createElement('div');
+            cardAction.className = 'card-action';
+            
+            // View detail button
+            const viewBtn = document.createElement('a');
+            viewBtn.href = JSP_VARS.contextPath + '/experiences/' + experience.id;
+            viewBtn.className = 'btn btn-outline-primary';
+            viewBtn.innerHTML = '<i class="ri-eye-line me-2"></i>Xem Chi Tiết';
+            cardAction.appendChild(viewBtn);
+            
+            // Share button
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'btn-copy';
+            shareBtn.setAttribute('onclick', "copyExperience('" + experience.title.replace(/'/g, "\\'") + "')");
+            shareBtn.innerHTML = '<i class="ri-share-line"></i><span>Chia sẻ</span>';
+            cardAction.appendChild(shareBtn);
+            
+            cardContent.appendChild(cardAction);
+            
+            // Assemble the card
+            card.appendChild(cardImage);
+            card.appendChild(cardContent);
+            
+            return card;
+        }
+        
+        // Create pagination for distance filter
+        function createDistanceFilterPagination(totalItems, maxDistance) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                // Hide pagination if only one page
+                const paginationContainer = document.querySelector('.pagination-container');
+                if (paginationContainer) {
+                    paginationContainer.style.display = 'none';
+                }
+                return;
+            }
+            
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (!paginationContainer) return;
+            
+            paginationContainer.style.display = 'flex';
+            
+            const pagination = paginationContainer.querySelector('.pagination');
+            pagination.innerHTML = '';
+            
+            // Previous button
+            if (currentDistanceFilterPage > 1) {
+                const prevLi = document.createElement('li');
+                prevLi.className = 'page-item';
+                const prevLink = document.createElement('a');
+                prevLink.className = 'page-link';
+                prevLink.href = '#';
+                prevLink.setAttribute('onclick', 'changeDistanceFilterPage(' + (currentDistanceFilterPage - 1) + ', ' + maxDistance + ')');
+                prevLink.innerHTML = '<i class="ri-arrow-left-s-line"></i>';
+                prevLi.appendChild(prevLink);
+                pagination.appendChild(prevLi);
+            }
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = 'page-item' + (i === currentDistanceFilterPage ? ' active' : '');
+                const pageLink = document.createElement('a');
+                pageLink.className = 'page-link';
+                pageLink.href = '#';
+                pageLink.setAttribute('onclick', 'changeDistanceFilterPage(' + i + ', ' + maxDistance + ')');
+                pageLink.textContent = i;
+                pageLi.appendChild(pageLink);
+                pagination.appendChild(pageLi);
+            }
+            
+            // Next button
+            if (currentDistanceFilterPage < totalPages) {
+                const nextLi = document.createElement('li');
+                nextLi.className = 'page-item';
+                const nextLink = document.createElement('a');
+                nextLink.className = 'page-link';
+                nextLink.href = '#';
+                nextLink.setAttribute('onclick', 'changeDistanceFilterPage(' + (currentDistanceFilterPage + 1) + ', ' + maxDistance + ')');
+                nextLink.innerHTML = '<i class="ri-arrow-right-s-line"></i>';
+                nextLi.appendChild(nextLink);
+                pagination.appendChild(nextLi);
+            }
+        }
+        
+        // Change page in distance filter
+        function changeDistanceFilterPage(page, maxDistance) {
+            if (page < 1 || page > Math.ceil(currentFilteredExperiences.length / itemsPerPage)) {
+                return;
+            }
+            
+            displayFilteredExperiences(page);
+            createDistanceFilterPagination(currentFilteredExperiences.length, maxDistance);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Show loading state
+        function showLoadingState() {
+            const container = document.querySelector('.cards-grid');
+            
+            // Create loading wrapper
+            const loadingWrapper = document.createElement('div');
+            loadingWrapper.className = 'col-12 text-center py-5';
+            
+            // Create spinner
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner-border text-primary';
+            spinner.setAttribute('role', 'status');
+            
+            const spinnerText = document.createElement('span');
+            spinnerText.className = 'visually-hidden';
+            spinnerText.textContent = 'Đang tải...';
+            spinner.appendChild(spinnerText);
+            
+            // Create message
+            const message = document.createElement('p');
+            message.className = 'mt-3';
+            message.textContent = 'Đang tìm kiếm trải nghiệm gần bạn...';
+            
+            // Assemble loading state
+            loadingWrapper.appendChild(spinner);
+            loadingWrapper.appendChild(message);
+            
+            // Clear container and add loading
+            container.innerHTML = '';
+            container.appendChild(loadingWrapper);
         }
 
-        // Make debug function available globally
-        window.debugExperiences = debugExperiences;
+        // Show no distance results
+        function showNoDistanceResults(maxDistance) {
+            const container = document.querySelector('.cards-grid');
+            
+            const noResultsWrapper = document.createElement('div');
+            noResultsWrapper.className = 'no-results';
+            
+            noResultsWrapper.innerHTML = `
+                <i class="ri-map-pin-line"></i>
+                <h4>Không tìm thấy trải nghiệm nào trong bán kính ${maxDistance}km</h4>
+                <p>Hãy thử tăng khoảng cách tìm kiếm hoặc tắt bộ lọc khoảng cách</p>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" onclick="increaseDistance()">
+                        <i class="ri-add-line me-2"></i>Tăng khoảng cách
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="disableDistanceFilter()">
+                        <i class="ri-close-line me-2"></i>Tắt lọc khoảng cách
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = '';
+            container.appendChild(noResultsWrapper);
+            
+            // Hide pagination
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.style.display = 'none';
+            }
+        }
+
+        // Increase distance when no results found
+        function increaseDistance() {
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            
+            if (distanceSlider && distanceValue) {
+                const currentValue = parseInt(distanceSlider.value);
+                const newValue = Math.min(currentValue + 20, 100); // Increase by 20km, max 100km
+                
+                distanceSlider.value = newValue;
+                distanceValue.textContent = newValue;
+                
+                // Trigger filter with new distance
+                filterExperiencesByDistance(newValue);
+            }
+        }
+
+        // Disable distance filter
+        function disableDistanceFilter() {
+            const locationToggle = document.getElementById('locationToggle');
+            const distanceControls = document.getElementById('distanceControls');
+            
+            if (locationToggle && distanceControls) {
+                locationToggle.checked = false;
+                distanceControls.classList.add('d-none');
+                distanceFilter.isLocationEnabled = false;
+                showAllExperiences();
+            }
+        }
+        
+        // Hide loading state
+        function hideLoadingState() {
+            // Loading state will be replaced by actual content
+        }
+        
+        // Show all experiences (reset distance filter)
+        function showAllExperiences() {
+            isDistanceFilterActive = false;
+            currentFilteredExperiences = [];
+            
+            // Instead of reloading, restore original display
+            const container = document.querySelector('.cards-grid');
+            container.innerHTML = '';
+            
+            // Show original experiences
+            allExperiences.forEach(experience => {
+                if (experience.element) {
+                    container.appendChild(experience.element);
+                }
+            });
+            
+            // Restore original pagination
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.style.display = 'flex';
+                // Restore original pagination if it exists
+                const originalPagination = paginationContainer.getAttribute('data-original-pagination');
+                if (originalPagination) {
+                    paginationContainer.innerHTML = originalPagination;
+                }
+            }
+            
+            // Restore original results count
+            updateResultsCount(totalExperiencesCount, 'trải nghiệm được tìm thấy');
+        }
+        
+                     // Update results count
+             function updateResultsCount(visibleCount, suffix) {
+                 const resultsHeader = document.querySelector('#resultsTitle');
+                 if (resultsHeader) {
+                     if (suffix.includes('trong bán kính')) {
+                         // When filtering by distance, show filtered count and total
+                         resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                             visibleCount + '/' + totalExperiencesCount + ' ' + suffix;
+                     } else {
+                         // When showing all, show original title or total count
+                         if (originalResultsTitle) {
+                             resultsHeader.innerHTML = originalResultsTitle;
+                         } else {
+                             resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                                 totalExperiencesCount + ' trải nghiệm được tìm thấy';
+                         }
+                     }
+                 }
+             }
+        
+        // Format distance
+        function formatDistance(distance) {
+            if (distance < 1) {
+                return Math.round(distance * 1000) + 'm';
+            }
+            return distance.toFixed(1) + 'km';
+        }
+        
+        // Simple distance filter initialization
+        function initializeSimpleDistanceFilter() {
+            const locationToggle = document.getElementById('locationToggle');
+            const distanceControls = document.getElementById('distanceControls');
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            const locationStatus = document.getElementById('locationStatus');
+            
+            if (!locationToggle || !distanceControls || !distanceSlider || !distanceValue) {
+                console.log('Distance filter elements not found');
+                return;
+            }
+            
+            // Initialize distance filter object
+            distanceFilter = {
+                userLocation: null,
+                isLocationEnabled: false
+            };
+            
+            // Location toggle handler
+            locationToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    distanceControls.classList.remove('d-none');
+                    requestUserLocation();
+                } else {
+                    distanceControls.classList.add('d-none');
+                    distanceFilter.isLocationEnabled = false;
+                    showAllExperiences();
+                }
+            });
+            
+            // Distance slider handler
+            distanceSlider.addEventListener('input', function() {
+                distanceValue.textContent = this.value;
+            });
+            
+            distanceSlider.addEventListener('change', function() {
+                if (distanceFilter.isLocationEnabled && distanceFilter.userLocation) {
+                    filterExperiencesByDistance(parseInt(this.value));
+                }
+            });
+            
+            // Request user location
+            function requestUserLocation() {
+                locationStatus.innerHTML = '<i class="ri-loader-4-line"></i> Đang lấy vị trí...';
+                
+                if (!navigator.geolocation) {
+                    locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> Trình duyệt không hỗ trợ định vị';
+                    locationToggle.checked = false;
+                    distanceControls.classList.add('d-none');
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        distanceFilter.userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        distanceFilter.isLocationEnabled = true;
+                        locationStatus.innerHTML = '<i class="ri-map-pin-line text-success"></i> Đã lấy vị trí thành công';
+                        
+                        // Start filtering with current distance
+                        filterExperiencesByDistance(parseInt(distanceSlider.value));
+                    },
+                    function(error) {
+                        let errorMessage = 'Không thể lấy vị trí';
+                        if (error.code === 1) errorMessage = 'Bạn đã từ chối truy cập vị trí';
+                        
+                        locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> ' + errorMessage;
+                        locationToggle.checked = false;
+                        distanceControls.classList.add('d-none');
+                    }
+                );
+            }
+        }
 
         // ===== KEYWORD SEARCH FUNCTIONALITY =====
         
@@ -2752,103 +2987,6 @@
                 });
         }
 
-        // ===== DISTANCE FILTERING & GEOLOCATION =====
-        
-        let userLocation = {
-            lat: null,
-            lng: null,
-            enabled: false
-        };
-
-        // Request user location
-        function requestLocation() {
-            const btn = document.getElementById('locationBtn');
-            const status = document.getElementById('distanceStatus');
-            const distanceSelect = document.getElementById('distanceSelect');
-            
-            if (!navigator.geolocation) {
-                updateLocationStatus('disabled', 'Trình duyệt không hỗ trợ định vị');
-                return;
-            }
-
-            // Show loading state
-            btn.classList.add('active');
-            updateLocationStatus('detecting', 'Đang xác định vị trí...');
-
-            navigator.geolocation.getCurrentPosition(
-                function(position) {
-                    // Success
-                    userLocation.lat = position.coords.latitude;
-                    userLocation.lng = position.coords.longitude;
-                    userLocation.enabled = true;
-                    
-                    // Update UI
-                    btn.classList.remove('active');
-                    btn.classList.add('enabled');
-                    distanceSelect.disabled = false;
-                    
-                    // Update hidden inputs
-                    document.getElementById('userLat').value = userLocation.lat;
-                    document.getElementById('userLng').value = userLocation.lng;
-                    
-                    updateLocationStatus('enabled', 'Định vị thành công (±' + Math.round(position.coords.accuracy) + 'm)');
-                    
-                    console.log('Location acquired:', userLocation);
-                },
-                function(error) {
-                    // Error
-                    btn.classList.remove('active');
-                    updateLocationStatus('disabled', getLocationErrorMessage(error));
-                    console.error('Geolocation error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 300000 // 5 minutes
-                }
-            );
-        }
-
-        // Update location status UI
-        function updateLocationStatus(type, message) {
-            const status = document.getElementById('distanceStatus');
-            status.className = 'distance-status ' + type;
-            status.innerHTML = '<i class="ri-information-line"></i> ' + message;
-        }
-
-        // Get user-friendly error message
-        function getLocationErrorMessage(error) {
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    return "Quyền truy cập vị trí bị từ chối";
-                case error.POSITION_UNAVAILABLE:
-                    return "Không thể xác định vị trí";
-                case error.TIMEOUT:
-                    return "Hết thời gian chờ định vị";
-                default:
-                    return "Lỗi không xác định khi định vị";
-            }
-        }
-
-        // Initialize distance filter if coordinates are available
-        function initializeDistanceFilter() {
-            const userLat = document.getElementById('userLat').value;
-            const userLng = document.getElementById('userLng').value;
-            
-            if (userLat && userLng) {
-                userLocation.lat = parseFloat(userLat);
-                userLocation.lng = parseFloat(userLng);
-                userLocation.enabled = true;
-                
-                const btn = document.getElementById('locationBtn');
-                const distanceSelect = document.getElementById('distanceSelect');
-                
-                btn.classList.add('enabled');
-                distanceSelect.disabled = false;
-                updateLocationStatus('enabled', 'Vị trí đã được lưu từ lần trước');
-            }
-        }
-
         // Setup keyword search event listeners
         function setupKeywordSearch() {
             const keywordInput = document.getElementById('keywordSearch');
@@ -2874,6 +3012,73 @@
                 });
             }
         }
+
+        // Animate elements when they come into view
+        function animateOnScroll() {
+            const fadeElements = document.querySelectorAll('.fade-up');
+            
+            fadeElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('active');
+                }
+            });
+        }
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.custom-navbar');
+            if (navbar) {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            }
+            
+            animateOnScroll();
+        });
+
+        // Dropdown menu functionality
+        const menuIcon = document.querySelector('.menu-icon');
+        const dropdownMenu = document.querySelector('.dropdown-menu-custom');
+
+        if (menuIcon && dropdownMenu) {
+            menuIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdownMenu.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function() {
+                dropdownMenu.classList.remove('show');
+            });
+
+            dropdownMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Sort experiences function
+        function sortExperiences(sortValue) {
+            if (sortValue) {
+                const url = new URL(window.location);
+                url.searchParams.set('sort', sortValue);
+                window.location = url;
+            }
+        }
+
+        // Debug function
+        function debugExperiences() {
+            console.log('=== DEBUG INFO ===');
+            console.log('All experiences:', allExperiences);
+            console.log('Distance filter:', distanceFilter);
+            console.log('Current filtered:', currentFilteredExperiences);
+        }
+
+        // Make debug function available globally
+        window.debugExperiences = debugExperiences;
     </script>
 
 </body>
