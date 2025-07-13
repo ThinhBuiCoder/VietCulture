@@ -1119,6 +1119,25 @@
                 font-size: 1rem;
             }
         }
+
+        .distance-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .distance-badge i {
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -1314,7 +1333,30 @@
 
                     <div class="form-group">
                         <label>Khoảng Cách</label>
-                        <div id="distanceFilterContainer"></div>
+                        <div id="distanceFilterContainer">
+                            <div class="simple-distance-filter">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="locationToggle">
+                                    <label class="form-check-label" for="locationToggle">
+                                        <i class="ri-map-pin-line me-2"></i>Lọc theo khoảng cách
+                                    </label>
+                                </div>
+                                <div id="distanceControls" class="d-none">
+                                    <label class="form-label">
+                                        Khoảng cách: <span id="distanceValue">20</span>km
+                                    </label>
+                                    <input type="range" class="form-range" id="distanceSlider" 
+                                           min="1" max="100" value="20" step="1">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>1km</span>
+                                        <span>100km</span>
+                                    </div>
+                                    <div id="locationStatus" class="mt-2 small text-muted">
+                                        <i class="ri-information-line"></i> Bấm để bật định vị
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -1351,11 +1393,18 @@
     <div class="container">
         <!-- Results Count -->
         <div class="results-header fade-up">
-            <h3>
+            <h3 id="resultsTitle">
                 <c:choose>
                     <c:when test="${not empty accommodations}">
                         <i class="ri-home-heart-line me-2" style="color: var(--primary-500);"></i>
-                        ${fn:length(accommodations)} chỗ lưu trú được tìm thấy
+                        <c:choose>
+                            <c:when test="${not empty totalAccommodations}">
+                                ${totalAccommodations} chỗ lưu trú được tìm thấy
+                            </c:when>
+                            <c:otherwise>
+                                ${fn:length(accommodations)} chỗ lưu trú được tìm thấy
+                            </c:otherwise>
+                        </c:choose>
                     </c:when>
                     <c:otherwise>
                         <i class="ri-building-2-line me-2" style="color: var(--secondary-500);"></i>
@@ -2236,6 +2285,524 @@
                 updateLocationStatus('enabled', 'Vị trí đã được lưu từ lần trước');
             }
         }
+
+        // ===== DISTANCE FILTERING FOR ACCOMMODATIONS =====
+        let distanceFilter;
+        let allAccommodations = [];
+        let allAccommodationsFromAllPages = [];
+        let totalAccommodationsCount = 0;
+        let originalResultsTitle = '';
+        let isDistanceFilterActive = false;
+        let currentFilteredAccommodations = [];
+        let itemsPerPage = 10;
+        let currentDistanceFilterPage = 1;
+        const vietnamCities = {
+            "Hồ Chí Minh": { lat: 10.8231, lng: 106.6297 },
+            "Hà Nội": { lat: 21.0285, lng: 105.8542 },
+            "Đà Nẵng": { lat: 16.0544, lng: 108.2022 },
+            "Nha Trang": { lat: 12.2388, lng: 109.1967 },
+            "Hội An": { lat: 15.8801, lng: 108.335 },
+            "Hạ Long": { lat: 20.9101, lng: 107.1839 },
+            "Huế": { lat: 16.4637, lng: 107.5909 },
+            "Đà Lạt": { lat: 11.9404, lng: 108.4583 },
+            "Cần Thơ": { lat: 10.0452, lng: 105.7469 },
+            "Vũng Tàu": { lat: 10.4113, lng: 107.1362 },
+            "Phú Quốc": { lat: 10.2899, lng: 103.9840 },
+            "Sapa": { lat: 22.3380, lng: 103.8438 },
+            "Ninh Bình": { lat: 20.2506, lng: 105.9744 },
+            "Cao Bằng": { lat: 22.6663, lng: 106.2529 },
+            "Lạng Sơn": { lat: 21.8533, lng: 106.7614 },
+            "Quảng Ninh": { lat: 21.0069, lng: 107.2925 },
+            "Thanh Hóa": { lat: 19.8069, lng: 105.7851 },
+            "Nghệ An": { lat: 19.2342, lng: 104.9200 },
+            "Hà Tĩnh": { lat: 18.3430, lng: 105.9005 },
+            "Quảng Bình": { lat: 17.4677, lng: 106.6222 },
+            "Quảng Trị": { lat: 16.7403, lng: 107.1858 },
+            "Thừa Thiên Huế": { lat: 16.4637, lng: 107.5909 },
+            "Quảng Nam": { lat: 15.5394, lng: 108.0191 },
+            "Quảng Ngãi": { lat: 15.1214, lng: 108.8044 },
+            "Bình Định": { lat: 13.7763, lng: 109.2177 },
+            "Phú Yên": { lat: 13.0881, lng: 109.0929 },
+            "Khánh Hòa": { lat: 12.2388, lng: 109.1967 },
+            "Ninh Thuận": { lat: 11.5752, lng: 108.9229 },
+            "Bình Thuận": { lat: 11.0904, lng: 108.0721 },
+            "Kon Tum": { lat: 14.3497, lng: 108.0130 },
+            "Gia Lai": { lat: 13.9833, lng: 108.0000 },
+            "Đắk Lắk": { lat: 12.7100, lng: 108.2378 },
+            "Đắk Nông": { lat: 12.2646, lng: 107.6098 },
+            "Lâm Đồng": { lat: 11.5752, lng: 108.1429 },
+            "Bình Phước": { lat: 11.7511, lng: 106.7234 },
+            "Tây Ninh": { lat: 11.3100, lng: 106.1000 },
+            "Bình Dương": { lat: 11.3254, lng: 106.4770 },
+            "Đồng Nai": { lat: 10.9571, lng: 106.8438 },
+            "Bà Rịa - Vũng Tàu": { lat: 10.4113, lng: 107.1362 },
+            "Long An": { lat: 10.6956, lng: 106.2431 },
+            "Tiền Giang": { lat: 10.3632, lng: 106.3600 },
+            "Bến Tre": { lat: 10.2431, lng: 106.3757 },
+            "Trà Vinh": { lat: 9.9478, lng: 106.3267 },
+            "Vĩnh Long": { lat: 10.2397, lng: 105.9571 },
+            "Đồng Tháp": { lat: 10.6637, lng: 105.6357 },
+            "An Giang": { lat: 10.5215, lng: 105.1258 },
+            "Kiên Giang": { lat: 10.0125, lng: 105.0806 },
+            "Cà Mau": { lat: 9.1767, lng: 105.1524 },
+            "Bạc Liêu": { lat: 9.2945, lng: 105.7244 },
+            "Sóc Trăng": { lat: 9.6003, lng: 105.9800 },
+            "Hậu Giang": { lat: 9.7570, lng: 105.6412 }
+        };
+        // ==== Hàm tính toán và filter tương tự experiences.jsp, nhưng cho accommodation ====
+        // ... (phần JS distance filter đầy đủ sẽ được chèn ở đây, đã chỉnh selector và biến cho accommodation) ...
+
+        // Haversine formula
+        function calculateDistance(coord1, coord2) {
+            const R = 6371;
+            const lat1 = coord1.lat * Math.PI / 180;
+            const lat2 = coord2.lat * Math.PI / 180;
+            const deltaLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+            const deltaLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+            const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        async function getCoordinatesFromAddress(address) {
+            try {
+                const cleanAddress = address.trim();
+                if (vietnamCities[cleanAddress]) return vietnamCities[cleanAddress];
+                for (const cityName in vietnamCities) {
+                    if (cleanAddress.toLowerCase().includes(cityName.toLowerCase()) ||
+                        cityName.toLowerCase().includes(cleanAddress.toLowerCase())) {
+                        return vietnamCities[cityName];
+                    }
+                }
+                return null;
+            } catch (error) {
+                console.error('Error getting coordinates for address:', address, error);
+                return null;
+            }
+        }
+
+        function extractAccommodationDataFromCard(card) {
+            try {
+                const titleElement = card.querySelector('h5');
+                const locationElement = card.querySelector('.location span');
+                const priceElement = card.querySelector('.price');
+                const ratingElement = card.querySelector('.rating span');
+                const imageElement = card.querySelector('.card-image img');
+                const typeElement = card.querySelector('.card-badge');
+                const viewButton = card.querySelector('a[href*="/accommodations/"]');
+                const descriptionElement = card.querySelector('.card-content p');
+                const hostElement = card.querySelector('.host-name');
+                if (!titleElement || !viewButton) return null;
+                return {
+                    id: extractAccommodationId(card),
+                    name: titleElement.textContent.trim(),
+                    location: locationElement ? locationElement.textContent.trim() : '',
+                    price: extractPrice(priceElement),
+                    rating: extractRating(ratingElement),
+                    firstImage: imageElement ? imageElement.src.split('/').pop() : '',
+                    type: typeElement ? typeElement.textContent.trim() : '',
+                    description: descriptionElement ? descriptionElement.textContent.trim() : '',
+                    hostName: hostElement ? hostElement.textContent.replace('Host: ', '').trim() : '',
+                    element: null
+                };
+            } catch (error) {
+                console.error('Error extracting accommodation data from card:', error);
+                return null;
+            }
+        }
+        function extractAccommodationId(card) {
+            const viewButton = card.querySelector('a[href*="/accommodations/"]');
+            if (viewButton) {
+                const href = viewButton.getAttribute('href');
+                const match = href.match(/\/accommodations\/(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }
+            return 0;
+        }
+        function extractPrice(priceElement) {
+            if (!priceElement) return 0;
+            const text = priceElement.textContent;
+            if (text.includes('Miễn phí')) return 0;
+            const match = text.match(/[\d,]+/);
+            return match ? parseInt(match[0].replace(/,/g, '')) : 0;
+        }
+        function extractRating(ratingElement) {
+            if (!ratingElement) return 0;
+            const text = ratingElement.textContent;
+            const match = text.match(/[\d.]+/);
+            return match ? parseFloat(match[0]) : 0;
+        }
+        function formatDistance(distance) {
+            if (distance < 1) return Math.round(distance * 1000) + 'm';
+            return distance.toFixed(1) + 'km';
+        }
+        function showToast(message, type = 'success') {
+            const toastContainer = document.querySelector('.toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            let icon = '<i class="ri-check-line"></i>';
+            if (type === 'error') icon = '<i class="ri-error-warning-line" style="color: #FF385C;"></i>';
+            else if (type === 'info') icon = '<i class="ri-information-line" style="color: #3498db;"></i>';
+            toast.innerHTML = icon + '<span>' + message + '</span>';
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => { if (toast.parentNode) toastContainer.removeChild(toast); }, 300);
+            }, 3000);
+        }
+        function initializeSimpleDistanceFilter() {
+            const locationToggle = document.getElementById('locationToggle');
+            const distanceControls = document.getElementById('distanceControls');
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            const locationStatus = document.getElementById('locationStatus');
+            if (!locationToggle || !distanceControls || !distanceSlider || !distanceValue) return;
+            distanceFilter = { userLocation: null, isLocationEnabled: false };
+            locationToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    distanceControls.classList.remove('d-none');
+                    requestUserLocation();
+                } else {
+                    distanceControls.classList.add('d-none');
+                    distanceFilter.isLocationEnabled = false;
+                    showAllAccommodations();
+                }
+            });
+            distanceSlider.addEventListener('input', function() {
+                distanceValue.textContent = this.value;
+            });
+            distanceSlider.addEventListener('change', function() {
+                if (distanceFilter.isLocationEnabled && distanceFilter.userLocation) {
+                    filterAccommodationsByDistance(parseInt(this.value));
+                }
+            });
+            function requestUserLocation() {
+                locationStatus.innerHTML = '<i class="ri-loader-4-line"></i> Đang lấy vị trí...';
+                if (!navigator.geolocation) {
+                    locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> Trình duyệt không hỗ trợ định vị';
+                    locationToggle.checked = false;
+                    distanceControls.classList.add('d-none');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        distanceFilter.userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        distanceFilter.isLocationEnabled = true;
+                        locationStatus.innerHTML = '<i class="ri-map-pin-line text-success"></i> Đã lấy vị trí thành công';
+                        filterAccommodationsByDistance(parseInt(distanceSlider.value));
+                    },
+                    function(error) {
+                        let errorMessage = 'Không thể lấy vị trí';
+                        if (error.code === 1) errorMessage = 'Bạn đã từ chối truy cập vị trí';
+                        locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> ' + errorMessage;
+                        locationToggle.checked = false;
+                        distanceControls.classList.add('d-none');
+                    }
+                );
+            }
+        }
+        async function filterAccommodationsByDistance(maxDistance) {
+            if (!distanceFilter || !distanceFilter.isLocationEnabled || !distanceFilter.userLocation) {
+                showToast('Vui lòng cho phép truy cập vị trí để lọc theo khoảng cách', 'error');
+                return;
+            }
+            showLoadingState();
+            const allAccommodations = await loadAllAccommodations();
+            if (allAccommodations.length === 0) {
+                showToast('Không tìm thấy chỗ lưu trú nào để lọc', 'error');
+                return;
+            }
+            const filteredAccommodations = await filterAccommodationsByDistanceFromList(allAccommodations, maxDistance);
+            filteredAccommodations.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+            currentFilteredAccommodations = filteredAccommodations;
+            isDistanceFilterActive = true;
+            currentDistanceFilterPage = 1;
+            if (filteredAccommodations.length === 0) {
+                showNoDistanceResults(maxDistance);
+            } else {
+                displayFilteredAccommodations(currentDistanceFilterPage);
+                updateResultsCount(filteredAccommodations.length, 'chỗ lưu trú trong bán kính ' + maxDistance + 'km');
+                createDistanceFilterPagination(filteredAccommodations.length, maxDistance);
+                showToast('Tìm thấy ' + filteredAccommodations.length + ' chỗ lưu trú trong bán kính ' + maxDistance + 'km', 'success');
+            }
+            hideLoadingState();
+        }
+        async function filterAccommodationsByDistanceFromList(accommodations, maxDistance) {
+            const filtered = [];
+            for (const acc of accommodations) {
+                if (!acc.location) continue;
+                const accCoords = await getCoordinatesFromAddress(acc.location);
+                if (accCoords) {
+                    const distance = calculateDistance(distanceFilter.userLocation, accCoords);
+                    if (distance <= maxDistance) {
+                        acc.distance = distance;
+                        filtered.push(acc);
+                    }
+                }
+            }
+            return filtered;
+        }
+        function displayFilteredAccommodations(page) {
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageAccommodations = currentFilteredAccommodations.slice(startIndex, endIndex);
+            const container = document.querySelector('.cards-grid');
+            container.innerHTML = '';
+            pageAccommodations.forEach(acc => {
+                const card = createAccommodationCard(acc);
+                container.appendChild(card);
+            });
+            currentDistanceFilterPage = page;
+            setTimeout(() => { loadUserFavorites && loadUserFavorites(); }, 100);
+        }
+        function createAccommodationCard(acc) {
+            if (acc.element) {
+                const card = acc.element.cloneNode(true);
+                if (acc.distance !== undefined) {
+                    const cardImage = card.querySelector('.card-image');
+                    if (cardImage) {
+                        const existingDistanceBadge = cardImage.querySelector('.distance-badge');
+                        if (existingDistanceBadge) existingDistanceBadge.remove();
+                        const distanceBadge = document.createElement('div');
+                        distanceBadge.className = 'distance-badge';
+                        distanceBadge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(acc.distance);
+                        cardImage.appendChild(distanceBadge);
+                    }
+                }
+                const favoriteBtn = card.querySelector('.favorite-btn');
+                if (favoriteBtn) favoriteBtn.setAttribute('onclick', 'toggleFavorite(this)');
+                return card;
+            }
+            // fallback: tạo card mới nếu không có element gốc
+            const card = document.createElement('div');
+            card.className = 'card-item';
+            // ... (có thể bổ sung render fallback nếu cần)
+            return card;
+        }
+        function createDistanceFilterPagination(totalItems, maxDistance) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (!paginationContainer) return;
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            paginationContainer.style.display = 'flex';
+            const pagination = paginationContainer.querySelector('.pagination');
+            pagination.innerHTML = '';
+            if (currentDistanceFilterPage > 1) {
+                const prevLi = document.createElement('li');
+                prevLi.className = 'page-item';
+                const prevLink = document.createElement('a');
+                prevLink.className = 'page-link';
+                prevLink.href = '#';
+                prevLink.setAttribute('onclick', 'changeDistanceFilterPage(' + (currentDistanceFilterPage - 1) + ', ' + maxDistance + ')');
+                prevLink.innerHTML = '<i class="ri-arrow-left-s-line"></i>';
+                prevLi.appendChild(prevLink);
+                pagination.appendChild(prevLi);
+            }
+            for (let i = 1; i <= totalPages; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = 'page-item' + (i === currentDistanceFilterPage ? ' active' : '');
+                const pageLink = document.createElement('a');
+                pageLink.className = 'page-link';
+                pageLink.href = '#';
+                pageLink.setAttribute('onclick', 'changeDistanceFilterPage(' + i + ', ' + maxDistance + ')');
+                pageLink.textContent = i;
+                pageLi.appendChild(pageLink);
+                pagination.appendChild(pageLi);
+            }
+            if (currentDistanceFilterPage < totalPages) {
+                const nextLi = document.createElement('li');
+                nextLi.className = 'page-item';
+                const nextLink = document.createElement('a');
+                nextLink.className = 'page-link';
+                nextLink.href = '#';
+                nextLink.setAttribute('onclick', 'changeDistanceFilterPage(' + (currentDistanceFilterPage + 1) + ', ' + maxDistance + ')');
+                nextLink.innerHTML = '<i class="ri-arrow-right-s-line"></i>';
+                nextLi.appendChild(nextLink);
+                pagination.appendChild(nextLi);
+            }
+        }
+        function changeDistanceFilterPage(page, maxDistance) {
+            if (page < 1 || page > Math.ceil(currentFilteredAccommodations.length / itemsPerPage)) return;
+            displayFilteredAccommodations(page);
+            createDistanceFilterPagination(currentFilteredAccommodations.length, maxDistance);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function showLoadingState() {
+            const container = document.querySelector('.cards-grid');
+            const loadingWrapper = document.createElement('div');
+            loadingWrapper.className = 'col-12 text-center py-5';
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner-border text-primary';
+            spinner.setAttribute('role', 'status');
+            const spinnerText = document.createElement('span');
+            spinnerText.className = 'visually-hidden';
+            spinnerText.textContent = 'Đang tải...';
+            spinner.appendChild(spinnerText);
+            const message = document.createElement('p');
+            message.className = 'mt-3';
+            message.textContent = 'Đang tìm kiếm chỗ lưu trú gần bạn...';
+            loadingWrapper.appendChild(spinner);
+            loadingWrapper.appendChild(message);
+            container.innerHTML = '';
+            container.appendChild(loadingWrapper);
+        }
+        function showNoDistanceResults(maxDistance) {
+            const container = document.querySelector('.cards-grid');
+            const noResultsWrapper = document.createElement('div');
+            noResultsWrapper.className = 'no-results';
+            noResultsWrapper.innerHTML = `
+                <i class="ri-map-pin-line"></i>
+                <h4>Không tìm thấy chỗ lưu trú nào trong bán kính ${maxDistance}km</h4>
+                <p>Hãy thử tăng khoảng cách tìm kiếm hoặc tắt bộ lọc khoảng cách</p>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" onclick="increaseDistance()">
+                        <i class="ri-add-line me-2"></i>Tăng khoảng cách
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="disableDistanceFilter()">
+                        <i class="ri-close-line me-2"></i>Tắt lọc khoảng cách
+                    </button>
+                </div>
+            `;
+            container.innerHTML = '';
+            container.appendChild(noResultsWrapper);
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) paginationContainer.style.display = 'none';
+        }
+        function increaseDistance() {
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            if (distanceSlider && distanceValue) {
+                const currentValue = parseInt(distanceSlider.value);
+                const newValue = Math.min(currentValue + 20, 100);
+                distanceSlider.value = newValue;
+                distanceValue.textContent = newValue;
+                filterAccommodationsByDistance(newValue);
+            }
+        }
+        function disableDistanceFilter() {
+            const locationToggle = document.getElementById('locationToggle');
+            const distanceControls = document.getElementById('distanceControls');
+            if (locationToggle && distanceControls) {
+                locationToggle.checked = false;
+                distanceControls.classList.add('d-none');
+                distanceFilter.isLocationEnabled = false;
+                showAllAccommodations();
+            }
+        }
+        function hideLoadingState() {}
+        function showAllAccommodations() {
+            isDistanceFilterActive = false;
+            currentFilteredAccommodations = [];
+            const container = document.querySelector('.cards-grid');
+            container.innerHTML = '';
+            allAccommodations.forEach(acc => { if (acc.element) container.appendChild(acc.element); });
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) {
+                paginationContainer.style.display = 'flex';
+                const originalPagination = paginationContainer.getAttribute('data-original-pagination');
+                if (originalPagination) paginationContainer.innerHTML = originalPagination;
+            }
+            updateResultsCount(totalAccommodationsCount, 'chỗ lưu trú được tìm thấy');
+            setTimeout(() => { loadUserFavorites && loadUserFavorites(); }, 100);
+        }
+        function updateResultsCount(visibleCount, suffix) {
+            const resultsHeader = document.querySelector('#resultsTitle');
+            if (resultsHeader) {
+                if (suffix.includes('trong bán kính')) {
+                    resultsHeader.innerHTML = '<i class="ri-home-heart-line me-2" style="color: var(--primary-500);"></i>' +
+                        visibleCount + '/' + totalAccommodationsCount + ' ' + suffix;
+                } else {
+                    if (originalResultsTitle) resultsHeader.innerHTML = originalResultsTitle;
+                    else resultsHeader.innerHTML = '<i class="ri-home-heart-line me-2" style="color: var(--primary-500);"></i>' +
+                        totalAccommodationsCount + ' chỗ lưu trú được tìm thấy';
+                }
+            }
+        }
+        async function loadAllAccommodations() {
+            if (allAccommodationsFromAllPages.length >= totalAccommodationsCount) return allAccommodationsFromAllPages;
+            try {
+                const allAccs = [];
+                const totalPages = Math.ceil(totalAccommodationsCount / itemsPerPage);
+                const pagePromises = [];
+                for (let page = 1; page <= totalPages; page++) {
+                    pagePromises.push(loadAccommodationsFromPage(page));
+                }
+                const pageResults = await Promise.all(pagePromises);
+                pageResults.forEach(pageAccs => { allAccs.push(...pageAccs); });
+                allAccommodationsFromAllPages = allAccs;
+                return allAccs;
+            } catch (error) {
+                console.error('Error loading all accommodations:', error);
+                return allAccommodationsFromAllPages;
+            }
+        }
+        async function loadAccommodationsFromPage(pageNumber) {
+            try {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('page', pageNumber);
+                const response = await fetch(currentUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const accommodationCards = doc.querySelectorAll('.card-item');
+                const pageAccs = [];
+                accommodationCards.forEach(card => {
+                    const acc = extractAccommodationDataFromCard(card);
+                    if (acc) {
+                        acc.element = card.cloneNode(true);
+                        pageAccs.push(acc);
+                    }
+                });
+                return pageAccs;
+            } catch (error) {
+                console.error(`Error loading page ${pageNumber}:`, error);
+                return [];
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultsHeader = document.querySelector('#resultsTitle');
+            if (resultsHeader) {
+                originalResultsTitle = resultsHeader.innerHTML;
+                // Ưu tiên lấy từ biến JSP nếu có
+                let totalFromJsp = 0;
+                try {
+                    totalFromJsp = parseInt('${totalAccommodations}');
+                } catch (e) { totalFromJsp = 0; }
+                if (!isNaN(totalFromJsp) && totalFromJsp > 0) {
+                    totalAccommodationsCount = totalFromJsp;
+                } else {
+                    // Nếu không có, parse từ text
+                    const titleText = resultsHeader.textContent;
+                    const match = titleText.match(/(\d+)\s+chỗ lưu trú/);
+                    if (match) totalAccommodationsCount = parseInt(match[1]);
+                }
+            }
+            const paginationContainer = document.querySelector('.pagination-container');
+            if (paginationContainer) paginationContainer.setAttribute('data-original-pagination', paginationContainer.innerHTML);
+            allAccommodations = [];
+            initializeSimpleDistanceFilter();
+            const accommodationCards = document.querySelectorAll('.card-item');
+            accommodationCards.forEach(card => {
+                const acc = extractAccommodationDataFromCard(card);
+                if (acc) {
+                    acc.element = card.cloneNode(true);
+                    allAccommodations.push(acc);
+                }
+            });
+            allAccommodationsFromAllPages = [...allAccommodations];
+            const currentDisplayedItems = document.querySelectorAll('.card-item').length;
+            if (currentDisplayedItems > 0) itemsPerPage = currentDisplayedItems;
+        });
     </script>
 </body>
 </html>
