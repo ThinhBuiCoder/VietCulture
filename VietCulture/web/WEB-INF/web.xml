@@ -5,6 +5,15 @@
 
     <display-name>VietCulture</display-name>
 
+    <!-- Report Servlet Mapping -->
+    <servlet>
+        <servlet-name>ReportServlet</servlet-name>
+        <servlet-class>controller.ReportServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ReportServlet</servlet-name>
+        <url-pattern>/report</url-pattern>
+    </servlet-mapping>
     
     <session-config>
         <session-timeout>30</session-timeout>

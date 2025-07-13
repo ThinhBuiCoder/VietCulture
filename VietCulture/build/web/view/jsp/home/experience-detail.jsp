@@ -2360,6 +2360,11 @@
                             <i class="ri-calendar-line"></i>
                             <span>Lịch trình</span>
                         </a>
+                        <!-- Nút Báo cáo -->
+                        <a href="#" class="action-btn" onclick="openReportModal(); return false;">
+                            <i class="ri-flag-2-line"></i>
+                            <span>Báo cáo</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -4694,6 +4699,164 @@
                                             }
                                           });
                                         }
+
+                                        function openReportModal() {
+                                            // Lấy biến từ JSP
+                                            var isLoggedIn = ('${not empty sessionScope.user ? "true" : "false"}' === 'true');
+                                            var canReport = ('${canReportExperience ? "true" : "false"}' === 'true');
+
+                                            const modal = document.getElementById('reportModal');
+                                            const modalContent = document.getElementById('reportModalContent');
+                                            if (!modal || !modalContent) return;
+
+                                            if (!isLoggedIn || !canReport) {
+                                                // Hiện thông báo giống modal đánh giá
+                                                modalContent.innerHTML = `
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Báo cáo trải nghiệm</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                                    </div>
+                                                    <div class="modal-body text-center">
+                                                        <i class="ri-information-line" style="font-size:3rem;color:#FF385C"></i>
+                                                        <h5 class="mt-3 mb-2">Chỉ khách đã đặt tour mới có thể báo cáo</h5>
+                                                        <p class="text-muted mb-4">Vui lòng đặt và tham gia trải nghiệm để có thể gửi báo cáo.</p>
+                                                        <button class="btn btn-primary" onclick="goToBookingFromReport();return false;">Đặt ngay</button>
+                                                    </div>
+                                                `;
+                                            } else {
+                                                // Hiện form báo cáo như cũ
+                                                modalContent.innerHTML = `
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="reportModalLabel">Báo cáo trải nghiệm</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <form id="reportForm">
+                                                            <div class="mb-3">
+                                                                <label for="reportReason" class="form-label">Lý do báo cáo</label>
+                                                                <select class="form-control" id="reportReason" required>
+                                                                    <option value="">Chọn lý do</option>
+                                                                    <option value="spam">Spam/quảng cáo</option>
+                                                                    <option value="inappropriate">Nội dung không phù hợp</option>
+                                                                    <option value="fraud">Lừa đảo</option>
+                                                                    <option value="other">Khác</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="reportDetail" class="form-label">Chi tiết (tuỳ chọn)</label>
+                                                                <textarea class="form-control" id="reportDetail" rows="3"></textarea>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-primary">Gửi báo cáo</button>
+                                                        </form>
+                                                    </div>
+                                                `;
+                                            }
+
+                                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                                const bsModal = new bootstrap.Modal(modal);
+                                                bsModal.show();
+                                            } else {
+                                                modal.style.display = 'block';
+                                                modal.classList.add('show');
+                                                document.body.classList.add('modal-open');
+                                            }
+
+                                            // Gắn lại event submit cho form nếu có
+                                            setTimeout(() => {
+                                                const reportForm = document.getElementById('reportForm');
+                                                if (reportForm) {
+                                                    reportForm.addEventListener('submit', function(e) {
+                                                        e.preventDefault();
+                                                        // Lấy dữ liệu từ form
+                                                        const reason = document.getElementById('reportReason').value;
+                                                        const description = document.getElementById('reportDetail').value;
+                                                        const experienceId = "${experience.experienceId}";
+
+                                                        // Gửi AJAX POST tới JSP handler
+                                                        fetch('${pageContext.request.contextPath}/view/jsp/report-handler.jsp', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/x-www-form-urlencoded'
+                                                            },
+                                                            body: new URLSearchParams({
+                                                                contentType: 'experience',
+                                                                contentId: experienceId,
+                                                                reason: reason,
+                                                                description: description
+                                                            })
+                                                        })
+                                                        .then(response => {
+                                                            if (response.ok) {
+                                                                showToast('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất!', 'success');
+                                                            } else {
+                                                                showToast('Gửi báo cáo thất bại!', 'error');
+                                                            }
+                                                            // Đóng modal
+                                                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                                                const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+                                                                if (modal) modal.hide();
+                                                            }
+                                                            reportForm.reset();
+                                                        })
+                                                        .catch(() => {
+                                                            showToast('Gửi báo cáo thất bại!', 'error');
+                                                        });
+                                                    });
+                                                }
+                                            }, 200);
+                                        }
+
+                                        document.addEventListener('DOMContentLoaded', function() {
+                                            const reportForm = document.getElementById('reportForm');
+                                            if (reportForm) {
+                                                reportForm.addEventListener('submit', function(e) {
+                                                    e.preventDefault();
+                                                    showToast('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất!', 'success');
+                                                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                                        const modal = bootstrap.Modal.getInstance(document.getElementById('reportModal'));
+                                                        if (modal) modal.hide();
+                                                    } else {
+                                                        const modal = document.getElementById('reportModal');
+                                                        modal.style.display = 'none';
+                                                        modal.classList.remove('show');
+                                                        document.body.classList.remove('modal-open');
+                                                    }
+                                                    reportForm.reset();
+                                                });
+                                            }
+                                        });
+
+                                        function goToBookingFromReport() {
+                                            // Đóng modal báo cáo
+                                            const reportModal = document.getElementById('reportModal');
+                                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                                const modal = bootstrap.Modal.getInstance(reportModal);
+                                                if (modal) modal.hide();
+                                            } else {
+                                                reportModal.style.display = 'none';
+                                                reportModal.classList.remove('show');
+                                                document.body.classList.remove('modal-open');
+                                            }
+                                            // Cuộn mượt xuống phần booking
+                                            setTimeout(() => {
+                                                const bookingSection = document.querySelector('.booking-card');
+                                                if (bookingSection) {
+                                                    const navbar = document.querySelector('.custom-navbar');
+                                                    const navbarHeight = navbar ? navbar.offsetHeight : 0;
+                                                    const targetPosition = bookingSection.getBoundingClientRect().top + window.scrollY - navbarHeight - 20;
+                                                    window.scrollTo({
+                                                        top: targetPosition,
+                                                        behavior: 'smooth'
+                                                    });
+                                                    // Highlight booking card
+                                                    bookingSection.style.transition = 'all 0.3s ease';
+                                                    bookingSection.style.boxShadow = '0 0 20px rgba(255, 56, 92, 0.4)';
+                                                    setTimeout(() => {
+                                                        bookingSection.style.boxShadow = '';
+                                                    }, 2000);
+                                                }
+                                            }, 350);
+                                        }
         </script>
 
         <!-- Simple Map Helper Functions -->
@@ -4909,6 +5072,15 @@
                             <jsp:param name="experience" value="${experience}" />
                         </jsp:include>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Báo Cáo -->
+        <div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" id="reportModalContent">
+                    <!-- Nội dung sẽ được render bằng JS -->
                 </div>
             </div>
         </div>

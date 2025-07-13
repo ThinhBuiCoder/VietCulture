@@ -139,6 +139,10 @@ public class ExperiencesServlet extends HttpServlet {
             }
             request.setAttribute("hasBooked", hasBooked);
 
+            // Thêm dòng này để quyền báo cáo hoạt động đúng
+            boolean canReportExperience = hasBooked;
+            request.setAttribute("canReportExperience", canReportExperience);
+
             // Log access
             LOGGER.info("Experience detail accessed - ID: " + experienceId
                     + ", Title: " + experience.getTitle());
