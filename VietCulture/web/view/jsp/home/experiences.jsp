@@ -1849,7 +1849,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
+   <script>
         // JSP Variables for JavaScript use
         const JSP_VARS = {
             isLoggedIn: <c:choose><c:when test="${not empty sessionScope.user}">true</c:when><c:otherwise>false</c:otherwise></c:choose>,
@@ -1917,8 +1917,8 @@
                         toastContainer.removeChild(toast);
                     }
                 }, 300);
-                         }, 3000);
-         }
+            }, 3000);
+        }
 
         // Improved favorite functionality
         function toggleFavorite(button) {
@@ -2235,7 +2235,7 @@
             animateOnScroll();
         });
         
-        // Extract experience data from a DOM card
+        // Cải thiện function extractExperienceDataFromCard để lưu thêm thông tin
         function extractExperienceDataFromCard(card) {
             try {
                 const titleElement = card.querySelector('h5');
@@ -2246,6 +2246,11 @@
                 const typeElement = card.querySelector('.card-badge');
                 const difficultyElement = card.querySelector('.difficulty-badge');
                 const viewButton = card.querySelector('a[href*="/experiences/"]');
+                const descriptionElement = card.querySelector('.card-content p');
+                const hostElement = card.querySelector('.host-name');
+                const durationElement = card.querySelector('.info-row span i.ri-time-line');
+                const groupSizeElement = card.querySelector('.info-row span i.ri-group-line');
+                const includedItemsElement = card.querySelector('.info-row span i.ri-check-line');
                 
                 if (!titleElement || !viewButton) {
                     return null;
@@ -2258,17 +2263,51 @@
                     cityName: locationElement ? locationElement.textContent.trim() : '',
                     price: extractPrice(priceElement),
                     rating: extractRating(ratingElement),
-                    totalBookings: 0,
+                    totalBookings: extractTotalBookings(card),
                     firstImage: imageElement ? imageElement.src.split('/').pop() : '',
                     images: imageElement ? imageElement.src.split('/').pop() : '',
                     type: typeElement ? typeElement.textContent.trim() : '',
                     difficulty: difficultyElement ? difficultyElement.textContent.trim() : '',
-                    element: null
+                    description: descriptionElement ? descriptionElement.textContent.trim() : '',
+                    hostName: hostElement ? hostElement.textContent.replace('Host: ', '').trim() : '',
+                    duration: durationElement ? durationElement.parentElement.textContent.trim() : '',
+                    maxGroupSize: groupSizeElement ? extractGroupSize(groupSizeElement.parentElement.textContent) : '',
+                    includedItems: includedItemsElement ? includedItemsElement.parentElement.textContent.replace(/^[^:]*:\s*/, '').trim() : '',
+                    element: null // Sẽ được gán sau
                 };
             } catch (error) {
                 console.error('Error extracting experience data from card:', error);
                 return null;
             }
+        }
+
+        // Helper functions mới
+        function extractTotalBookings(card) {
+            const ratingElement = card.querySelector('.rating small');
+            if (ratingElement) {
+                const match = ratingElement.textContent.match(/\((\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }
+            return 0;
+        }
+
+        function extractGroupSize(text) {
+            const match = text.match(/(\d+)\s*người/);
+            return match ? parseInt(match[1]) : '';
+        }
+
+        function formatDuration(duration) {
+            // Nếu duration là string từ DOM
+            if (typeof duration === 'string') {
+                return duration;
+            }
+            // Nếu duration là Date object từ database
+            if (duration instanceof Date) {
+                const hours = duration.getHours();
+                const minutes = duration.getMinutes();
+                return hours + 'h' + (minutes > 0 ? minutes.toString().padStart(2, '0') : '');
+            }
+            return 'Cả ngày';
         }
         
         // Load all experiences from all pages
@@ -2329,30 +2368,10 @@
                 const pageExperiences = [];
                 
                 experienceCards.forEach((card, index) => {
-                    const titleElement = card.querySelector('h5');
-                    const locationElement = card.querySelector('.location span');
-                    const priceElement = card.querySelector('.price');
-                    const ratingElement = card.querySelector('.rating span');
-                    const imageElement = card.querySelector('.card-image img');
-                    const typeElement = card.querySelector('.card-badge');
-                    const difficultyElement = card.querySelector('.difficulty-badge');
-                    
-                    if (titleElement) {
-                        const experience = {
-                            id: extractExperienceId(card),
-                            title: titleElement.textContent.trim(),
-                            location: locationElement ? locationElement.textContent.trim() : '',
-                            cityName: locationElement ? locationElement.textContent.trim() : '',
-                            price: extractPrice(priceElement),
-                            rating: extractRating(ratingElement),
-                            totalBookings: 0,
-                            firstImage: imageElement ? imageElement.src.split('/').pop() : '',
-                            images: imageElement ? imageElement.src.split('/').pop() : '',
-                            type: typeElement ? typeElement.textContent.trim() : '',
-                            difficulty: difficultyElement ? difficultyElement.textContent.trim() : '',
-                            element: card.cloneNode(true)
-                        };
-                        
+                    const experience = extractExperienceDataFromCard(card);
+                    if (experience) {
+                        // Clone the card element
+                        experience.element = card.cloneNode(true);
                         pageExperiences.push(experience);
                     }
                 });
@@ -2487,10 +2506,52 @@
             
             // Update page number
             currentDistanceFilterPage = page;
+            
+            // Reload favorites for new cards
+            setTimeout(() => {
+                loadUserFavorites();
+            }, 100);
         }
         
-        // Create experience card element
+        // Cải thiện function createExperienceCard để tạo card giống hệt card gốc
         function createExperienceCard(experience) {
+            // Nếu có element gốc, clone và cập nhật distance badge
+            if (experience.element) {
+                const card = experience.element.cloneNode(true);
+                
+                // Thêm distance badge nếu có distance
+                if (experience.distance !== undefined) {
+                    const cardImage = card.querySelector('.card-image');
+                    if (cardImage) {
+                        // Xóa distance badge cũ nếu có
+                        const existingDistanceBadge = cardImage.querySelector('.distance-badge');
+                        if (existingDistanceBadge) {
+                            existingDistanceBadge.remove();
+                        }
+                        
+                        // Thêm distance badge mới
+                        const distanceBadge = document.createElement('div');
+                        distanceBadge.className = 'distance-badge';
+                        distanceBadge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(experience.distance);
+                        cardImage.appendChild(distanceBadge);
+                    }
+                }
+                
+                // Đảm bảo favorite button hoạt động đúng
+                const favoriteBtn = card.querySelector('.favorite-btn');
+                if (favoriteBtn) {
+                    favoriteBtn.setAttribute('onclick', 'toggleFavorite(this)');
+                }
+                
+                return card;
+            }
+            
+            // Fallback: tạo card mới với cấu trúc đầy đủ
+            return createFullExperienceCard(experience);
+        }
+
+        // Function tạo card đầy đủ (backup cho trường hợp không có element gốc)
+        function createFullExperienceCard(experience) {
             const card = document.createElement('div');
             card.className = 'card-item';
             
@@ -2528,16 +2589,33 @@
             }
             
             // Add type badge
-            const typeBadge = document.createElement('div');
-            typeBadge.className = 'card-badge';
-            typeBadge.textContent = experience.type;
-            cardImage.appendChild(typeBadge);
+            if (experience.type) {
+                const typeBadge = document.createElement('div');
+                typeBadge.className = 'card-badge';
+                let typeText = experience.type;
+                // Convert type to Vietnamese
+                switch(experience.type) {
+                    case 'Food': typeText = 'Ẩm Thực'; break;
+                    case 'Culture': typeText = 'Văn Hóa'; break;
+                    case 'Adventure': typeText = 'Phiêu Lưu'; break;
+                    case 'History': typeText = 'Lịch Sử'; break;
+                }
+                typeBadge.textContent = typeText;
+                cardImage.appendChild(typeBadge);
+            }
             
             // Add difficulty badge if exists
             if (experience.difficulty) {
                 const difficultyBadge = document.createElement('div');
                 difficultyBadge.className = 'difficulty-badge';
-                difficultyBadge.textContent = experience.difficulty;
+                let difficultyText = experience.difficulty;
+                // Convert difficulty to Vietnamese
+                switch(experience.difficulty) {
+                    case 'EASY': difficultyText = 'Dễ'; break;
+                    case 'MODERATE': difficultyText = 'Vừa'; break;
+                    case 'CHALLENGING': difficultyText = 'Khó'; break;
+                }
+                difficultyBadge.textContent = difficultyText;
                 cardImage.appendChild(difficultyBadge);
             }
             
@@ -2564,6 +2642,52 @@
             location.innerHTML = '<i class="ri-map-pin-line"></i><span>' + (experience.cityName || experience.location) + '</span>';
             cardContent.appendChild(location);
             
+            // Description (if available from experience data)
+            if (experience.description) {
+                const description = document.createElement('p');
+                const desc = experience.description.length > 100 ? 
+                    experience.description.substring(0, 100) + '...' : 
+                    experience.description;
+                description.textContent = desc;
+                cardContent.appendChild(description);
+            }
+            
+            // Info rows (duration, group size, etc.)
+            if (experience.duration || experience.maxGroupSize) {
+                const infoRow1 = document.createElement('div');
+                infoRow1.className = 'info-row';
+                
+                let infoHtml = '';
+                if (experience.duration) {
+                    infoHtml += '<span><i class="ri-time-line"></i> ' + formatDuration(experience.duration) + '</span>';
+                }
+                if (experience.maxGroupSize) {
+                    infoHtml += '<span><i class="ri-group-line"></i> Tối đa ' + experience.maxGroupSize + ' người</span>';
+                }
+                
+                infoRow1.innerHTML = infoHtml;
+                cardContent.appendChild(infoRow1);
+            }
+            
+            // Included items (if available)
+            if (experience.includedItems) {
+                const infoRow2 = document.createElement('div');
+                infoRow2.className = 'info-row';
+                
+                const items = experience.includedItems.split(',');
+                let itemsText = '';
+                if (items.length > 2) {
+                    itemsText = items[0].trim() + ', ' + items[1].trim() + '...';
+                } else {
+                    itemsText = experience.includedItems.length > 50 ? 
+                        experience.includedItems.substring(0, 50) + '...' : 
+                        experience.includedItems;
+                }
+                
+                infoRow2.innerHTML = '<span><i class="ri-check-line"></i> ' + itemsText + '</span>';
+                cardContent.appendChild(infoRow2);
+            }
+            
             // Footer with price and rating
             const cardFooter = document.createElement('div');
             cardFooter.className = 'card-footer';
@@ -2583,10 +2707,27 @@
                 const rating = document.createElement('div');
                 rating.className = 'rating';
                 rating.innerHTML = '<i class="ri-star-fill"></i><span>' + experience.rating.toFixed(1) + '</span>';
+                if (experience.totalBookings > 0) {
+                    rating.innerHTML += '<small>(' + experience.totalBookings + ' đánh giá)</small>';
+                }
                 cardFooter.appendChild(rating);
             }
             
             cardContent.appendChild(cardFooter);
+            
+            // Host info (if available)
+            if (experience.hostName) {
+                const hostInfo = document.createElement('div');
+                hostInfo.className = 'host-info';
+                hostInfo.innerHTML = `
+                    <img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" alt="Host" class="host-avatar">
+                    <div>
+                        <div class="host-name">Host: ${experience.hostName}</div>
+                        <small class="text-muted">Trải nghiệm địa phương</small>
+                    </div>
+                `;
+                cardContent.appendChild(hostInfo);
+            }
             
             // Action buttons
             const cardAction = document.createElement('div');
@@ -2816,27 +2957,32 @@
             
             // Restore original results count
             updateResultsCount(totalExperiencesCount, 'trải nghiệm được tìm thấy');
+            
+            // Reload favorites
+            setTimeout(() => {
+                loadUserFavorites();
+            }, 100);
         }
         
-                     // Update results count
-             function updateResultsCount(visibleCount, suffix) {
-                 const resultsHeader = document.querySelector('#resultsTitle');
-                 if (resultsHeader) {
-                     if (suffix.includes('trong bán kính')) {
-                         // When filtering by distance, show filtered count and total
-                         resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
-                             visibleCount + '/' + totalExperiencesCount + ' ' + suffix;
-                     } else {
-                         // When showing all, show original title or total count
-                         if (originalResultsTitle) {
-                             resultsHeader.innerHTML = originalResultsTitle;
-                         } else {
-                             resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
-                                 totalExperiencesCount + ' trải nghiệm được tìm thấy';
-                         }
-                     }
-                 }
-             }
+        // Update results count
+        function updateResultsCount(visibleCount, suffix) {
+            const resultsHeader = document.querySelector('#resultsTitle');
+            if (resultsHeader) {
+                if (suffix.includes('trong bán kính')) {
+                    // When filtering by distance, show filtered count and total
+                    resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                        visibleCount + '/' + totalExperiencesCount + ' ' + suffix;
+                } else {
+                    // When showing all, show original title or total count
+                    if (originalResultsTitle) {
+                        resultsHeader.innerHTML = originalResultsTitle;
+                    } else {
+                        resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                            totalExperiencesCount + ' trải nghiệm được tìm thấy';
+                    }
+                }
+            }
+        }
         
         // Format distance
         function formatDistance(distance) {
