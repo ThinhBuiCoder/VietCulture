@@ -199,6 +199,102 @@
             margin-bottom: 8px;
         }
 
+        /* Distance Filter Component Styles */
+        .distance-filter-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 5px;
+        }
+
+        .distance-filter-header {
+            margin-bottom: 15px;
+        }
+
+        .distance-filter-header .form-check-label {
+            font-weight: 500;
+            color: #495057;
+            cursor: pointer;
+        }
+
+        .distance-filter-controls {
+            transition: all 0.3s ease;
+        }
+
+        .distance-slider-container {
+            margin-bottom: 15px;
+        }
+
+        .distance-slider-wrapper {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .distance-slider {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            outline: none;
+            transition: background 0.3s ease;
+        }
+
+        .distance-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .distance-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .distance-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .location-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .location-status i {
+            font-size: 1.1rem;
+        }
+
+        .location-status i.spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Copy Button */
         .btn-copy {
             background-color: transparent;
@@ -1367,25 +1463,33 @@
                         </select>
                     </div>
 
-                    <div class="form-group distance-filter-container">
-                        <label for="distanceSelect">Khoảng Cách</label>
-                        <div style="position: relative;">
-                            <select class="form-control" name="distance" id="distanceSelect" disabled>
-                                <option value="">Chọn khoảng cách</option>
-                                <option value="2" ${param.distance == '2' ? 'selected' : ''}>Trong 2km</option>
-                                <option value="5" ${param.distance == '5' ? 'selected' : ''}>Trong 5km</option>
-                                <option value="10" ${param.distance == '10' ? 'selected' : ''}>Trong 10km</option>
-                                <option value="20" ${param.distance == '20' ? 'selected' : ''}>Trong 20km</option>
-                                <option value="50" ${param.distance == '50' ? 'selected' : ''}>Trong 50km</option>
-                            </select>
-                            <button type="button" class="location-btn" id="locationBtn" onclick="requestLocation()" title="Bật định vị để lọc theo khoảng cách">
-                                <i class="ri-map-pin-line"></i>
-                            </button>
-                            <!-- Hidden inputs for coordinates -->
-                            <input type="hidden" name="lat" id="userLat" value="${param.lat}">
-                            <input type="hidden" name="lng" id="userLng" value="${param.lng}">
+                    <div class="form-group">
+                        <label>Khoảng Cách</label>
+                        <div id="distanceFilterContainer">
+                            <!-- Fallback simple distance filter -->
+                            <div class="simple-distance-filter">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="locationToggle">
+                                    <label class="form-check-label" for="locationToggle">
+                                        <i class="ri-map-pin-line me-2"></i>Lọc theo khoảng cách
+                                    </label>
                         </div>
-                        
+                                <div id="distanceControls" class="d-none">
+                                    <label class="form-label">
+                                        Khoảng cách: <span id="distanceValue">20</span>km
+                                    </label>
+                                    <input type="range" class="form-range" id="distanceSlider" 
+                                           min="1" max="100" value="20" step="1">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>1km</span>
+                                        <span>100km</span>
+                                    </div>
+                                    <div id="locationStatus" class="mt-2 small text-muted">
+                                        <i class="ri-information-line"></i> Bấm để bật định vị
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -1419,11 +1523,18 @@
     <div class="container">
         <!-- Results Count -->
         <div class="results-header fade-up">
-            <h3>
+            <h3 id="resultsTitle">
                 <c:choose>
                     <c:when test="${not empty experiences}">
                         <i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>
+                        <c:choose>
+                            <c:when test="${not empty totalExperiences}">
+                                ${totalExperiences} trải nghiệm được tìm thấy
+                            </c:when>
+                            <c:otherwise>
                         ${fn:length(experiences)} trải nghiệm được tìm thấy
+                            </c:otherwise>
+                        </c:choose>
                     </c:when>
                     <c:otherwise>
                         <i class="ri-map-pin-2-line me-2" style="color: var(--secondary-500);"></i>
@@ -1717,7 +1828,385 @@
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/view/assets/js/location-utils.js"></script>
+    
+    <script>
+        // Initialize distance filter component
+        let distanceFilter;
+        let allExperiences = [];
+        let totalExperiencesCount = 0;
+        let originalResultsTitle = '';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Save original total count and title
+            const resultsTitle = document.getElementById('resultsTitle');
+            if (resultsTitle) {
+                originalResultsTitle = resultsTitle.innerHTML;
+                // Extract total count from title text
+                const titleText = resultsTitle.textContent;
+                const match = titleText.match(/(\d+)\s+trải nghiệm/);
+                if (match) {
+                    totalExperiencesCount = parseInt(match[1]);
+                }
+            }
+            // Collect all experiences data for client-side filtering
+            <c:if test="${not empty experiences}">
+                allExperiences = [
+                    <c:forEach var="experience" items="${experiences}" varStatus="status">
+                        {
+                            id: ${experience.experienceId},
+                            title: "${fn:escapeXml(experience.title)}",
+                            location: "${fn:escapeXml(experience.location)}",
+                            cityName: "${fn:escapeXml(experience.cityName)}",
+                            price: ${experience.price},
+                            rating: ${experience.averageRating},
+                            totalBookings: ${experience.totalBookings},
+                            firstImage: "${not empty experience.firstImage ? experience.firstImage : ''}",
+                            images: "${not empty experience.images ? experience.images : ''}",
+                            type: "${experience.type}",
+                            difficulty: "${experience.difficulty}",
+                            element: null // Will be set later
+                        }<c:if test="${not status.last}">,</c:if>
+                    </c:forEach>
+                ];
+            </c:if>
+            
+            // Initialize simple distance filter
+            initializeSimpleDistanceFilter();
+            
+            // Store references to DOM elements for each experience
+            const experienceCards = document.querySelectorAll('.card-item');
+            experienceCards.forEach((card, index) => {
+                if (allExperiences[index]) {
+                    allExperiences[index].element = card;
+                }
+            });
+        });
+        
+        // Filter experiences by distance
+        async function filterExperiencesByDistance(maxDistance) {
+            if (!distanceFilter || !distanceFilter.isLocationEnabled) {
+                showAllExperiences();
+                return;
+            }
+            
+            try {
+                const filteredExperiences = await distanceFilter.filterItems(allExperiences, 'location');
+                
+                // Hide all experiences first
+                hideAllExperiences();
+                
+                // Show filtered experiences
+                let visibleCount = 0;
+                filteredExperiences.forEach(exp => {
+                    if (exp.element) {
+                        exp.element.style.display = 'block';
+                        
+                        // Add distance badge
+                        const distanceBadge = exp.element.querySelector('.distance-badge');
+                        if (distanceBadge) {
+                            distanceBadge.remove();
+                        }
+                        
+                        if (exp.distance !== undefined) {
+                            const badge = document.createElement('div');
+                            badge.className = 'distance-badge';
+                                                         badge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(exp.distance);
+                            exp.element.querySelector('.card-image').appendChild(badge);
+                        }
+                        
+                        visibleCount++;
+                    }
+                });
+                
+                // Update results count
+                updateResultsCount(visibleCount, 'trải nghiệm trong bán kính ' + maxDistance + 'km');
+                
+            } catch (error) {
+                console.error('Error filtering experiences:', error);
+                showAllExperiences();
+            }
+        }
+        
+        // Show all experiences
+        function showAllExperiences() {
+            const experienceCards = document.querySelectorAll('.card-item');
+            experienceCards.forEach(card => {
+                card.style.display = 'block';
+                
+                // Remove distance badges
+                const distanceBadge = card.querySelector('.distance-badge');
+                if (distanceBadge) {
+                    distanceBadge.remove();
+                }
+            });
+            
+            updateResultsCount(allExperiences.length, 'trải nghiệm được tìm thấy');
+        }
+        
+        // Hide all experiences
+        function hideAllExperiences() {
+            const experienceCards = document.querySelectorAll('.card-item');
+            experienceCards.forEach(card => {
+                card.style.display = 'none';
+            });
+        }
+        
+                     // Update results count
+             function updateResultsCount(visibleCount, suffix) {
+                 const resultsHeader = document.querySelector('#resultsTitle');
+                 if (resultsHeader) {
+                     if (suffix.includes('trong bán kính')) {
+                         // When filtering by distance, show filtered count and total
+                         resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                             visibleCount + '/' + totalExperiencesCount + ' ' + suffix;
+                     } else {
+                         // When showing all, show original title or total count
+                         if (originalResultsTitle) {
+                             resultsHeader.innerHTML = originalResultsTitle;
+                         } else {
+                             resultsHeader.innerHTML = '<i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>' + 
+                                 totalExperiencesCount + ' trải nghiệm được tìm thấy';
+                         }
+                     }
+                 }
+             }
+        
+        // Format distance
+        function formatDistance(distance) {
+            if (distance < 1) {
+                return Math.round(distance * 1000) + 'm';
+            }
+            return distance.toFixed(1) + 'km';
+        }
+        
+        // Simple distance filter initialization
+        function initializeSimpleDistanceFilter() {
+            const locationToggle = document.getElementById('locationToggle');
+            const distanceControls = document.getElementById('distanceControls');
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            const locationStatus = document.getElementById('locationStatus');
+            
+            if (!locationToggle || !distanceControls || !distanceSlider || !distanceValue) {
+                console.log('Distance filter elements not found');
+                return;
+            }
+            
+            let userLocation = null;
+            let isLocationEnabled = false;
+            
+            // Location toggle handler
+            locationToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    distanceControls.classList.remove('d-none');
+                    requestUserLocation();
+                } else {
+                    distanceControls.classList.add('d-none');
+                    isLocationEnabled = false;
+                    showAllExperiences();
+                }
+            });
+            
+            // Distance slider handler
+            distanceSlider.addEventListener('input', function() {
+                distanceValue.textContent = this.value;
+            });
+            
+            distanceSlider.addEventListener('change', function() {
+                if (isLocationEnabled && userLocation) {
+                    filterByDistance(parseInt(this.value));
+                }
+            });
+            
+            // Request user location
+            function requestUserLocation() {
+                locationStatus.innerHTML = '<i class="ri-loader-4-line"></i> Đang lấy vị trí...';
+                
+                if (!navigator.geolocation) {
+                    locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> Trình duyệt không hỗ trợ định vị';
+                    locationToggle.checked = false;
+                    distanceControls.classList.add('d-none');
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        isLocationEnabled = true;
+                        locationStatus.innerHTML = '<i class="ri-map-pin-line text-success"></i> Đã lấy vị trí thành công';
+                        
+                        // Start filtering with current distance
+                        filterByDistance(parseInt(distanceSlider.value));
+                    },
+                    function(error) {
+                        let errorMessage = 'Không thể lấy vị trí';
+                        if (error.code === 1) errorMessage = 'Bạn đã từ chối truy cập vị trí';
+                        
+                        locationStatus.innerHTML = '<i class="ri-error-warning-line text-danger"></i> ' + errorMessage;
+                        locationToggle.checked = false;
+                        distanceControls.classList.add('d-none');
+                    }
+                );
+            }
+            
+                         // Filter experiences by distance
+             async function filterByDistance(maxDistance) {
+                 if (!userLocation || !isLocationEnabled) return;
+                 
+                 const experienceCards = document.querySelectorAll('.card-item');
+                 let visibleCount = 0;
+                 
+                 for (let i = 0; i < experienceCards.length; i++) {
+                     const card = experienceCards[i];
+                     
+                     // Get experience data
+                     const experienceData = allExperiences[i];
+                     if (!experienceData || !experienceData.location) {
+                         card.style.display = 'none';
+                         continue;
+                     }
+                     
+                     // Get coordinates for experience location
+                     const experienceCoords = await getCoordinatesFromAddress(experienceData.location);
+                     
+                     if (experienceCoords) {
+                         // Calculate real distance
+                         const distance = calculateDistance(userLocation, experienceCoords);
+                         
+                         if (distance <= maxDistance) {
+                             card.style.display = 'block';
+                             visibleCount++;
+                             
+                             // Add distance badge with real distance
+                             let distanceBadge = card.querySelector('.distance-badge');
+                             if (distanceBadge) {
+                                 distanceBadge.remove();
+                             }
+                             
+                             const badge = document.createElement('div');
+                             badge.className = 'distance-badge';
+                             badge.innerHTML = '<i class="ri-map-pin-line"></i> ' + formatDistance(distance);
+                             card.querySelector('.card-image').appendChild(badge);
+                         } else {
+                             card.style.display = 'none';
+                         }
+                     } else {
+                         // If can't geocode, hide the experience
+                         card.style.display = 'none';
+                     }
+                 }
+                 
+                 updateResultsCount(visibleCount, 'trải nghiệm trong bán kính ' + maxDistance + 'km');
+             }
+             
+             // Calculate distance between two coordinates using Haversine formula
+             function calculateDistance(coord1, coord2) {
+                 const R = 6371; // Earth's radius in kilometers
+                 const dLat = toRadians(coord2.lat - coord1.lat);
+                 const dLng = toRadians(coord2.lng - coord1.lng);
+                 
+                 const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                           Math.cos(toRadians(coord1.lat)) * Math.cos(toRadians(coord2.lat)) *
+                           Math.sin(dLng/2) * Math.sin(dLng/2);
+                 
+                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                 return R * c;
+             }
+             
+             // Convert degrees to radians
+             function toRadians(degrees) {
+                 return degrees * (Math.PI / 180);
+             }
+             
+             // Get coordinates from address using fallback Vietnam cities data
+             async function getCoordinatesFromAddress(address) {
+                 if (!address || address.trim() === '') {
+                     return null;
+                 }
+                 
+                 // Vietnam cities coordinates fallback
+                 const vietnamCities = {
+                     'hà nội': { lat: 21.0285, lng: 105.8542 },
+                     'hanoi': { lat: 21.0285, lng: 105.8542 },
+                     'hồ chí minh': { lat: 10.8231, lng: 106.6297 },
+                     'ho chi minh': { lat: 10.8231, lng: 106.6297 },
+                     'đà nẵng': { lat: 16.0471, lng: 108.2068 },
+                     'da nang': { lat: 16.0471, lng: 108.2068 },
+                     'hải phòng': { lat: 20.8449, lng: 106.6881 },
+                     'hai phong': { lat: 20.8449, lng: 106.6881 },
+                     'cần thơ': { lat: 10.0452, lng: 105.7469 },
+                     'can tho': { lat: 10.0452, lng: 105.7469 },
+                     'nha trang': { lat: 12.2388, lng: 109.1967 },
+                     'hội an': { lat: 15.8801, lng: 108.3380 },
+                     'hoi an': { lat: 15.8801, lng: 108.3380 },
+                     'sapa': { lat: 22.3380, lng: 103.8438 },
+                     'sa pa': { lat: 22.3380, lng: 103.8438 },
+                     'đà lạt': { lat: 11.9404, lng: 108.4583 },
+                     'da lat': { lat: 11.9404, lng: 108.4583 },
+                     'phú quốc': { lat: 10.2899, lng: 103.9840 },
+                     'phu quoc': { lat: 10.2899, lng: 103.9840 },
+                     'vịnh hạ long': { lat: 20.9101, lng: 107.1839 },
+                     'ha long': { lat: 20.9101, lng: 107.1839 },
+                     'hạ long': { lat: 20.9101, lng: 107.1839 },
+                     'ninh bình': { lat: 20.2540, lng: 105.9750 },
+                     'ninh binh': { lat: 20.2540, lng: 105.9750 },
+                     'quảng bình': { lat: 17.4677, lng: 106.6220 },
+                     'quang binh': { lat: 17.4677, lng: 106.6220 },
+                     'huế': { lat: 16.4637, lng: 107.5909 },
+                     'hue': { lat: 16.4637, lng: 107.5909 },
+                     'quy nhơn': { lat: 13.7563, lng: 109.2297 },
+                     'quy nhon': { lat: 13.7563, lng: 109.2297 },
+                     'vũng tàu': { lat: 10.4109, lng: 107.1361 },
+                     'vung tau': { lat: 10.4109, lng: 107.1361 },
+                     'bến tre': { lat: 10.2415, lng: 106.3759 },
+                     'ben tre': { lat: 10.2415, lng: 106.3759 }
+                 };
+                 
+                 const addressLower = address.toLowerCase().trim();
+                 
+                 // Check for exact matches first
+                 if (vietnamCities[addressLower]) {
+                     return vietnamCities[addressLower];
+                 }
+                 
+                 // Check for partial matches
+                 for (const [city, coords] of Object.entries(vietnamCities)) {
+                     if (addressLower.includes(city) || city.includes(addressLower)) {
+                         return coords;
+                     }
+                 }
+                 
+                 // Default fallback to Ho Chi Minh City if no match found
+                 return { lat: 10.8231, lng: 106.6297 };
+             }
+        }
+    </script>
+    
+    <style>
+        /* Distance badge styling */
+        .distance-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 5;
+        }
+        
+        .distance-badge i {
+            font-size: 0.8rem;
+        }
+    </style>
     <script>
         // JSP Variables for JavaScript use
         const JSP_VARS = {
@@ -1878,7 +2367,7 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error('HTTP error! status: ' + response.status);
                 }
                 return response.json();
             })
@@ -1888,7 +2377,7 @@
                 if (data.success && data.experienceIds) {
                     // Mark experience favorites
                     data.experienceIds.forEach(experienceId => {
-                        const button = document.querySelector(`button[data-experience-id="${experienceId}"][data-type="experience"]`);
+                        const button = document.querySelector('button[data-experience-id="' + experienceId + '"][data-type="experience"]');
                         if (button) {
                             button.classList.add('active');
                             const icon = button.querySelector('i');

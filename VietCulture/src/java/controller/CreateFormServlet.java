@@ -155,181 +155,131 @@ public class CreateFormServlet extends HttpServlet {
     }
 
     /**
-     * Xử lý tạo trải nghiệm
+     * Xử lý tạo trải nghiệm - CẢI TIẾN VỚI FORM DATA
      */
-private void handleCreateExperience(HttpServletRequest request, HttpServletResponse response, User user) 
-        throws ServletException, IOException, SQLException {
-    
-    try {
-        // Validate required fields (theo DB schema)
-        String title = request.getParameter("title");
-        String description = request.getParameter("description");
-        String location = request.getParameter("location"); // REQUIRED trong DB
-        String priceStr = request.getParameter("price");
-        String durationStr = request.getParameter("duration");
-        String cityIdStr = request.getParameter("cityId");
-        String type = request.getParameter("type"); // REQUIRED trong DB
-        String maxGroupSizeStr = request.getParameter("groupSize");
+    private void handleCreateExperience(HttpServletRequest request, HttpServletResponse response, User user) 
+            throws ServletException, IOException, SQLException {
         
-        LOGGER.info("Creating experience with title: " + title);
-        
-        // Kiểm tra required fields theo DB
-        if (isNullOrEmpty(title) || isNullOrEmpty(description) || 
-            isNullOrEmpty(location) || isNullOrEmpty(priceStr) || 
-            isNullOrEmpty(durationStr) || isNullOrEmpty(cityIdStr) ||
-            isNullOrEmpty(type) || isNullOrEmpty(maxGroupSizeStr)) {
-            throw new IllegalArgumentException("Vui lòng điền đầy đủ thông tin bắt buộc");
-        }
-
-        // Create Experience object
-        Experience experience = new Experience();
-        experience.setTitle(title.trim());
-        experience.setDescription(description.trim());
-        experience.setLocation(location.trim()); // REQUIRED
-        experience.setPrice(Double.parseDouble(priceStr));
-        experience.setHostId(user.getUserId());
-        experience.setCityId(Integer.parseInt(cityIdStr));
-        experience.setType(type); // REQUIRED
-        experience.setMaxGroupSize(Integer.parseInt(maxGroupSizeStr)); // REQUIRED
-        
-        // Handle duration (convert hours to TIME format)
-        int durationHours = Integer.parseInt(durationStr);
-        experience.setDuration(new Time(durationHours, 0, 0));
-        
-        // Optional fields
-        experience.setLanguage(request.getParameter("languages")); // DB field: language
-        experience.setIncludedItems(request.getParameter("included")); // DB field: includedItems
-        experience.setRequirements(request.getParameter("requirements"));
-        
-        // Handle difficulty - convert to DB format
-        String difficulty = request.getParameter("difficulty");
-        if (!isNullOrEmpty(difficulty)) {
-            // Convert Vietnamese to English for DB
-            switch (difficulty) {
-                case "Dễ":
-                    experience.setDifficulty("EASY");
-                    break;
-                case "Trung bình":
-                    experience.setDifficulty("MODERATE");
-                    break;
-                case "Khó":
-                    experience.setDifficulty("CHALLENGING");
-                    break;
-                default:
-                    experience.setDifficulty("MODERATE");
+        try {
+            // Parse form data vào FormData object
+            ExperienceFormData formData = parseExperienceForm(request);
+            
+            // Validate form data
+            formData.validate();
+            
+            if (!formData.isValid()) {
+                LOGGER.warning("Experience form validation failed: " + formData.getErrorMessage());
+                HttpSession session = request.getSession();
+                session.setAttribute("error", formData.getErrorMessage());
+                session.setAttribute("formData", formData);
+                response.sendRedirect(request.getContextPath() + "/Travel/create_experience");
+                return;
             }
-        } else {
-            experience.setDifficulty("MODERATE"); // Default
-        }
-        
-        // *** THAY ĐỔI CHÍNH: Set isActive = 1 (tự động duyệt) ***
-        experience.setActive(true); // isActive = 1 - TỰ ĐỘNG ĐƯỢC DUYỆT
-        experience.setAverageRating(0.0); // DEFAULT 0
-        experience.setTotalBookings(0); // DEFAULT 0
-        // createdAt sẽ tự động set bởi DB (DEFAULT GETDATE())
 
-        // Handle image upload
-        List<String> imageUrls = handleImageUpload(request, "experience");
-        if (!imageUrls.isEmpty()) {
-            experience.setImages(String.join(",", imageUrls));
-        }
+            LOGGER.info("Creating experience with title: " + formData.getTitle());
+            
+            // Create Experience object từ FormData
+            Experience experience = createExperienceFromFormData(formData, user);
+            
+            // Handle image upload
+            List<String> imageUrls = handleImageUpload(request, "experience");
+            if (!imageUrls.isEmpty()) {
+                experience.setImages(String.join(",", imageUrls));
+            }
 
-        // Save to database
-        int experienceId = experienceDAO.createExperience(experience);
-        
-        if (experienceId > 0) {
-            LOGGER.info("Experience created successfully with ID: " + experienceId + " - AUTO APPROVED");
-            LOGGER.info("Experience details - Title: " + experience.getTitle() + ", isActive: " + experience.isActive());
+            // Save to database với transaction
+            int experienceId = createExperienceWithTransaction(experience);
+            
+            if (experienceId > 0) {
+                LOGGER.info("Experience created successfully with ID: " + experienceId);
+                
+                // Send notification email
+                sendExperienceCreatedNotification(user, experience);
+                
+                HttpSession session = request.getSession();
+                session.setAttribute("success", "Trải nghiệm đã được tạo và chờ admin duyệt!");
+                response.sendRedirect(request.getContextPath() + "/Travel/create_service");
+            } else {
+                throw new RuntimeException("Không thể tạo trải nghiệm");
+            }
+
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid number format in experience creation", e);
             HttpSession session = request.getSession();
-            // *** THAY ĐỔI MESSAGE ***
-            session.setAttribute("success", "Trải nghiệm đã được tạo và xuất bản thành công!");
-            response.sendRedirect(request.getContextPath() + "/Travel/create_service");
-        } else {
-            LOGGER.severe("Failed to create experience");
-            throw new RuntimeException("Không thể tạo trải nghiệm");
+            session.setAttribute("error", "Dữ liệu số không hợp lệ. Vui lòng kiểm tra lại.");
+            response.sendRedirect(request.getContextPath() + "/Travel/create_experience");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error creating experience", e);
+            HttpSession session = request.getSession();
+            session.setAttribute("error", "Có lỗi xảy ra khi tạo trải nghiệm: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/Travel/create_experience");
         }
-
-    } catch (NumberFormatException e) {
-        LOGGER.log(Level.WARNING, "Invalid number format in experience creation", e);
-        throw new IllegalArgumentException("Dữ liệu số không hợp lệ");
     }
-}
 
     /**
      * Xử lý tạo chỗ lưu trú
      */
+    /**
+     * Xử lý tạo chỗ lưu trú - CẢI TIẾN VỚI FORM DATA
+     */
     private void handleCreateAccommodation(HttpServletRequest request, HttpServletResponse response, User user) 
-        throws ServletException, IOException, SQLException {
-    
-    try {
-        // Validate required fields
-        String title = request.getParameter("title");
-        String description = request.getParameter("description");
-        String priceStr = request.getParameter("price");
-        String accommodationType = request.getParameter("accommodationType");
-        String cityIdStr = request.getParameter("cityId");
-        String address = request.getParameter("address");
+            throws ServletException, IOException, SQLException {
         
-        LOGGER.info("Creating accommodation with title: " + title);
-        
-        if (isNullOrEmpty(title) || isNullOrEmpty(description) || 
-            isNullOrEmpty(priceStr) || isNullOrEmpty(accommodationType) ||
-            isNullOrEmpty(cityIdStr) || isNullOrEmpty(address)) {
-            throw new IllegalArgumentException("Vui lòng điền đầy đủ thông tin bắt buộc");
-        }
+        try {
+            // Parse form data vào FormData object
+            AccommodationFormData formData = parseAccommodationForm(request);
+            
+            // Validate form data
+            formData.validate();
+            
+            if (!formData.isValid()) {
+                LOGGER.warning("Accommodation form validation failed: " + formData.getErrorMessage());
+                HttpSession session = request.getSession();
+                session.setAttribute("error", formData.getErrorMessage());
+                session.setAttribute("formData", formData);
+                response.sendRedirect(request.getContextPath() + "/Travel/create_accommodation");
+                return;
+            }
 
-        // Create Accommodation object
-        Accommodation accommodation = new Accommodation();
-        accommodation.setName(title.trim()); // Note: DAO uses 'name' not 'title'
-        accommodation.setDescription(description.trim());
-        accommodation.setPricePerNight(Double.parseDouble(priceStr));
-        accommodation.setType(accommodationType);
-        accommodation.setCityId(Integer.parseInt(cityIdStr));
-        accommodation.setHostId(user.getUserId());
-        accommodation.setAddress(address.trim());
-        
-        // Parse number fields with defaults
-        String maxGuestsStr = request.getParameter("maxGuests");
-        String bedroomsStr = request.getParameter("bedrooms");
-        String bathroomsStr = request.getParameter("bathrooms");
-        
-        // Set maxOccupancy from form
-        int maxGuests = (maxGuestsStr != null && !maxGuestsStr.isEmpty()) ? Integer.parseInt(maxGuestsStr) : 2;
-        accommodation.setMaxOccupancy(maxGuests);
-        
-        // For DAO compatibility, use numberOfRooms instead of separate bedrooms/bathrooms
-        int bedrooms = (bedroomsStr != null && !bedroomsStr.isEmpty()) ? Integer.parseInt(bedroomsStr) : 1;
-        accommodation.setNumberOfRooms(bedrooms);
-        
-        accommodation.setAmenities(request.getParameter("amenities"));
-        
-        // *** THAY ĐỔI CHÍNH: Set isActive = 1 (tự động duyệt) ***
-        accommodation.setActive(true); // isActive = 1 - TỰ ĐỘNG ĐƯỢC DUYỆT
+            LOGGER.info("Creating accommodation with name: " + formData.getName());
+            
+            // Create Accommodation object từ FormData
+            Accommodation accommodation = createAccommodationFromFormData(formData, user);
+            
+            // Handle image upload
+            List<String> imageUrls = handleImageUpload(request, "accommodation");
+            if (!imageUrls.isEmpty()) {
+                accommodation.setImages(String.join(",", imageUrls));
+            }
 
-        // Handle image upload
-        List<String> imageUrls = handleImageUpload(request, "accommodation");
-        if (!imageUrls.isEmpty()) {
-            accommodation.setImages(String.join(",", imageUrls));
-        }
+            // Save to database với transaction
+            int accommodationId = createAccommodationWithTransaction(accommodation);
+            
+            if (accommodationId > 0) {
+                LOGGER.info("Accommodation created successfully with ID: " + accommodationId);
+                
+                // Send notification email
+                sendAccommodationCreatedNotification(user, accommodation);
+                
+                HttpSession session = request.getSession();
+                session.setAttribute("success", "Chỗ lưu trú đã được tạo và chờ admin duyệt!");
+                response.sendRedirect(request.getContextPath() + "/Travel/create_service");
+            } else {
+                throw new RuntimeException("Không thể tạo chỗ lưu trú");
+            }
 
-        // Save to database
-        int accommodationId = accommodationDAO.createAccommodation(accommodation);
-        
-        if (accommodationId > 0) {
-            LOGGER.info("Accommodation created successfully with ID: " + accommodationId + " - AUTO APPROVED");
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.WARNING, "Invalid number format in accommodation creation", e);
             HttpSession session = request.getSession();
-            // *** THAY ĐỔI MESSAGE ***
-            session.setAttribute("success", "Chỗ lưu trú đã được tạo và xuất bản thành công!");
-            response.sendRedirect(request.getContextPath() + "/Travel/create_service");
-        } else {
-            throw new RuntimeException("Không thể tạo chỗ lưu trú");
+            session.setAttribute("error", "Dữ liệu số không hợp lệ. Vui lòng kiểm tra lại.");
+            response.sendRedirect(request.getContextPath() + "/Travel/create_accommodation");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error creating accommodation", e);
+            HttpSession session = request.getSession();
+            session.setAttribute("error", "Có lỗi xảy ra khi tạo chỗ lưu trú: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/Travel/create_accommodation");
         }
-
-    } catch (NumberFormatException e) {
-        LOGGER.log(Level.WARNING, "Invalid number format in accommodation creation", e);
-        throw new IllegalArgumentException("Dữ liệu số không hợp lệ");
     }
-}
 
     /**
      * Xử lý upload hình ảnh
@@ -440,6 +390,235 @@ private List<String> handleImageUpload(HttpServletRequest request, String servic
         return str == null || str.trim().isEmpty();
     }
 
+    // ==================== HELPER METHODS ĐỒNG NHẤT VỚI BOOKING ====================
+    
+    /**
+     * Parse Experience form data từ request
+     */
+    private ExperienceFormData parseExperienceForm(HttpServletRequest request) {
+        ExperienceFormData formData = new ExperienceFormData();
+        
+        try {
+            formData.setTitle(request.getParameter("title"));
+            formData.setDescription(request.getParameter("description"));
+            formData.setLocation(request.getParameter("location"));
+            formData.setType(request.getParameter("type"));
+            formData.setLanguage(request.getParameter("languages"));
+            formData.setIncludedItems(request.getParameter("included"));
+            formData.setRequirements(request.getParameter("requirements"));
+            
+            // Parse number fields
+            String cityIdStr = request.getParameter("cityId");
+            if (!isNullOrEmpty(cityIdStr)) {
+                formData.setCityId(Integer.parseInt(cityIdStr));
+            }
+            
+            String priceStr = request.getParameter("price");
+            if (!isNullOrEmpty(priceStr)) {
+                formData.setPrice(Double.parseDouble(priceStr));
+            }
+            
+            String maxGroupSizeStr = request.getParameter("groupSize");
+            if (!isNullOrEmpty(maxGroupSizeStr)) {
+                formData.setMaxGroupSize(Integer.parseInt(maxGroupSizeStr));
+            }
+            
+            String durationStr = request.getParameter("duration");
+            if (!isNullOrEmpty(durationStr)) {
+                formData.setDuration(Integer.parseInt(durationStr));
+            }
+            
+            // Handle difficulty conversion
+            String difficulty = request.getParameter("difficulty");
+            if (!isNullOrEmpty(difficulty)) {
+                switch (difficulty) {
+                    case "Dễ":
+                        formData.setDifficulty("EASY");
+                        break;
+                    case "Trung bình":
+                        formData.setDifficulty("MODERATE");
+                        break;
+                    case "Khó":
+                        formData.setDifficulty("CHALLENGING");
+                        break;
+                    default:
+                        formData.setDifficulty("MODERATE");
+                }
+            } else {
+                formData.setDifficulty("MODERATE");
+            }
+            
+        } catch (NumberFormatException e) {
+            formData.addError("Dữ liệu số không hợp lệ");
+        }
+        
+        return formData;
+    }
+    
+    /**
+     * Tạo Experience object từ FormData
+     */
+    private Experience createExperienceFromFormData(ExperienceFormData formData, User user) {
+        Experience experience = new Experience();
+        
+        experience.setTitle(formData.getTitle().trim());
+        experience.setDescription(formData.getDescription().trim());
+        experience.setLocation(formData.getLocation().trim());
+        experience.setPrice(formData.getPrice());
+        experience.setHostId(user.getUserId());
+        experience.setCityId(formData.getCityId());
+        experience.setType(formData.getType());
+        experience.setMaxGroupSize(formData.getMaxGroupSize());
+        
+        // Convert duration hours to TIME format
+        experience.setDuration(new Time(formData.getDuration(), 0, 0));
+        
+        // Optional fields
+        experience.setLanguage(formData.getLanguage());
+        experience.setIncludedItems(formData.getIncludedItems());
+        experience.setRequirements(formData.getRequirements());
+        experience.setDifficulty(formData.getDifficulty());
+        
+        // Set default values - QUAN TRỌNG: ĐỒNG NHẤT VỚI BOOKING
+        experience.setActive(true); // Host muốn hiện
+        experience.setAverageRating(0.0);
+        experience.setTotalBookings(0);
+        
+        return experience;
+    }
+    
+    /**
+     * Tạo Experience với transaction - đồng nhất với booking
+     */
+    private int createExperienceWithTransaction(Experience experience) throws SQLException {
+        try {
+            return experienceDAO.createExperience(experience);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Transaction failed for experience creation", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Gửi email notification khi tạo experience - đồng nhất với booking
+     */
+    private void sendExperienceCreatedNotification(User user, Experience experience) {
+        try {
+            // Gửi email xác nhận tạo experience
+            utils.EmailUtils.sendExperienceCreatedEmail(
+                user.getEmail(),
+                user.getFullName(),
+                experience.getTitle(),
+                experience.getPrice(),
+                experience.getLocation()
+            );
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to send experience created notification", e);
+            // Không throw exception vì email không critical
+        }
+    }
+
+    /**
+     * Parse Accommodation form data từ request
+     */
+    private AccommodationFormData parseAccommodationForm(HttpServletRequest request) {
+        AccommodationFormData formData = new AccommodationFormData();
+        
+        try {
+            formData.setName(request.getParameter("title")); // Form uses "title" but object uses "name"
+            formData.setDescription(request.getParameter("description"));
+            formData.setAddress(request.getParameter("address"));
+            formData.setType(request.getParameter("accommodationType"));
+            formData.setAmenities(request.getParameter("amenities"));
+            
+            // Parse number fields
+            String cityIdStr = request.getParameter("cityId");
+            if (!isNullOrEmpty(cityIdStr)) {
+                formData.setCityId(Integer.parseInt(cityIdStr));
+            }
+            
+            String priceStr = request.getParameter("price");
+            if (!isNullOrEmpty(priceStr)) {
+                formData.setPricePerNight(Double.parseDouble(priceStr));
+            }
+            
+            String maxGuestsStr = request.getParameter("maxGuests");
+            if (!isNullOrEmpty(maxGuestsStr)) {
+                formData.setMaxOccupancy(Integer.parseInt(maxGuestsStr));
+            } else {
+                formData.setMaxOccupancy(2); // Default
+            }
+            
+            String bedroomsStr = request.getParameter("bedrooms");
+            if (!isNullOrEmpty(bedroomsStr)) {
+                formData.setNumberOfRooms(Integer.parseInt(bedroomsStr));
+            } else {
+                formData.setNumberOfRooms(1); // Default
+            }
+            
+        } catch (NumberFormatException e) {
+            formData.addError("Dữ liệu số không hợp lệ");
+        }
+        
+        return formData;
+    }
+    
+    /**
+     * Tạo Accommodation object từ FormData
+     */
+    private Accommodation createAccommodationFromFormData(AccommodationFormData formData, User user) {
+        Accommodation accommodation = new Accommodation();
+        
+        accommodation.setName(formData.getName().trim());
+        accommodation.setDescription(formData.getDescription().trim());
+        accommodation.setAddress(formData.getAddress().trim());
+        accommodation.setPricePerNight(formData.getPricePerNight());
+        accommodation.setType(formData.getType());
+        accommodation.setCityId(formData.getCityId());
+        accommodation.setHostId(user.getUserId());
+        accommodation.setMaxOccupancy(formData.getMaxOccupancy());
+        accommodation.setNumberOfRooms(formData.getNumberOfRooms());
+        accommodation.setAmenities(formData.getAmenities());
+        
+        // Set default values - QUAN TRỌNG: ĐỒNG NHẤT VỚI BOOKING
+        accommodation.setActive(true); // Host muốn hiện
+        accommodation.setAverageRating(0.0);
+        accommodation.setTotalBookings(0);
+        
+        return accommodation;
+    }
+    
+    /**
+     * Tạo Accommodation với transaction - đồng nhất với booking
+     */
+    private int createAccommodationWithTransaction(Accommodation accommodation) throws SQLException {
+        try {
+            return accommodationDAO.createAccommodation(accommodation);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Transaction failed for accommodation creation", e);
+            throw e;
+        }
+    }
+    
+    /**
+     * Gửi email notification khi tạo accommodation - đồng nhất với booking
+     */
+    private void sendAccommodationCreatedNotification(User user, Accommodation accommodation) {
+        try {
+            // Gửi email xác nhận tạo accommodation
+            utils.EmailUtils.sendAccommodationCreatedEmail(
+                user.getEmail(),
+                user.getFullName(),
+                accommodation.getName(),
+                accommodation.getPricePerNight(),
+                accommodation.getAddress()
+            );
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to send accommodation created notification", e);
+            // Không throw exception vì email không critical
+        }
+    }
+
     /**
      * Determine service type from URL path and parameters
      */
@@ -540,5 +719,194 @@ private List<String> handleImageUpload(HttpServletRequest request, String servic
     public void destroy() {
         super.destroy();
         LOGGER.info("CreateFormServlet destroyed");
+    }
+
+    // ==================== FORM DATA CLASSES ====================
+    // Đồng nhất với BookingFormData pattern
+    
+    /**
+     * Experience Form Data class - đồng nhất với BookingFormData
+     */
+    public static class ExperienceFormData {
+        private String title;
+        private String description;
+        private String location;
+        private Integer cityId;
+        private String type;
+        private Double price;
+        private Integer maxGroupSize;
+        private Integer duration; // hours
+        private String difficulty;
+        private String language;
+        private String includedItems;
+        private String requirements;
+        private String images;
+        private List<String> errors = new ArrayList<>();
+
+        public ExperienceFormData() {}
+
+        // Getters and Setters
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
+
+        public Integer getCityId() { return cityId; }
+        public void setCityId(Integer cityId) { this.cityId = cityId; }
+
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+
+        public Double getPrice() { return price; }
+        public void setPrice(Double price) { this.price = price; }
+
+        public Integer getMaxGroupSize() { return maxGroupSize; }
+        public void setMaxGroupSize(Integer maxGroupSize) { this.maxGroupSize = maxGroupSize; }
+
+        public Integer getDuration() { return duration; }
+        public void setDuration(Integer duration) { this.duration = duration; }
+
+        public String getDifficulty() { return difficulty; }
+        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+
+        public String getLanguage() { return language; }
+        public void setLanguage(String language) { this.language = language; }
+
+        public String getIncludedItems() { return includedItems; }
+        public void setIncludedItems(String includedItems) { this.includedItems = includedItems; }
+
+        public String getRequirements() { return requirements; }
+        public void setRequirements(String requirements) { this.requirements = requirements; }
+
+        public String getImages() { return images; }
+        public void setImages(String images) { this.images = images; }
+
+        public List<String> getErrors() { return errors; }
+        public void addError(String error) { this.errors.add(error); }
+        public boolean isValid() { return errors.isEmpty(); }
+        public String getErrorMessage() { return String.join(", ", errors); }
+
+        // Validation methods
+        public void validate() {
+            if (isNullOrEmpty(title)) {
+                addError("Vui lòng nhập tiêu đề trải nghiệm");
+            }
+            if (isNullOrEmpty(description)) {
+                addError("Vui lòng nhập mô tả chi tiết");
+            }
+            if (isNullOrEmpty(location)) {
+                addError("Vui lòng nhập địa điểm");
+            }
+            if (cityId == null || cityId <= 0) {
+                addError("Vui lòng chọn thành phố");
+            }
+            if (isNullOrEmpty(type)) {
+                addError("Vui lòng chọn loại trải nghiệm");
+            }
+            if (price == null || price <= 0) {
+                addError("Vui lòng nhập giá hợp lệ");
+            }
+            if (maxGroupSize == null || maxGroupSize <= 0) {
+                addError("Vui lòng nhập số lượng khách tối đa");
+            }
+            if (duration == null || duration <= 0) {
+                addError("Vui lòng nhập thời gian diễn ra");
+            }
+        }
+
+        private boolean isNullOrEmpty(String str) {
+            return str == null || str.trim().isEmpty();
+        }
+    }
+
+    /**
+     * Accommodation Form Data class - đồng nhất với BookingFormData
+     */
+    public static class AccommodationFormData {
+        private String name;
+        private String description;
+        private String address;
+        private Integer cityId;
+        private String type;
+        private Double pricePerNight;
+        private Integer numberOfRooms;
+        private Integer maxOccupancy;
+        private String amenities;
+        private String images;
+        private List<String> errors = new ArrayList<>();
+
+        public AccommodationFormData() {}
+
+        // Getters and Setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
+
+        public Integer getCityId() { return cityId; }
+        public void setCityId(Integer cityId) { this.cityId = cityId; }
+
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+
+        public Double getPricePerNight() { return pricePerNight; }
+        public void setPricePerNight(Double pricePerNight) { this.pricePerNight = pricePerNight; }
+
+        public Integer getNumberOfRooms() { return numberOfRooms; }
+        public void setNumberOfRooms(Integer numberOfRooms) { this.numberOfRooms = numberOfRooms; }
+
+        public Integer getMaxOccupancy() { return maxOccupancy; }
+        public void setMaxOccupancy(Integer maxOccupancy) { this.maxOccupancy = maxOccupancy; }
+
+        public String getAmenities() { return amenities; }
+        public void setAmenities(String amenities) { this.amenities = amenities; }
+
+        public String getImages() { return images; }
+        public void setImages(String images) { this.images = images; }
+
+        public List<String> getErrors() { return errors; }
+        public void addError(String error) { this.errors.add(error); }
+        public boolean isValid() { return errors.isEmpty(); }
+        public String getErrorMessage() { return String.join(", ", errors); }
+
+        // Validation methods
+        public void validate() {
+            if (isNullOrEmpty(name)) {
+                addError("Vui lòng nhập tên chỗ lưu trú");
+            }
+            if (isNullOrEmpty(description)) {
+                addError("Vui lòng nhập mô tả chi tiết");
+            }
+            if (isNullOrEmpty(address)) {
+                addError("Vui lòng nhập địa chỉ");
+            }
+            if (cityId == null || cityId <= 0) {
+                addError("Vui lòng chọn thành phố");
+            }
+            if (isNullOrEmpty(type)) {
+                addError("Vui lòng chọn loại chỗ lưu trú");
+            }
+            if (pricePerNight == null || pricePerNight <= 0) {
+                addError("Vui lòng nhập giá theo đêm hợp lệ");
+            }
+            if (numberOfRooms == null || numberOfRooms <= 0) {
+                addError("Vui lòng nhập số phòng");
+            }
+            if (maxOccupancy == null || maxOccupancy <= 0) {
+                addError("Vui lòng nhập số khách tối đa");
+            }
+        }
+
+        private boolean isNullOrEmpty(String str) {
+            return str == null || str.trim().isEmpty();
+        }
     }
 }

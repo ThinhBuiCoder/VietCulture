@@ -1628,7 +1628,8 @@ public class BookingServlet extends HttpServlet {
             return experience != null && experience.isActive();
         } else if (formData.hasAccommodation()) {
             Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
-            return accommodation != null && accommodation.isActive();
+            // Kiểm tra cả isActive (host muốn hiển thị) VÀ adminApprovalStatus (admin đã duyệt)
+            return accommodation != null && accommodation.isPubliclyVisible();
         }
         return false;
     }

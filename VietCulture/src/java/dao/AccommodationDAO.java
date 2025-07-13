@@ -62,7 +62,7 @@ public class AccommodationDAO {
             INSERT INTO Accommodations (hostId, name, description, cityId, address, type, 
                                        numberOfRooms, maxOccupancy, amenities, pricePerNight, images, 
                                        isActive, adminApprovalStatus, averageRating, totalBookings)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = DBUtils.getConnection();

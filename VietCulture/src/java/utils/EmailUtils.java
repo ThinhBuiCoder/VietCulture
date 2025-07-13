@@ -1363,4 +1363,206 @@ private static String createPaymentFailureTemplate(String userName, int bookingI
                 java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))  // ngày gửi
         );
 }
+
+    /**
+     * Send experience created notification email
+     */
+    public static boolean sendExperienceCreatedEmail(String toEmail, String hostName, 
+                                                   String experienceTitle, double price, 
+                                                   String location) {
+        LOGGER.info("📧 Sending experience created notification to: " + toEmail);
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Trải nghiệm đã được tạo thành công - VietCulture", "UTF-8");
+            
+            String htmlContent = createExperienceCreatedTemplate(hostName, experienceTitle, price, location);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Experience created notification sent successfully to: " + toEmail);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send experience created notification to: " + toEmail, e);
+            return false;
+        }
+    }
+
+    /**
+     * Send accommodation created notification email
+     */
+    public static boolean sendAccommodationCreatedEmail(String toEmail, String hostName, 
+                                                      String accommodationName, double pricePerNight, 
+                                                      String address) {
+        LOGGER.info("📧 Sending accommodation created notification to: " + toEmail);
+        
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+            
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Chỗ lưu trú đã được tạo thành công - VietCulture", "UTF-8");
+            
+            String htmlContent = createAccommodationCreatedTemplate(hostName, accommodationName, pricePerNight, address);
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            
+            Transport.send(message);
+            LOGGER.info("✅ Accommodation created notification sent successfully to: " + toEmail);
+            return true;
+            
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send accommodation created notification to: " + toEmail, e);
+            return false;
+        }
+    }
+
+    /**
+     * Create experience created email template
+     */
+    private static String createExperienceCreatedTemplate(String hostName, String experienceTitle, 
+                                                        double price, String location) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Trải nghiệm được tạo thành công</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #10466C, #83C5BE); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 40px 30px; }
+                    .experience-info { 
+                        background: white; 
+                        padding: 20px; 
+                        border-radius: 8px; 
+                        border-left: 4px solid #10466C; 
+                        margin: 20px 0; 
+                    }
+                    .highlight { color: #10466C; font-weight: bold; }
+                    .price { font-size: 24px; color: #28a745; font-weight: bold; }
+                    .next-steps { 
+                        background: #e3f2fd; 
+                        border-left: 4px solid #2196f3; 
+                        padding: 15px; 
+                        margin: 20px 0; 
+                    }
+                    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🎉 Trải Nghiệm Đã Được Tạo!</h1>
+                        <p>VietCulture - Kết nối trải nghiệm độc đáo</p>
+                    </div>
+                    <div class="content">
+                        <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                        <p>Chúc mừng! Trải nghiệm của bạn đã được tạo thành công và đang chờ admin duyệt.</p>
+                        
+                        <div class="experience-info">
+                            <h3>📍 Thông tin trải nghiệm:</h3>
+                            <p><strong>Tên:</strong> %s</p>
+                            <p><strong>Địa điểm:</strong> %s</p>
+                            <p><strong>Giá:</strong> <span class="price">%,.0f VND</span></p>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h3>🔄 Bước tiếp theo:</h3>
+                            <p>• <strong>Chờ duyệt:</strong> Admin sẽ xem xét và duyệt trải nghiệm trong vòng 24-48 giờ</p>
+                            <p>• <strong>Thông báo:</strong> Bạn sẽ nhận được email khi trải nghiệm được duyệt</p>
+                            <p>• <strong>Quản lý:</strong> Bạn có thể xem và chỉnh sửa trong trang quản lý dịch vụ</p>
+                        </div>
+                        
+                        <p><strong>Lưu ý:</strong> Trải nghiệm chỉ hiển thị công khai sau khi được admin duyệt.</p>
+                        
+                        <p>Cảm ơn bạn đã tham gia cộng đồng VietCulture!</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 VietCulture. Email tự động - vui lòng không trả lời.</p>
+                        <p>Hỗ trợ: kienltde180359@gmail.com | 1900 1234</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(hostName, experienceTitle, location, price);
+    }
+
+    /**
+     * Create accommodation created email template
+     */
+    private static String createAccommodationCreatedTemplate(String hostName, String accommodationName, 
+                                                           double pricePerNight, String address) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Chỗ lưu trú được tạo thành công</title>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #10466C, #83C5BE); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 40px 30px; }
+                    .accommodation-info { 
+                        background: white; 
+                        padding: 20px; 
+                        border-radius: 8px; 
+                        border-left: 4px solid #10466C; 
+                        margin: 20px 0; 
+                    }
+                    .highlight { color: #10466C; font-weight: bold; }
+                    .price { font-size: 24px; color: #28a745; font-weight: bold; }
+                    .next-steps { 
+                        background: #e3f2fd; 
+                        border-left: 4px solid #2196f3; 
+                        padding: 15px; 
+                        margin: 20px 0; 
+                    }
+                    .footer { background: #333; color: white; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🏠 Chỗ Lưu Trú Đã Được Tạo!</h1>
+                        <p>VietCulture - Kết nối homestay và khách sạn</p>
+                    </div>
+                    <div class="content">
+                        <h2>Xin chào <span class="highlight">%s</span>!</h2>
+                        <p>Chúc mừng! Chỗ lưu trú của bạn đã được tạo thành công và đang chờ admin duyệt.</p>
+                        
+                        <div class="accommodation-info">
+                            <h3>🏨 Thông tin chỗ lưu trú:</h3>
+                            <p><strong>Tên:</strong> %s</p>
+                            <p><strong>Địa chỉ:</strong> %s</p>
+                            <p><strong>Giá mỗi đêm:</strong> <span class="price">%,.0f VND</span></p>
+                        </div>
+                        
+                        <div class="next-steps">
+                            <h3>🔄 Bước tiếp theo:</h3>
+                            <p>• <strong>Chờ duyệt:</strong> Admin sẽ xem xét và duyệt chỗ lưu trú trong vòng 24-48 giờ</p>
+                            <p>• <strong>Thông báo:</strong> Bạn sẽ nhận được email khi chỗ lưu trú được duyệt</p>
+                            <p>• <strong>Quản lý:</strong> Bạn có thể xem và chỉnh sửa trong trang quản lý dịch vụ</p>
+                        </div>
+                        
+                        <p><strong>Lưu ý:</strong> Chỗ lưu trú chỉ hiển thị công khai sau khi được admin duyệt.</p>
+                        
+                        <p>Cảm ơn bạn đã tham gia cộng đồng VietCulture!</p>
+                    </div>
+                    <div class="footer">
+                        <p>© 2025 VietCulture. Email tự động - vui lòng không trả lời.</p>
+                        <p>Hỗ trợ: kienltde180359@gmail.com | 1900 1234</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(hostName, accommodationName, address, pricePerNight);
+    }
 }

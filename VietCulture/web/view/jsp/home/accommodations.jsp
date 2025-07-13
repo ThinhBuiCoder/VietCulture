@@ -1312,27 +1312,9 @@
                         </select>
                     </div>
 
-                    <div class="form-group distance-filter-container">
-                        <label for="distanceSelect">Khoảng Cách</label>
-                        <div style="position: relative;">
-                            <select class="form-control" name="distance" id="distanceSelect" disabled>
-                                <option value="">Chọn khoảng cách</option>
-                                <option value="2" ${param.distance == '2' ? 'selected' : ''}>Trong 2km</option>
-                                <option value="5" ${param.distance == '5' ? 'selected' : ''}>Trong 5km</option>
-                                <option value="10" ${param.distance == '10' ? 'selected' : ''}>Trong 10km</option>
-                                <option value="20" ${param.distance == '20' ? 'selected' : ''}>Trong 20km</option>
-                                <option value="50" ${param.distance == '50' ? 'selected' : ''}>Trong 50km</option>
-                            </select>
-                            <button type="button" class="location-btn" id="locationBtn" onclick="requestLocation()" title="Bật định vị để lọc theo khoảng cách">
-                                <i class="ri-map-pin-line"></i>
-                            </button>
-                            <!-- Hidden inputs for coordinates -->
-                            <input type="hidden" name="lat" id="userLat" value="${param.lat}">
-                            <input type="hidden" name="lng" id="userLng" value="${param.lng}">
-                        </div>
-                        <div class="distance-status" id="distanceStatus">
-                            <i class="ri-information-line"></i> Nhấn vào biểu tượng vị trí để bật định vị
-                        </div>
+                    <div class="form-group">
+                        <label>Khoảng Cách</label>
+                        <div id="distanceFilterContainer"></div>
                     </div>
                 </div>
             </form>
