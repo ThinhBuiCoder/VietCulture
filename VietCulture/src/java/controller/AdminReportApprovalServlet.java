@@ -84,13 +84,14 @@ public class AdminReportApprovalServlet extends HttpServlet {
             if ("approve".equals(action)) {
                 String notes = request.getParameter("notes");
                 success = reportDAO.approveReport(reportId, admin.getUserId(), notes);
-                // Ẩn nội dung nếu là trải nghiệm
+                // XÓA VĨNH VIỄN accommodation khi báo cáo được duyệt
                 Report report = reportDAO.getReportById(reportId);
                 if (report != null) {
                     if ("experience".equalsIgnoreCase(report.getContentType())) {
                         experienceDAO.updateExperienceStatus(report.getContentId(), false); // ẩn trải nghiệm
                     } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
-                        accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẩn chỗ ở
+                        // accommodationDAO.deleteAccommodation(report.getContentId()); // XÓA VĨNH VIỄN
+                        accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẨN accommodation thay vì xóa cứng
                     }
                 }
             } else if ("reject".equals(action)) {

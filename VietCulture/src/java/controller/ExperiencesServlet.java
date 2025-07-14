@@ -128,19 +128,25 @@ public class ExperiencesServlet extends HttpServlet {
 
             // Kiểm tra booking để truyền biến hasBooked cho review
             boolean hasBooked = false;
+            boolean canReportExperience = false;
             jakarta.servlet.http.HttpSession session = request.getSession(false);
             if (session != null && session.getAttribute("user") != null) {
                 model.User user = (model.User) session.getAttribute("user");
                 try {
-                    hasBooked = bookingDAO.getTotalBookingsByUserAndExperience(user.getUserId(), experience.getExperienceId()) > 0;
+                    // Chỉ cần kiểm tra có booking là cho phép đánh giá/báo cáo, không cần kiểm tra status
+                    List<model.Booking> bookings = bookingDAO.getBookingsByUser(user.getUserId(), 0, 1000);
+                    for (model.Booking b : bookings) {
+                        if (b.getExperienceId() != null && b.getExperienceId() == experience.getExperienceId()) {
+                            hasBooked = true;
+                            canReportExperience = true;
+                            break;
+                        }
+                    }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "Error checking booking for review", ex);
+                    LOGGER.log(Level.WARNING, "Error checking booking for review/report", ex);
                 }
             }
             request.setAttribute("hasBooked", hasBooked);
-
-            // Thêm dòng này để quyền báo cáo hoạt động đúng
-            boolean canReportExperience = hasBooked;
             request.setAttribute("canReportExperience", canReportExperience);
 
             // Log access

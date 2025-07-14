@@ -115,9 +115,15 @@ public class AccommodationsServlet extends HttpServlet {
             if (session != null && session.getAttribute("user") != null) {
                 model.User user = (model.User) session.getAttribute("user");
                 try {
-                    int total = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodation.getAccommodationId());
-                    hasBooked = total > 0;
-                    canReportAccommodation = total > 0;
+                    // Chỉ cần kiểm tra có booking là cho phép đánh giá/báo cáo, không cần kiểm tra status
+                    List<model.Booking> bookings = bookingDAO.getBookingsByUser(user.getUserId(), 0, 1000);
+                    for (model.Booking b : bookings) {
+                        if (b.getAccommodationId() != null && b.getAccommodationId() == accommodation.getAccommodationId()) {
+                            hasBooked = true;
+                            canReportAccommodation = true;
+                            break;
+                        }
+                    }
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "Error checking booking for review/report", ex);
                 }

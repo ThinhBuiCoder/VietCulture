@@ -54,7 +54,7 @@ public class DBUtils {
             
             return connection;
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database connection error: " + e.getMessage(), e);
+                        LOGGER.log(Level.SEVERE, "Database connection error", e);
             throw e;
         }
     }

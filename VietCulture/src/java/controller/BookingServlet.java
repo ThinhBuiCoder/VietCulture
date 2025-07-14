@@ -1214,43 +1214,57 @@ public class BookingServlet extends HttpServlet {
     StringBuilder jsonBuilder = new StringBuilder();
     jsonBuilder.append("{");
 
-    // Basic contact info
-    jsonBuilder.append("\"contactName\":\"").append(escapeJson(formData.getContactName())).append("\",");
-    jsonBuilder.append("\"contactEmail\":\"").append(escapeJson(formData.getContactEmail())).append("\",");
-    jsonBuilder.append("\"contactPhone\":\"").append(escapeJson(formData.getContactPhone())).append("\",");
-    jsonBuilder.append("\"serviceType\":\"").append(formData.getServiceType()).append("\"");
+    // Basic contact info - use shorter keys to save space
+    jsonBuilder.append("\"name\":\"").append(escapeJson(formData.getContactName())).append("\",");
+    jsonBuilder.append("\"email\":\"").append(escapeJson(formData.getContactEmail())).append("\",");
+    jsonBuilder.append("\"phone\":\"").append(escapeJson(formData.getContactPhone())).append("\",");
+    jsonBuilder.append("\"type\":\"").append(formData.getServiceType()).append("\"");
 
     // Accommodation-specific data
     if (formData.hasAccommodation()) {
         if (formData.getCheckInDateStr() != null) {
-            jsonBuilder.append(",\"checkInDate\":\"").append(escapeJson(formData.getCheckInDateStr())).append("\"");
+            jsonBuilder.append(",\"checkIn\":\"").append(escapeJson(formData.getCheckInDateStr())).append("\"");
         }
         if (formData.getCheckOutDateStr() != null) {
-            jsonBuilder.append(",\"checkOutDate\":\"").append(escapeJson(formData.getCheckOutDateStr())).append("\"");
+            jsonBuilder.append(",\"checkOut\":\"").append(escapeJson(formData.getCheckOutDateStr())).append("\"");
         }
-        jsonBuilder.append(",\"numberOfNights\":").append(formData.getNumberOfNights());
-        jsonBuilder.append(",\"numberOfGuests\":").append(formData.getNumberOfPeople());
-        jsonBuilder.append(",\"roomQuantity\":").append(formData.getRoomQuantity()); // NEW
-
-            
-        }
-
-         // Experience-specific data
-    if (formData.hasExperience()) {
-        if (formData.getTimeSlot() != null) {
-            jsonBuilder.append(",\"timeSlot\":\"").append(escapeJson(formData.getTimeSlot())).append("\"");
-            jsonBuilder.append(",\"timeSlotDisplay\":\"").append(escapeJson(formData.getTimeSlotDisplayName())).append("\"");
-        }
-        jsonBuilder.append(",\"numberOfParticipants\":").append(formData.getNumberOfPeople());
+        jsonBuilder.append(",\"nights\":").append(formData.getNumberOfNights());
+        jsonBuilder.append(",\"guests\":").append(formData.getNumberOfPeople());
+        jsonBuilder.append(",\"rooms\":").append(formData.getRoomQuantity());
     }
 
-    // Special requests
+    // Experience-specific data
+    if (formData.hasExperience()) {
+        if (formData.getTimeSlot() != null) {
+            jsonBuilder.append(",\"slot\":\"").append(escapeJson(formData.getTimeSlot())).append("\"");
+        }
+        jsonBuilder.append(",\"participants\":").append(formData.getNumberOfPeople());
+    }
+
+    // Special requests - truncate if necessary to fit in 255 char limit
     if (formData.getSpecialRequests() != null && !formData.getSpecialRequests().trim().isEmpty()) {
-        jsonBuilder.append(",\"specialRequests\":\"").append(escapeJson(formData.getSpecialRequests())).append("\"");
+        String currentJson = jsonBuilder.toString();
+        int remainingSpace = 250 - currentJson.length() - 20; // Reserve space for closing and special request key
+        
+        if (remainingSpace > 10) {
+            String truncatedRequests = formData.getSpecialRequests();
+            if (truncatedRequests.length() > remainingSpace) {
+                truncatedRequests = truncateString(truncatedRequests, remainingSpace);
+            }
+            jsonBuilder.append(",\"requests\":\"").append(escapeJson(truncatedRequests)).append("\"");
+        }
     }
 
     jsonBuilder.append("}");
-    return jsonBuilder.toString();
+    
+    // Final safety check - if still too long, truncate the whole thing
+    String result = jsonBuilder.toString();
+    if (result.length() > 255) {
+        result = truncateString(result, 252) + "...";
+        LOGGER.warning("ContactInfo JSON truncated to fit database limit: " + result.length() + " chars");
+    }
+    
+    return result;
 }
 
     // ==================== UTILITY METHODS ====================
@@ -1361,8 +1375,15 @@ public class BookingServlet extends HttpServlet {
                 }
             } catch (SQLException e) {
                 if (conn != null) try { conn.rollback(); } catch (Exception ex) {}
-                LOGGER.log(Level.SEVERE, "Error creating cash booking (TX)", e);
-                request.setAttribute("errorMessage", "Không thể tạo đặt chỗ. Vui lòng thử lại.");
+                LOGGER.log(Level.SEVERE, "Error creating cash booking (TX) - Special requests length: " + 
+                    (formData.getSpecialRequests() != null ? formData.getSpecialRequests().length() : 0), e);
+                
+                String errorMessage = "Không thể tạo đặt chỗ. Vui lòng thử lại.";
+                if (e.getMessage() != null && e.getMessage().contains("String or binary data would be truncated")) {
+                    errorMessage = "Thông tin đặt chỗ quá dài. Vui lòng rút gọn yêu cầu đặc biệt.";
+                }
+                
+                request.setAttribute("errorMessage", errorMessage);
                 request.setAttribute("formData", formData);
                 request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
             } finally {
@@ -1394,8 +1415,15 @@ public class BookingServlet extends HttpServlet {
             }
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error creating cash booking", e);
-            request.setAttribute("errorMessage", "Không thể tạo đặt chỗ. Vui lòng thử lại.");
+            LOGGER.log(Level.SEVERE, "Error creating cash booking - Special requests length: " + 
+                (formData.getSpecialRequests() != null ? formData.getSpecialRequests().length() : 0), e);
+            
+            String errorMessage = "Không thể tạo đặt chỗ. Vui lòng thử lại.";
+            if (e.getMessage() != null && e.getMessage().contains("String or binary data would be truncated")) {
+                errorMessage = "Thông tin đặt chỗ quá dài. Vui lòng rút gọn yêu cầu đặc biệt.";
+            }
+            
+            request.setAttribute("errorMessage", errorMessage);
             request.setAttribute("formData", formData);
             request.getRequestDispatcher(BOOKING_CONFIRM_PAGE).forward(request, response);
         }
@@ -1571,7 +1599,14 @@ public class BookingServlet extends HttpServlet {
         formData.setContactName(request.getParameter("contactName"));
         formData.setContactEmail(request.getParameter("contactEmail"));
         formData.setContactPhone(request.getParameter("contactPhone"));
-        formData.setSpecialRequests(request.getParameter("specialRequests"));
+        
+        // Parse and truncate special requests to fit database limit
+        String specialRequests = request.getParameter("specialRequests");
+        if (specialRequests != null && specialRequests.length() > 500) {
+            specialRequests = truncateString(specialRequests, 500);
+            LOGGER.warning("Special requests truncated to 500 characters for booking");
+        }
+        formData.setSpecialRequests(specialRequests);
     }
 
     private void validateRequiredFields(BookingFormData formData) {
@@ -1585,6 +1620,11 @@ public class BookingServlet extends HttpServlet {
         }
         if (isNullOrEmpty(formData.getContactPhone())) {
             formData.addError("Vui lòng nhập số điện thoại liên hệ.");
+        }
+        
+        // Validate special requests length
+        if (formData.getSpecialRequests() != null && formData.getSpecialRequests().length() > 500) {
+            formData.addError("Yêu cầu đặc biệt không được vượt quá 500 ký tự.");
         }
     }
 
@@ -1628,7 +1668,8 @@ public class BookingServlet extends HttpServlet {
             return experience != null && experience.isActive();
         } else if (formData.hasAccommodation()) {
             Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
-            return accommodation != null && accommodation.isActive();
+            // Kiểm tra cả isActive (host muốn hiển thị) VÀ adminApprovalStatus (admin đã duyệt)
+            return accommodation != null && accommodation.isPubliclyVisible();
         }
         return false;
     }
@@ -1723,7 +1764,10 @@ public class BookingServlet extends HttpServlet {
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
-                .replace("\t", "\\t");
+                .replace("\t", "\\t")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
+                .replace("/", "\\/");
     }
 
     private String truncateString(String input, int maxLength) {

@@ -831,3 +831,28 @@ CREATE TABLE Reports (
     createdAt DATETIME DEFAULT GETDATE(),
     status NVARCHAR(20) DEFAULT 'PENDING'
 );
+
+ALTER TABLE Reports
+ADD adminApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING' 
+    CHECK (adminApprovalStatus IN ('PENDING', 'APPROVED', 'REJECTED'));
+
+ALTER TABLE Reports
+ADD adminApprovedBy INT NULL;
+
+ALTER TABLE Reports
+ADD adminApprovedAt DATETIME NULL;
+
+ALTER TABLE Reports
+ADD adminRejectReason NVARCHAR(500) NULL;
+
+ALTER TABLE Reports
+ADD adminNotes NVARCHAR(MAX) NULL;
+
+ALTER TABLE Reports
+ADD CONSTRAINT FK_Reports_AdminApprovedBy FOREIGN KEY (adminApprovedBy) REFERENCES Users(userId);
+
+ALTER TABLE Reports
+ADD CONSTRAINT FK_Reports_AdminApprovedBy FOREIGN KEY (adminApprovedBy) REFERENCES Users(userId);
+
+  SELECT r.*, u.fullName AS reporterName FROM Reports r
+  LEFT JOIN Users u ON r.reporterId = u.userId

@@ -260,7 +260,7 @@ public class AccommodationDAO {
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.adminApprovalStatus = 'APPROVED'
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
             ORDER BY a.createdAt DESC
             OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
         """;
@@ -277,7 +277,7 @@ public class AccommodationDAO {
             FROM Accommodations a
             LEFT JOIN Users u ON a.hostId = u.userId
             LEFT JOIN Cities c ON a.cityId = c.cityId
-            WHERE a.adminApprovalStatus = 'APPROVED'
+            WHERE a.adminApprovalStatus = 'APPROVED' AND a.isActive = 1
         """);
 
         List<Object> parameters = new ArrayList<>();
@@ -681,12 +681,12 @@ public class AccommodationDAO {
     }
 
     public int getApprovedAccommodationsCount() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED'";
+        String sql = "SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED' AND isActive = 1";
         return getCount(sql);
     }
 
     public int getApprovedAccommodationsCount(String type) throws SQLException {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED'");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Accommodations WHERE adminApprovalStatus = 'APPROVED' AND isActive = 1");
         
         if (type != null && !type.trim().isEmpty() && !"all".equals(type)) {
             sql.append(" AND type = ?");

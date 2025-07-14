@@ -941,7 +941,7 @@ public class BookingDAO {
      * Kiểm tra số booking của user cho một experience nhất định
      */
     public int getTotalBookingsByUserAndExperience(int userId, int experienceId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status IN ('CONFIRMED', 'COMPLETED')";
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status = 'COMPLETED'";
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, experienceId);
@@ -991,8 +991,8 @@ public class BookingDAO {
         SELECT ISNULL(SUM(
             CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)
+                AND (JSON_VALUE(b.contactInfo, '$.rooms') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.rooms'), JSON_VALUE(b.contactInfo, '$.roomQuantity')) AS INT)
                 ELSE 0
             END
         ), 0) as bookedRooms
@@ -1002,40 +1002,40 @@ public class BookingDAO {
         AND (
             (CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
                 ELSE NULL
             END < ? 
              AND CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
                 ELSE NULL
             END > ?)
             OR
             (CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
                 ELSE NULL
             END < ? 
              AND CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
                 ELSE NULL
             END > ?)
             OR
             (CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
                 ELSE NULL
             END >= ? 
              AND CASE 
                 WHEN ISJSON(b.contactInfo) = 1 
-                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
-                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
                 ELSE NULL
             END <= ?)
         )

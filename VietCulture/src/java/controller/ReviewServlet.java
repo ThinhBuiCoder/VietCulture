@@ -101,6 +101,7 @@ public class ReviewServlet extends HttpServlet {
             } else if (accommodationId != null) {
                 hasBooking = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodationId) > 0;
             }
+            // Không cần kiểm tra trạng thái booking, chỉ cần có booking là được
             if (!hasBooking) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().write(gson.toJson(new ServerResponse(false, "Bạn cần đặt trước khi đánh giá!")));
