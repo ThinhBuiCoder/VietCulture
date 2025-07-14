@@ -808,6 +808,12 @@
     // Context path for URLs
     const contextPath = '<c:out value="${pageContext.request.contextPath}"/>';
     
+    // Thêm biến avatar đối phương vào JS
+    var receiverAvatar = '<c:choose><c:when test="${chatRoom.userId == currentUser.userId}">${not empty chatRoom.hostAvatar ? chatRoom.hostAvatar : 'https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png'}</c:when><c:otherwise>${not empty chatRoom.userAvatar ? chatRoom.userAvatar : 'https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png'}</c:otherwise></c:choose>';
+    
+    // Đảm bảo đã có biến currentUserAvatar lấy từ server:
+    var currentUserAvatar = '<c:out value="${not empty currentUser.avatar ? currentUser.avatar : 'https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png'}"/>';
+    
     let isTyping = false;
     let typingTimeout = null;
 
@@ -887,95 +893,126 @@
         }, 1000);
     }
 
-function sendMessage() {
-    const messageInput = document.getElementById('messageInput');
-    const messageContent = messageInput.value.trim();
-    
-    if (messageContent === '') {
-        console.log('Empty message, not sending');
-        return;
+    // --- WebSocket Real-time Chat ---
+    let ws;
+    let wsConnected = false;
+    function connectWebSocket() {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const wsUrl = wsProtocol + window.location.host + contextPath + '/ws/chat-room';
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = function() {
+            wsConnected = true;
+            updateConnectionStatus('connected');
+            console.log('WebSocket connected:', wsUrl);
+        };
+        ws.onclose = function() {
+            wsConnected = false;
+            updateConnectionStatus('disconnected');
+            console.log('WebSocket disconnected');
+            // Tự động reconnect sau 2s
+            setTimeout(connectWebSocket, 2000);
+        };
+        ws.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+        ws.onmessage = wsOnMessageWrapper;
     }
-    
-    // Validate required data
-    if (!chatRoomId || !receiverId || !currentUserId) {
-        console.error('Missing chat data:', {chatRoomId: chatRoomId, receiverId: receiverId, currentUserId: currentUserId});
-        showNotification('Lỗi dữ liệu chat. Vui lòng refresh trang.', 'error');
-        return;
-    }
-    
-    const sendBtn = document.getElementById('sendBtn');
-    sendBtn.disabled = true;
-    
-    // Add message to UI immediately (optimistic UI)
-    addMessageToUI(messageContent, true);
-    
-    // FIXED: Use URL-encoded form data instead of FormData
-    const params = new URLSearchParams();
-    params.append('roomId', chatRoomId.toString());
-    params.append('receiverId', receiverId.toString());
-    params.append('messageContent', messageContent);
-    params.append('messageType', 'TEXT');
-    
-    // Debug parameters
-    console.log('Sending URL-encoded parameters:');
-    for (var pair of params.entries()) {
-        console.log('  ' + pair[0] + ': ' + pair[1]);
-    }
-    
-    const url = contextPath + '/chat/api/send-message';
-    console.log('Send message URL:', url);
-    console.log('Request body:', params.toString());
-    
-    fetch(url, {
-        method: 'POST',
-        body: params,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        }
-    })
-    .then(function(response) {
-        console.log('Send message response status:', response.status);
-        console.log('Response Content-Type:', response.headers.get('content-type'));
+
+    function sendMessage() {
+        const messageInput = document.getElementById('messageInput');
+        const messageContent = messageInput.value.trim();
         
-        if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
+        if (messageContent === '') {
+            console.log('Empty message, not sending');
+            return;
         }
         
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            return response.text().then(function(text) {
-                console.error('Expected JSON but got:', text.substring(0, 200));
-                throw new Error('Server returned non-JSON response');
-            });
+        // Validate required data
+        if (!chatRoomId || !receiverId || !currentUserId) {
+            console.error('Missing chat data:', {chatRoomId: chatRoomId, receiverId: receiverId, currentUserId: currentUserId});
+            showNotification('Lỗi dữ liệu chat. Vui lòng refresh trang.', 'error');
+            return;
         }
         
-        return response.json();
-    })
-    .then(function(data) {
-        console.log('Send message result:', data);
-        if (!data.success) {
+        const sendBtn = document.getElementById('sendBtn');
+        sendBtn.disabled = true;
+        
+        // Add message to UI immediately (optimistic UI)
+        addMessageToUI(messageContent, true);
+        
+        // Gửi qua WebSocket nếu đã kết nối
+        if (wsConnected && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(messageContent);
+        }
+        
+        // Gọi API cũ để lưu DB
+        const params = new URLSearchParams();
+        params.append('roomId', chatRoomId.toString());
+        params.append('receiverId', receiverId.toString());
+        params.append('messageContent', messageContent);
+        params.append('messageType', 'TEXT');
+        
+        // Debug parameters
+        console.log('Sending URL-encoded parameters:');
+        for (var pair of params.entries()) {
+            console.log('  ' + pair[0] + ': ' + pair[1]);
+        }
+        
+        const url = contextPath + '/chat/api/send-message';
+        console.log('Send message URL:', url);
+        console.log('Request body:', params.toString());
+        
+        fetch(url, {
+            method: 'POST',
+            body: params,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            console.log('Send message response status:', response.status);
+            console.log('Response Content-Type:', response.headers.get('content-type'));
+            
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(function(text) {
+                    console.error('Expected JSON but got:', text.substring(0, 200));
+                    throw new Error('Server returned non-JSON response');
+                });
+            }
+            
+            return response.json();
+        })
+        .then(function(data) {
+            console.log('Send message result:', data);
+            if (!data.success) {
+                removeLastOptimisticMessage();
+                showNotification(data.message || 'Có lỗi xảy ra khi gửi tin nhắn', 'error');
+            } else {
+                updateLastMessageStatus('sent');
+                // Optionally refresh messages or use WebSocket for real-time updates
+            }
+        })
+        .catch(function(error) {
+            console.error('Error sending message:', error);
             removeLastOptimisticMessage();
-            showNotification(data.message || 'Có lỗi xảy ra khi gửi tin nhắn', 'error');
-        } else {
-            updateLastMessageStatus('sent');
-            // Optionally refresh messages or use WebSocket for real-time updates
-        }
-    })
-    .catch(function(error) {
-        console.error('Error sending message:', error);
-        removeLastOptimisticMessage();
-        showNotification('Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
-    })
-    .finally(function() {
-        sendBtn.disabled = false;
-    });
-    
-    // Clear input
-    messageInput.value = '';
-    messageInput.style.height = 'auto';
-    messageInput.focus();
-}
+            showNotification('Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
+        })
+        .finally(function() {
+            sendBtn.disabled = false;
+        });
+        
+        // Clear input
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        messageInput.focus();
+    }
 function addMessageToUI(content, isSent) {
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
@@ -986,8 +1023,8 @@ function addMessageToUI(content, isSent) {
         
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message ' + (isSent ? 'sent' : 'received');
-        
-        messageDiv.innerHTML = 
+        // KHÔNG còn avatarHtml cho sent
+        messageDiv.innerHTML =
             '<div class="message-content">' +
                 '<div class="message-bubble">' + escapeHtml(content) + '</div>' +
                 '<div class="message-time">' + timeStr + '</div>' +
@@ -1031,12 +1068,7 @@ function addMessageToUI(content, isSent) {
             console.error('Invalid chatRoomId for markMessagesAsRead:', chatRoomId);
             return;
         }
-        
         const url = contextPath + '/chat/api/mark-read/' + chatRoomId;
-        
-        console.log('Marking messages as read for room:', chatRoomId);
-        console.log('Request URL:', url);
-        
         fetch(url, {
             method: 'POST',
             headers: {
@@ -1044,34 +1076,77 @@ function addMessageToUI(content, isSent) {
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            console.log('Mark read response status:', response.status);
-            
-            if (!response.ok) {
-                throw new Error('HTTP error! status: ' + response.status);
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return response.text().then(text => {
-                    console.error('Expected JSON but got:', text.substring(0, 200));
-                    throw new Error('Server returned non-JSON response');
-                });
-            }
-            
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Mark as read result:', data);
             if (data.success) {
-                console.log('Messages marked as read successfully');
-            } else {
-                console.warn('Failed to mark messages as read:', data.message);
+                // Gửi thông điệp đã xem qua WebSocket
+                if (wsConnected && ws && ws.readyState === WebSocket.OPEN) {
+                    const readMsg = JSON.stringify({ type: 'read', roomId: chatRoomId, userId: currentUserId });
+                    ws.send(readMsg);
+                }
             }
         })
         .catch(error => {
             console.error('Error marking messages as read:', error);
         });
+    }
+
+    // --- Hiển thị trạng thái đã xem ---
+    function showReadReceipt() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        const lastMessage = chatMessages.lastElementChild;
+        if (lastMessage && lastMessage.classList.contains('sent')) {
+            const statusDiv = lastMessage.querySelector('.message-status');
+            if (statusDiv) {
+                // Đổi icon và text sang đã xem
+                const statusIcon = statusDiv.querySelector('i');
+                if (statusIcon) statusIcon.className = 'ri-check-double-line';
+                const statusSpan = statusDiv.querySelector('span');
+                if (statusSpan) statusSpan.textContent = 'Đã xem';
+            }
+        }
+    }
+
+    // --- Nhận thông điệp WebSocket ---
+    let ws_onmessage_old = ws && ws.onmessage;
+    function wsOnMessageWrapper(event) {
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'read' && data.roomId == chatRoomId && data.userId != currentUserId) {
+                showReadReceipt();
+                return;
+            }
+        } catch (e) {
+            // Không phải JSON, là tin nhắn chat thường
+            addMessageToUI(event.data, false);
+            return;
+        }
+        // Nếu là tin nhắn chat dạng text cũ
+        if (typeof ws_onmessage_old === 'function') ws_onmessage_old(event);
+    }
+    // Gán lại handler sau khi connectWebSocket
+    function connectWebSocket() {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const wsUrl = wsProtocol + window.location.host + contextPath + '/ws/chat-room';
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = function() {
+            wsConnected = true;
+            updateConnectionStatus('connected');
+            console.log('WebSocket connected:', wsUrl);
+        };
+        ws.onclose = function() {
+            wsConnected = false;
+            updateConnectionStatus('disconnected');
+            console.log('WebSocket disconnected');
+            // Tự động reconnect sau 2s
+            setTimeout(connectWebSocket, 2000);
+        };
+        ws.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+        ws.onmessage = wsOnMessageWrapper;
     }
 
     function goBack() {
@@ -1187,6 +1262,9 @@ function addMessageToUI(content, isSent) {
 
     // Simulate connection status
     setTimeout(function() { updateConnectionStatus('connected'); }, 1000);
+</script>
+<script id="receiverAvatarScript" type="text/javascript">
+    var receiverAvatar = "<c:choose><c:when test='${chatRoom.userId == currentUser.userId}'>${not empty chatRoom.hostAvatar ? chatRoom.hostAvatar : 'https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png'}</c:when><c:otherwise>${not empty chatRoom.userAvatar ? chatRoom.userAvatar : 'https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png'}</c:otherwise></c:choose>";
 </script>
 </body>
 </html>

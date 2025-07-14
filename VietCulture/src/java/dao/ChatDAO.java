@@ -335,6 +335,94 @@ public boolean sendMessage(ChatMessage message) {
     return messages;
 }
     
+    // Lưu tin nhắn và trả về message ID
+    public int saveMessageAndGetId(ChatMessage message) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            LOGGER.info("ChatDAO.saveMessageAndGetId called with:");
+            LOGGER.info("  chatRoomId: " + message.getChatRoomId());
+            LOGGER.info("  senderId: " + message.getSenderId());
+            LOGGER.info("  receiverId: " + message.getReceiverId());
+            LOGGER.info("  messageContent: " + message.getMessageContent());
+            LOGGER.info("  messageType: " + message.getMessageType());
+            
+            // Use DBUtils to get connection
+            conn = DBUtils.getConnection();
+            if (conn == null) {
+                LOGGER.severe("Failed to get database connection");
+                return -1;
+            }
+            
+            // SQL for SQL Server with RETURN_GENERATED_KEYS
+            String sql = "INSERT INTO ChatMessages (ChatRoomId, SenderId, ReceiverId, MessageContent, MessageType, SentAt, IsRead) " +
+                        "VALUES (?, ?, ?, ?, ?, GETDATE(), 0)";
+            
+            pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            pstmt.setInt(1, message.getChatRoomId());
+            pstmt.setInt(2, message.getSenderId());
+            pstmt.setInt(3, message.getReceiverId());
+            pstmt.setString(4, message.getMessageContent());
+            pstmt.setString(5, message.getMessageType());
+            
+            LOGGER.info("Executing SQL: " + sql);
+            LOGGER.info("Parameters: chatRoomId=" + message.getChatRoomId() + 
+                       ", senderId=" + message.getSenderId() + 
+                       ", receiverId=" + message.getReceiverId() + 
+                       ", messageContent=" + message.getMessageContent() + 
+                       ", messageType=" + message.getMessageType());
+            
+            int rowsAffected = pstmt.executeUpdate();
+            LOGGER.info("Rows affected: " + rowsAffected);
+            
+            if (rowsAffected > 0) {
+                // Get the generated message ID
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int messageId = generatedKeys.getInt(1);
+                        LOGGER.info("Generated message ID: " + messageId);
+                        
+                        // Update chat room's last message and timestamp
+                        updateChatRoomLastMessage(conn, message.getChatRoomId(), message.getMessageContent());
+                        LOGGER.info("Message saved successfully with ID: " + messageId);
+                        return messageId;
+                    } else {
+                        LOGGER.warning("No message ID generated");
+                        return -1;
+                    }
+                }
+            } else {
+                LOGGER.warning("No rows affected - message not saved");
+                return -1;
+            }
+            
+        } catch (SQLException e) {
+            LOGGER.severe("SQL Exception in saveMessageAndGetId: " + e.getMessage());
+            LOGGER.severe("SQL State: " + e.getSQLState());
+            LOGGER.severe("Error Code: " + e.getErrorCode());
+            e.printStackTrace();
+            return -1;
+        } catch (Exception e) {
+            LOGGER.severe("Exception in saveMessageAndGetId: " + e.getMessage());
+            e.printStackTrace();
+            return -1;
+        } finally {
+            // Close resources using DBUtils
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                    LOGGER.info("PreparedStatement closed");
+                }
+            } catch (SQLException e) {
+                LOGGER.warning("Error closing PreparedStatement: " + e.getMessage());
+            }
+            
+            // Close connection
+            DBUtils.closeConnection(conn);
+        }
+    }
+
     // Đánh dấu tin nhắn đã đọc
     public boolean markMessagesAsRead(int chatRoomId, int userId) {
         String sql = "UPDATE ChatMessages SET isRead = 1, readAt = GETDATE() WHERE chatRoomId = ? AND receiverId = ? AND isRead = 0";

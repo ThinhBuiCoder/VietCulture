@@ -930,11 +930,7 @@
                 <p class="animate__animated animate__fadeInUp animate__delay-1s">
                     Kết nối và trò chuyện với host để có những trải nghiệm du lịch tuyệt vời nhất
                 </p>
-                <div class="d-flex justify-content-center gap-3 animate__animated animate__fadeInUp animate__delay-2s">
-                    <button class="btn-new-chat" onclick="showNewChatModal()">
-                        <i class="ri-add-line"></i>Tạo Chat Mới
-                    </button>
-                </div>
+                <!-- Xoá hoàn toàn nút tạo chat mới khỏi giao diện -->
             </div>
         </div>
     </section>
@@ -951,11 +947,7 @@
                             <input type="text" class="search-input" placeholder="Tìm kiếm cuộc trò chuyện..." id="searchInput">
                         </div>
                     </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn-new-chat" onclick="showNewChatModal()">
-                            <i class="ri-add-line"></i>Tạo Chat Mới
-                        </button>
-                    </div>
+                    <!-- XÓA NÚT TẠO CHAT MỚI Ở PHẦN SEARCH SECTION -->
                 </div>
             </div>
 
@@ -967,9 +959,7 @@
                             <i class="ri-chat-3-line"></i>
                             <h3>Chưa có cuộc trò chuyện nào</h3>
                             <p>Bắt đầu chat với host để được tư vấn về trải nghiệm du lịch và nơi lưu trú tuyệt vời</p>
-                            <button class="btn btn-primary" onclick="showNewChatModal()">
-                                <i class="ri-add-line me-2"></i>Tạo Chat Đầu Tiên
-                            </button>
+                            <!-- XÓA NÚT TẠO CHAT ĐẦU TIÊN TRONG EMPTY STATE -->
                         </div>
                     </c:when>
                     <c:otherwise>
