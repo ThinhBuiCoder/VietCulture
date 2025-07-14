@@ -1594,6 +1594,11 @@
                             <i class="ri-map-pin-line"></i>
                             <span>Vị trí</span>
                         </a>
+                        <!-- Nút Báo cáo -->
+                        <a href="#" class="action-btn" onclick="openAccommodationReportModal(); return false;">
+                            <i class="ri-flag-2-line"></i>
+                            <span>Báo cáo</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -2773,5 +2778,130 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Báo Cáo Lưu Trú -->
+        <div class="modal fade" id="accommodationReportModal" tabindex="-1" aria-labelledby="accommodationReportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" id="accommodationReportModalContent">
+                    <!-- Nội dung sẽ được render bằng JS -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+        var canReportAccommodation = ${canReportAccommodation ? "true" : "false"};
+        var accommodationId = "${accommodation.accommodationId}";
+        </script>
+
+        <script>
+        function openAccommodationReportModal() {
+            var isLoggedIn = ('${not empty sessionScope.user ? "true" : "false"}' === 'true');
+            var canReport = canReportAccommodation;
+            const modal = document.getElementById('accommodationReportModal');
+            const modalContent = document.getElementById('accommodationReportModalContent');
+            if (!modal || !modalContent) return;
+            if (!isLoggedIn || !canReport) {
+                modalContent.innerHTML = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">Báo cáo lưu trú</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <i class="ri-information-line" style="font-size:3rem;color:#FF385C"></i>
+                        <h5 class="mt-3 mb-2">Chỉ khách đã đặt phòng mới có thể báo cáo</h5>
+                        <p class="text-muted mb-4">Vui lòng đặt và hoàn thành lưu trú để gửi báo cáo.</p>
+                        <a href='${pageContext.request.contextPath}/booking?accommodationId=${accommodation.accommodationId}' class='btn btn-primary'>Đặt ngay</a>
+                    </div>
+                `;
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                } else {
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    document.body.classList.add('modal-open');
+                }
+                return;
+            }
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accommodationReportModalLabel">Báo cáo lưu trú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accommodationReportForm">
+                        <div class="mb-3">
+                            <label for="accommodationReportReason" class="form-label">Lý do báo cáo</label>
+                            <select class="form-control" id="accommodationReportReason" required>
+                                <option value="">Chọn lý do</option>
+                                <option value="spam">Spam/quảng cáo</option>
+                                <option value="inappropriate">Nội dung không phù hợp</option>
+                                <option value="fraud">Lừa đảo</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accommodationReportDetail" class="form-label">Chi tiết (tuỳ chọn)</label>
+                            <textarea class="form-control" id="accommodationReportDetail" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Gửi báo cáo</button>
+                    </form>
+                </div>
+            `;
+
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+            } else {
+                modal.style.display = 'block';
+                modal.classList.add('show');
+                document.body.classList.add('modal-open');
+            }
+
+            // Gắn lại event submit cho form nếu có
+            setTimeout(() => {
+                const reportForm = document.getElementById('accommodationReportForm');
+                if (reportForm) {
+                    reportForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        // Lấy dữ liệu từ form
+                        const reason = document.getElementById('accommodationReportReason').value;
+                        const description = document.getElementById('accommodationReportDetail').value;
+                        const accommodationId = "${accommodation.accommodationId}";
+
+                        // Gửi AJAX POST tới JSP handler
+                        fetch('${pageContext.request.contextPath}/view/jsp/report-handler.jsp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({
+                                contentType: 'accommodation',
+                                contentId: accommodationId,
+                                reason: reason,
+                                description: description
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                showToast('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất!', 'success');
+                            } else {
+                                showToast('Gửi báo cáo thất bại!', 'error');
+                            }
+                            // Đóng modal
+                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('accommodationReportModal'));
+                                if (modal) modal.hide();
+                            }
+                            reportForm.reset();
+                        })
+                        .catch(() => {
+                            showToast('Gửi báo cáo thất bại!', 'error');
+                        });
+                    });
+                }
+            }, 200);
+        }
+        </script>
     </body>
 </html>

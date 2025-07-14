@@ -17,6 +17,13 @@ public class Report {
     private String status; // PENDING, RESOLVED, DISMISSED
     private String reporterName; // Trường hiển thị từ JOIN với Users
 
+    // Thông tin duyệt admin
+    private String adminApprovalStatus; // PENDING, APPROVED, REJECTED
+    private int adminApprovedBy;
+    private Timestamp adminApprovedAt;
+    private String adminRejectReason;
+    private String adminNotes;
+
     // Constructor mặc định
     public Report() {
     }
@@ -103,6 +110,38 @@ public class Report {
 
     public void setReporterName(String reporterName) {
         this.reporterName = reporterName;
+    }
+
+    // Thông tin duyệt admin
+    public String getAdminApprovalStatus() {
+        return adminApprovalStatus;
+    }
+    public void setAdminApprovalStatus(String adminApprovalStatus) {
+        this.adminApprovalStatus = adminApprovalStatus;
+    }
+    public int getAdminApprovedBy() {
+        return adminApprovedBy;
+    }
+    public void setAdminApprovedBy(int adminApprovedBy) {
+        this.adminApprovedBy = adminApprovedBy;
+    }
+    public Timestamp getAdminApprovedAt() {
+        return adminApprovedAt;
+    }
+    public void setAdminApprovedAt(Timestamp adminApprovedAt) {
+        this.adminApprovedAt = adminApprovedAt;
+    }
+    public String getAdminRejectReason() {
+        return adminRejectReason;
+    }
+    public void setAdminRejectReason(String adminRejectReason) {
+        this.adminRejectReason = adminRejectReason;
+    }
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
     }
 
     // Phương thức hỗ trợ

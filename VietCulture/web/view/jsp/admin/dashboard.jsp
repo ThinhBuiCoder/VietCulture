@@ -79,7 +79,7 @@
                             </a>
                         </li>                 
                         <li class="nav-item">
-                            <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/complaints">
+                            <a class="nav-link text-white-50" href="${pageContext.request.contextPath}/admin/reports">
                                 <i class="fas fa-exclamation-triangle me-2"></i> Khiếu nại
                             </a>
                         </li>

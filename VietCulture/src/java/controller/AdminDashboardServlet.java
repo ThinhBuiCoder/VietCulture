@@ -2,6 +2,7 @@ package controller;
 
 import dao.ExperienceDAO;
 import dao.*;
+import dao.ComplaintDAO;
 import model.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -113,8 +114,8 @@ public class AdminDashboardServlet extends HttpServlet {
     }
 
     private int getNewComplaintsCount() throws SQLException {
-        // Placeholder - implement with a Complaints table
-        return 3;
+        ComplaintDAO complaintDAO = new ComplaintDAO();
+        return complaintDAO.getNewComplaintsCount();
     }
 
     public static class Activity {

@@ -110,16 +110,20 @@ public class AccommodationsServlet extends HttpServlet {
 
             // Kiểm tra booking để truyền biến hasBooked cho review
             boolean hasBooked = false;
+            boolean canReportAccommodation = false;
             jakarta.servlet.http.HttpSession session = request.getSession(false);
             if (session != null && session.getAttribute("user") != null) {
                 model.User user = (model.User) session.getAttribute("user");
                 try {
-                    hasBooked = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodation.getAccommodationId()) > 0;
+                    int total = bookingDAO.getTotalBookingsByUserAndAccommodation(user.getUserId(), accommodation.getAccommodationId());
+                    hasBooked = total > 0;
+                    canReportAccommodation = total > 0;
                 } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, "Error checking booking for review", ex);
+                    LOGGER.log(Level.WARNING, "Error checking booking for review/report", ex);
                 }
             }
             request.setAttribute("hasBooked", hasBooked);
+            request.setAttribute("canReportAccommodation", canReportAccommodation);
 
             // Forward to detail page - Updated path to match project structure
             request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")

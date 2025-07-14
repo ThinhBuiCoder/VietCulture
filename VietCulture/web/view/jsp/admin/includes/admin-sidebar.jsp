@@ -1,14 +1,32 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+body, html, .admin-sidebar {
+    font-family: 'Inter', Arial, Helvetica, sans-serif !important;
+}
 .admin-sidebar {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.3) transparent;
+    /* Sá»­a láº¡i width cá» Äá»nh cho sidebar */
+    width: 250px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1040;
+}
+
+/* Äáº£m báº£o pháº§n ná»i dung chÃ­nh khÃ´ng bá» sidebar che */
+@media (min-width: 768px) {
+    main.col-md-9, main.col-lg-10 {
+        margin-left: 250px !important;
+    }
 }
 
 .admin-sidebar::-webkit-scrollbar {
@@ -162,7 +180,8 @@
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/users') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/users">
                     <i class="fas fa-users me-2"></i> 
-                    <span>Quản lý Users</span>
+                    <span>Quáº
+                        £n lÃ½ Users</span>
                     <c:if test="${not empty newUsers and newUsers > 0}">
                         <span class="badge bg-info ms-auto">${newUsers}</span>
                     </c:if>
@@ -172,7 +191,7 @@
             <!-- Content Moderation Section -->
             <li class="nav-item mt-3">
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
-                    <span><i class="fas fa-shield-alt me-2"></i>Kiểm duyệt nội dung</span>
+                    <span><i class="fas fa-shield-alt me-2"></i>Kiá»m duyá»t ná»i dung</span>
                 </h6>
             </li>
             
@@ -180,10 +199,10 @@
             <li class="nav-item">
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/content/approval') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/content/approval">
-                    <span><i class="fas fa-shield-alt me-2"></i>Kiểm duyệt nội dung</span>
+                    <span><i class="fas fa-shield-alt me-2"></i>Kiá»m duyá»t ná»i dung</span>
                     <c:set var="totalPending" value="${(not empty pendingExperiences ? pendingExperiences : 0) + (not empty pendingAccommodations ? pendingAccommodations : 0)}" />
                     <c:if test="${totalPending > 0}">
-                        <span class="badge badge-combined ms-auto" title="Tổng experiences + accommodations chờ duyệt">${totalPending}</span>
+                        <span class="badge badge-combined ms-auto" title="Tá»ng experiences + accommodations chá» duyá»t">${totalPending}</span>
                     </c:if>
                 </a>
             </li>
@@ -200,9 +219,9 @@
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/content/delete') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/content/delete">
                     <i class="fas fa-shield-alt me-2"></i> 
-                    <span>Quản lý nội dung vi phạm</span>
+                    <span>Quáº£n lÃ½ ná»i dung vi pháº¡m</span>
                     <c:if test="${not empty reportedContent and reportedContent > 0}">
-                        <span class="badge bg-danger ms-auto" title="Nội dung bị báo cáo">${reportedContent}</span>
+                        <span class="badge bg-danger ms-auto" title="Ná»i dung bá» bÃ¡o cÃ¡o">${reportedContent}</span>
                     </c:if>
                 </a>
             </li>
@@ -210,7 +229,7 @@
             <!-- Bookings Section -->
             <li class="nav-item mt-3">
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
-                    <span><i class="fas fa-calendar-check me-2"></i>Quản lý Bookings</span>
+                    <span><i class="fas fa-calendar-check me-2"></i>Quáº£n lÃ½ Bookings</span>
                 </h6>
             </li>
             
@@ -218,7 +237,7 @@
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/bookings') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/bookings">
                     <i class="fas fa-calendar-alt me-2"></i> 
-                    <span>Tất cả Bookings</span>
+                    <span>Táº¥t cáº£ Bookings</span>
                     <c:if test="${not empty todayBookings and todayBookings > 0}">
                         <span class="badge bg-success ms-auto">${todayBookings}</span>
                     </c:if>
@@ -238,17 +257,16 @@
    
             <li class="nav-item mt-3">
                 <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mb-2 text-white-50">
-                    <span><i class="fas fa-life-ring me-2"></i>Hỗ trợ</span>
+                    <span><i class="fas fa-life-ring me-2"></i>Há» trá»£</span>
                 </h6>
             </li>
             
             <li class="nav-item">
                 <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/complaints') ? 'active text-white' : 'text-white-50'}" 
                    href="${pageContext.request.contextPath}/admin/complaints">
-                    <i class="fas fa-exclamation-triangle me-2"></i> 
-                    <span>Khiếu nại</span>
+                    <span>Khiáº¿u náº¡i</span>
                     <c:if test="${not empty newComplaints and newComplaints > 0}">
-                        <span class="badge bg-danger ms-auto">${newComplaints}</span>
+                        <span class="badge bg-danger ms-auto urgent-badge">${newComplaints}</span>
                     </c:if>
                 </a>
             </li>         
@@ -264,7 +282,7 @@
         <!-- System Status -->
         <div class="px-3 mb-3">
             <h6 class="sidebar-heading mb-2 text-white-50">
-                <span><i class="fas fa-server me-2"></i>Trạng thái hệ thống</span>
+                <span><i class="fas fa-server me-2"></i>Tráº¡ng thÃ¡i há» thá»ng</span>
             </h6>
             <div class="d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center">
@@ -274,10 +292,10 @@
                 <small class="text-white-50" id="uptime">24h</small>
             </div>
             <div class="mt-1">
-                <small class="text-white-50">Cập nhật: <span id="lastUpdate"></span></small>
+                <small class="text-white-50">Cáº­p nháº­t: <span id="lastUpdate"></span></small>
             </div>
             <div class="mt-1">
-                <small class="text-white-50">Pending: <span id="totalPendingCount">${(not empty pendingExperiences ? pendingExperiences : 0) + (not empty pendingAccommodations ? pendingAccommodations : 0)}</span> nội dung</small>
+                <small class="text-white-50">Pending: <span id="totalPendingCount">${(not empty pendingExperiences ? pendingExperiences : 0) + (not empty pendingAccommodations ? pendingAccommodations : 0)}</span> ná»i dung</small>
             </div>
         </div>
         
@@ -306,14 +324,14 @@
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow-lg">
                 <li>
                     <h6 class="dropdown-header">
-                        <i class="fas fa-user me-1"></i> Tài khoản
+                        <i class="fas fa-user me-1"></i> TÃ i khoáº£n
                     </h6>
                 </li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/profile">
-                    <i class="fas fa-user-edit me-2"></i> Chỉnh sửa Profile
+                    <i class="fas fa-user-edit me-2"></i> Chá»nh sá»­a Profile
                 </a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/admin/settings/profile">
-                    <i class="fas fa-key me-2"></i> Đổi mật khẩu
+                    <i class="fas fa-key me-2"></i> Äá»i máº­t kháº©u
                 </a></li>
                 <li><hr class="dropdown-divider"></li>
                
@@ -322,8 +340,8 @@
                 <li><hr class="dropdown-divider"></li>
    
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout" onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
-                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout" onclick="return confirm('Báº¡n cÃ³ cháº¯c cháº¯n muá»n ÄÄng xuáº¥t?')">
+                    <i class="fas fa-sign-out-alt me-2"></i> ÄÄng xuáº¥t
                 </a></li>
             </ul>
         </div>
@@ -336,10 +354,10 @@ const contextPath = '${pageContext.request.contextPath}';
 
 // NEW: Quick approve all function
 function quickApproveAll() {
-    if (confirm('Bạn có chắc chắn muốn duyệt TẤT CẢ nội dung đang chờ?\nBao gồm cả experiences và accommodations.')) {
+    if (confirm('Báº¡n cÃ³ cháº¯c cháº¯n muá»n duyá»t Táº¤T Cáº¢ ná»i dung Äang chá»?\nBao gá»m cáº£ experiences vÃ  accommodations.')) {
         const btn = event.target;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang duyệt...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Äang duyá»t...';
         btn.disabled = true;
         
         fetch(contextPath + '/admin/content/approve-all', {
@@ -359,7 +377,7 @@ function quickApproveAll() {
             if (data.success) {
                 const count = data.data?.count || 0;
                 const total = data.data?.total || 0;
-                showNotification('Đã duyệt ' + count + '/' + total + ' nội dung thành công!', 'success');
+                showNotification('ÄÃ£ duyá»t ' + count + '/' + total + ' ná»i dung thÃ nh cÃ´ng!', 'success');
                 
                 // Update pending count in sidebar
                 const pendingCountElement = document.getElementById('totalPendingCount');
@@ -373,12 +391,12 @@ function quickApproveAll() {
                     setTimeout(() => window.location.reload(), 2000);
                 }
             } else {
-                showNotification('Duyệt thất bại: ' + (data.message || 'Unknown error'), 'error');
+                showNotification('Duyá»t tháº¥t báº¡i: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Approve all error:', error);
-            showNotification('Lỗi kết nối: ' + error.message, 'error');
+            showNotification('Lá»i káº¿t ná»i: ' + error.message, 'error');
         })
         .finally(() => {
             btn.innerHTML = originalText;
@@ -389,10 +407,10 @@ function quickApproveAll() {
 
 // Quick action functions
 function quickBackup() {
-    if (confirm('Bạn có chắc chắn muốn thực hiện backup hệ thống?\nQuá trình này có thể mất vài phút.')) {
+    if (confirm('Báº¡n cÃ³ cháº¯c cháº¯n muá»n thá»±c hiá»n backup há» thá»ng?\nQuÃ¡ trÃ¬nh nÃ y cÃ³ thá» máº¥t vÃ i phÃºt.')) {
         const btn = event.target;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang backup...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Äang backup...';
         btn.disabled = true;
         
         fetch(contextPath + '/admin/system/backup', {
@@ -410,14 +428,14 @@ function quickBackup() {
         })
         .then(data => {
             if (data.success) {
-                showNotification('Backup thành công!', 'success');
+                showNotification('Backup thÃ nh cÃ´ng!', 'success');
             } else {
-                showNotification('Backup thất bại: ' + (data.message || 'Unknown error'), 'error');
+                showNotification('Backup tháº¥t báº¡i: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Backup error:', error);
-            showNotification('Lỗi kết nối: ' + error.message, 'error');
+            showNotification('Lá»i káº¿t ná»i: ' + error.message, 'error');
         })
         .finally(() => {
             btn.innerHTML = originalText;
@@ -427,10 +445,10 @@ function quickBackup() {
 }
 
 function clearCache() {
-    if (confirm('Bạn có chắc chắn muốn xóa cache hệ thống?\nViệc này có thể làm chậm website trong thời gian ngắn.')) {
+    if (confirm('Báº¡n cÃ³ cháº¯c cháº¯n muá»n xÃ³a cache há» thá»ng?\nViá»c nÃ y cÃ³ thá» lÃ m cháº­m website trong thá»i gian ngáº¯n.')) {
         const btn = event.target;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang xóa...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Äang xÃ³a...';
         btn.disabled = true;
         
         fetch(contextPath + '/admin/system/clear-cache', {
@@ -448,14 +466,14 @@ function clearCache() {
         })
         .then(data => {
             if (data.success) {
-                showNotification('Đã xóa cache thành công!', 'success');
+                showNotification('ÄÃ£ xÃ³a cache thÃ nh cÃ´ng!', 'success');
             } else {
-                showNotification('Xóa cache thất bại: ' + (data.message || 'Unknown error'), 'error');
+                showNotification('XÃ³a cache tháº¥t báº¡i: ' + (data.message || 'Unknown error'), 'error');
             }
         })
         .catch(error => {
             console.error('Clear cache error:', error);
-            showNotification('Lỗi kết nối: ' + error.message, 'error');
+            showNotification('Lá»i káº¿t ná»i: ' + error.message, 'error');
         })
         .finally(() => {
             btn.innerHTML = originalText;
@@ -679,7 +697,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isNewSession && window.location.pathname.includes('/admin/')) {
         sessionStorage.setItem('adminSessionWelcome', 'shown');
         setTimeout(() => {
-            showNotification('Chào mừng đến Admin Panel! Sử dụng Ctrl+Shift+C để mở trang duyệt nội dung nhanh.', 'info');
+            showNotification('ChÃ o má»«ng Äáº¿n Admin Panel! Sá»­ dá»¥ng Ctrl+Shift+C Äá» má» trang duyá»t ná»i dung nhanh.', 'info');
         }, 1000);
     }
 });

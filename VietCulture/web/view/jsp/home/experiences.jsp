@@ -1423,7 +1423,7 @@
                 <c:choose>
                     <c:when test="${not empty experiences}">
                         <i class="ri-compass-discover-line me-2" style="color: var(--primary-500);"></i>
-                        ${fn:length(experiences)} trải nghiệm được tìm thấy
+                        <c:out value="${totalExperiences}"/> trải nghiệm được tìm thấy
                     </c:when>
                     <c:otherwise>
                         <i class="ri-map-pin-2-line me-2" style="color: var(--secondary-500);"></i>

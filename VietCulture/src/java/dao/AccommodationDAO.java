@@ -853,6 +853,16 @@ public class AccommodationDAO {
         }
     }
 
+    public boolean updateAccommodationStatus(int accommodationId, boolean isActive) throws SQLException {
+        String sql = "UPDATE Accommodations SET isActive = ? WHERE accommodationId = ?";
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, isActive);
+            ps.setInt(2, accommodationId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     /**
      * Lấy accommodations theo city và region
      */

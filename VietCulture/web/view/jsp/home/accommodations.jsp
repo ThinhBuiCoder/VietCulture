@@ -1373,7 +1373,7 @@
                 <c:choose>
                     <c:when test="${not empty accommodations}">
                         <i class="ri-home-heart-line me-2" style="color: var(--primary-500);"></i>
-                        ${fn:length(accommodations)} chỗ lưu trú được tìm thấy
+                        <c:out value="${totalAccommodations}"/> chỗ lưu trú được tìm thấy
                     </c:when>
                     <c:otherwise>
                         <i class="ri-building-2-line me-2" style="color: var(--secondary-500);"></i>
