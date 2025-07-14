@@ -63,8 +63,12 @@
                 %>
                 <table class="table table-bordered">
                     <tr>
-                        <th>ID</th>
+                        <th>ID Khiếu nại</th>
                         <td><%= report.getReportId() %></td>
+                    </tr>
+                    <tr>
+                        <th>ID nội dung</th>
+                        <td><%= report.getContentId() %></td>
                     </tr>
                     <tr>
                         <th>Loại nội dung</th>

@@ -1,10 +1,10 @@
+<%@ page pageEncoding="UTF-8" %>
 <%-- 
     Document   : admin-footer
     Created on : 25 thg 5, 2025, 20:41:37
     Author     : ASUS
 --%>
 
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
     <head>
