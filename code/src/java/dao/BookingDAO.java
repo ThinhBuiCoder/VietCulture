@@ -1,0 +1,1589 @@
+package dao;
+
+import model.Accommodation;
+import model.Booking;
+import model.Experience;
+import utils.DBUtils;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
+public class BookingDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(BookingDAO.class.getName());
+
+    // ========== BOOKING OPERATIONS ==========
+    /**
+     * Get total bookings count by user (traveler)
+     */
+    public int getTotalBookingsByUser(int userId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ?";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get bookings by user with pagination
+     */
+    public List<Booking> getBookingsByUser(int userId, int offset, int limit) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            WHERE b.travelerId = ?
+            ORDER BY b.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, offset);
+            ps.setInt(3, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    bookings.add(booking);
+                }
+            }
+        }
+        return bookings;
+    }
+
+    /**
+     * Get all bookings by user ID (without pagination)
+     */
+    public List<Booking> getBookingsByUserId(int userId) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            WHERE b.travelerId = ?
+            ORDER BY b.createdAt DESC
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    bookings.add(booking);
+                }
+            }
+        }
+        return bookings;
+    }
+
+    /**
+     * Get booking by ID
+     */
+    public Booking getBookingById(int bookingId) throws SQLException {
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            WHERE b.bookingId = ?
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapBookingFromResultSet(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Create new booking
+     */
+    public int createBooking(Booking booking) throws SQLException {
+        String sql = """
+            INSERT INTO Bookings (experienceId, accommodationId, travelerId, bookingDate, 
+                                bookingTime, numberOfPeople, totalPrice, status, 
+                                specialRequests, contactInfo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setObject(1, booking.getExperienceId());
+            ps.setObject(2, booking.getAccommodationId());
+            ps.setInt(3, booking.getTravelerId());
+            ps.setDate(4, new java.sql.Date(booking.getBookingDate().getTime()));
+            ps.setTime(5, new java.sql.Time(booking.getBookingTime().getTime()));
+            ps.setInt(6, booking.getNumberOfPeople());
+            ps.setDouble(7, booking.getTotalPrice());
+            ps.setString(8, booking.getStatus());
+            ps.setString(9, booking.getSpecialRequests());
+            ps.setString(10, booking.getContactInfo());
+
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int bookingId = generatedKeys.getInt(1);
+                        booking.setBookingId(bookingId);
+                        return bookingId;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    // Overload createBooking nhận Connection (dùng cho transaction)
+    public int createBooking(Connection conn, Booking booking) throws SQLException {
+        String sql = """
+            INSERT INTO Bookings (experienceId, accommodationId, travelerId, bookingDate, 
+                                bookingTime, numberOfPeople, totalPrice, status, 
+                                specialRequests, contactInfo)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setObject(1, booking.getExperienceId());
+            ps.setObject(2, booking.getAccommodationId());
+            ps.setInt(3, booking.getTravelerId());
+            ps.setDate(4, new java.sql.Date(booking.getBookingDate().getTime()));
+            ps.setTime(5, new java.sql.Time(booking.getBookingTime().getTime()));
+            ps.setInt(6, booking.getNumberOfPeople());
+            ps.setDouble(7, booking.getTotalPrice());
+            ps.setString(8, booking.getStatus());
+            ps.setString(9, booking.getSpecialRequests());
+            ps.setString(10, booking.getContactInfo());
+
+            int affectedRows = ps.executeUpdate();
+
+            if (affectedRows > 0) {
+                try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int bookingId = generatedKeys.getInt(1);
+                        booking.setBookingId(bookingId);
+                        return bookingId;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Update booking status
+     */
+    public boolean updateBookingStatus(int bookingId, String status) throws SQLException {
+        String sql = "UPDATE Bookings SET status = ? WHERE bookingId = ?";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setInt(2, bookingId);
+
+            int rowsAffected = ps.executeUpdate();
+            LOGGER.info("Booking status updated: " + bookingId + " -> " + status);
+            return rowsAffected > 0;
+        }
+    }
+
+    // ========== EXPERIENCE BOOKING VALIDATION METHODS ==========
+    /**
+     * Kiểm tra xem trải nghiệm còn slot trống không
+     *
+     * @param experienceId ID của trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ (morning/afternoon/evening)
+     * @param requestedPeople Số người yêu cầu
+     * @return true nếu còn đủ slot
+     */
+    public boolean isExperienceSlotAvailable(int experienceId, Date bookingDate, String timeSlot, int requestedPeople) throws SQLException {
+        // Lấy thông tin trải nghiệm
+        ExperienceDAO experienceDAO = new ExperienceDAO();
+        Experience experience = experienceDAO.getExperienceById(experienceId);
+
+        if (experience == null || !experience.isActive()) {
+            return false;
+        }
+
+        int maxGroupSize = experience.getMaxGroupSize();
+
+        // SỬA: Sử dụng query an toàn hơn để tránh lỗi JSON parsing
+        String sql = """
+            SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ? 
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int bookedPeople = rs.getInt("bookedPeople");
+                    int availableSlots = maxGroupSize - bookedPeople;
+
+                    LOGGER.info("Experience " + experienceId + " - Date: " + bookingDate
+                            + " - TimeSlot: " + timeSlot + " - Booked: " + bookedPeople
+                            + " - Max: " + maxGroupSize + " - Available: " + availableSlots);
+
+                    return availableSlots >= requestedPeople;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra người dùng đã đặt trải nghiệm nào trong cùng ngày và khung giờ
+     * chưa
+     *
+     * @param userId ID người dùng
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @param excludeBookingId ID booking cần loại trừ (khi update)
+     * @return true nếu đã có booking trùng lặp
+     */
+    public boolean hasConflictingExperienceBooking(int userId, Date bookingDate, String timeSlot, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) as conflictCount
+            FROM Bookings b
+            INNER JOIN Experiences e ON b.experienceId = e.experienceId
+            WHERE b.travelerId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """);
+
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            ps.setInt(1, userId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+
+            if (excludeBookingId != null) {
+                ps.setInt(4, excludeBookingId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int conflictCount = rs.getInt("conflictCount");
+                    LOGGER.info("User " + userId + " conflict check - Date: " + bookingDate
+                            + " - TimeSlot: " + timeSlot + " - Conflicts: " + conflictCount);
+                    return conflictCount > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra người dùng đã đặt trải nghiệm này trong cùng ngày chưa (bất kể
+     * khung giờ)
+     *
+     * @param userId ID người dùng
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param excludeBookingId ID booking cần loại trừ
+     * @return true nếu đã đặt trải nghiệm này trong ngày
+     */
+    public boolean hasDuplicateExperienceBooking(int userId, int experienceId, Date bookingDate, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) as duplicateCount
+            FROM Bookings b
+            WHERE b.travelerId = ?
+            AND b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """);
+
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            ps.setDate(3, new java.sql.Date(bookingDate.getTime()));
+
+            if (excludeBookingId != null) {
+                ps.setInt(4, excludeBookingId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int duplicateCount = rs.getInt("duplicateCount");
+                    LOGGER.info("User " + userId + " duplicate check - Experience: " + experienceId
+                            + " - Date: " + bookingDate + " - Duplicates: " + duplicateCount);
+                    return duplicateCount > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lấy danh sách booking trải nghiệm theo ngày và khung giờ
+     *
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @return Danh sách booking
+     */
+    public List<Booking> getExperienceBookingsByDateAndTimeSlot(int experienceId, Date bookingDate, String timeSlot) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            INNER JOIN Experiences e ON b.experienceId = e.experienceId
+            INNER JOIN Users u ON b.travelerId = u.userId
+            WHERE b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+            ORDER BY b.createdAt ASC
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    booking.setTravelerName(rs.getString("travelerName"));
+                    booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    bookings.add(booking);
+                }
+            }
+        }
+
+        return bookings;
+    }
+
+    /**
+     * Lấy thống kê slot đã đặt cho trải nghiệm theo ngày
+     *
+     * @param experienceId ID trải nghiệm
+     * @param bookingDate Ngày đặt
+     * @return Map với key là timeSlot và value là số người đã đặt
+     */
+    public Map<String, Integer> getExperienceBookingStatsByDate(int experienceId, Date bookingDate) throws SQLException {
+        Map<String, Integer> stats = new HashMap<>();
+
+        String sql = """
+            SELECT CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END as timeSlot,
+                   SUM(b.numberOfPeople) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ?
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+            AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+            GROUP BY JSON_VALUE(b.contactInfo, '$.timeSlot')
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String timeSlot = rs.getString("timeSlot");
+                    int bookedPeople = rs.getInt("bookedPeople");
+                    if (timeSlot != null) {
+                        stats.put(timeSlot, bookedPeople);
+                    }
+                }
+            }
+        }
+
+        // Đảm bảo có tất cả time slots với giá trị 0 nếu chưa có booking
+        stats.putIfAbsent("morning", 0);
+        stats.putIfAbsent("afternoon", 0);
+        stats.putIfAbsent("evening", 0);
+
+        return stats;
+    }
+
+    /**
+     * Lấy thông tin chi tiết về tình trạng slot của experience
+     *
+     * @param experienceId ID experience
+     * @param bookingDate Ngày đặt
+     * @param timeSlot Khung giờ
+     * @param requestedPeople Số người yêu cầu
+     * @return Thông tin chi tiết về tình trạng slot
+     */
+    public SlotAvailabilityInfo getSlotAvailabilityInfo(int experienceId, Date bookingDate, String timeSlot, int requestedPeople) throws SQLException {
+        // Lấy thông tin experience
+        ExperienceDAO experienceDAO = new ExperienceDAO();
+        Experience experience = experienceDAO.getExperienceById(experienceId);
+
+        if (experience == null || !experience.isActive()) {
+            return new SlotAvailabilityInfo(false, 0, 0, 0, "Trải nghiệm không tồn tại hoặc đã bị vô hiệu hóa.");
+        }
+
+        int maxGroupSize = experience.getMaxGroupSize();
+        int bookedPeople = getBookedPeopleCount(experienceId, bookingDate, timeSlot);
+        int availableSlots = maxGroupSize - bookedPeople;
+        boolean isAvailable = availableSlots >= requestedPeople;
+
+        String message;
+        if (isAvailable) {
+            message = String.format("Còn %d chỗ trống cho khung giờ %s.", availableSlots, getTimeSlotDisplayName(timeSlot));
+        } else {
+            message = String.format("Chỉ còn %d chỗ trống (cần %d chỗ) cho khung giờ %s. Vui lòng chọn ít người hơn hoặc khung giờ khác.", 
+                availableSlots, requestedPeople, getTimeSlotDisplayName(timeSlot));
+        }
+
+        return new SlotAvailabilityInfo(isAvailable, maxGroupSize, bookedPeople, availableSlots, message);
+    }
+
+    /**
+     * Lấy số người đã đặt cho experience trong ngày và khung giờ cụ thể
+     */
+    private int getBookedPeopleCount(int experienceId, Date bookingDate, String timeSlot) throws SQLException {
+        String sql = """
+            SELECT ISNULL(SUM(b.numberOfPeople), 0) as bookedPeople
+            FROM Bookings b
+            WHERE b.experienceId = ? 
+            AND CAST(b.bookingDate AS DATE) = CAST(? AS DATE)
+            AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.timeSlot') IS NOT NULL
+                THEN JSON_VALUE(b.contactInfo, '$.timeSlot')
+                ELSE NULL
+            END = ?
+            AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, experienceId);
+            ps.setDate(2, new java.sql.Date(bookingDate.getTime()));
+            ps.setString(3, timeSlot);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("bookedPeople");
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Chuyển đổi timeSlot thành tên hiển thị
+     */
+    private String getTimeSlotDisplayName(String timeSlot) {
+        if (timeSlot == null) return "không xác định";
+        
+        switch (timeSlot.toLowerCase()) {
+            case "morning":
+                return "Sáng (9:00)";
+            case "afternoon":
+                return "Chiều (14:00)";
+            case "evening":
+                return "Tối (18:00)";
+            default:
+                return timeSlot;
+        }
+    }
+
+    /**
+     * Class chứa thông tin chi tiết về tình trạng slot
+     */
+    public static class SlotAvailabilityInfo {
+        private final boolean available;
+        private final int maxGroupSize;
+        private final int bookedPeople;
+        private final int availableSlots;
+        private final String message;
+
+        public SlotAvailabilityInfo(boolean available, int maxGroupSize, int bookedPeople, int availableSlots, String message) {
+            this.available = available;
+            this.maxGroupSize = maxGroupSize;
+            this.bookedPeople = bookedPeople;
+            this.availableSlots = availableSlots;
+            this.message = message;
+        }
+
+        public boolean isAvailable() { return available; }
+        public int getMaxGroupSize() { return maxGroupSize; }
+        public int getBookedPeople() { return bookedPeople; }
+        public int getAvailableSlots() { return availableSlots; }
+        public String getMessage() { return message; }
+    }
+
+    /**
+     * Get bookings by host (for host dashboard)
+     */
+    public List<Booking> getBookingsByHost(int hostId, int offset, int limit) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName,
+                   u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            LEFT JOIN Users u ON b.travelerId = u.userId
+            WHERE (e.hostId = ? OR a.hostId = ?)
+            ORDER BY b.createdAt DESC
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+            ps.setInt(3, offset);
+            ps.setInt(4, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    // Add traveler info if available
+                    if (rs.getString("travelerName") != null) {
+                        booking.setTravelerName(rs.getString("travelerName"));
+                        booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    }
+                    bookings.add(booking);
+                }
+            }
+        }
+        return bookings;
+    }
+
+    /**
+     * Get total bookings count by host
+     */
+    public int getTotalBookingsByHost(int hostId) throws SQLException {
+        String sql = """
+            SELECT COUNT(*) FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            WHERE (e.hostId = ? OR a.hostId = ?)
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get revenue by host
+     */
+    public double getRevenueByHost(int hostId) throws SQLException {
+        String sql = """
+            SELECT ISNULL(SUM(b.totalPrice), 0) as totalRevenue
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            WHERE (e.hostId = ? OR a.hostId = ?) AND b.status = 'COMPLETED'
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("totalRevenue");
+                }
+            }
+        }
+        return 0.0;
+    }
+
+    // ========== ADMIN STATISTICS ==========
+    /**
+     * Get current month bookings count
+     */
+    public int getCurrentMonthBookingsCount() throws SQLException {
+        String sql = """
+            SELECT COUNT(*) 
+            FROM Bookings 
+            WHERE createdAt >= DATEADD(MONTH, DATEDIFF(MONTH, 0, GETDATE()), 0)
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get weekly bookings data for dashboard chart
+     */
+    public List<Integer> getWeeklyBookingsData() throws SQLException {
+        List<Integer> data = new ArrayList<>();
+
+        String sql = """
+            SELECT COUNT(*) as count
+            FROM Bookings 
+            WHERE createdAt >= DATEADD(DAY, ?, GETDATE())
+            AND createdAt < DATEADD(DAY, ?, GETDATE())
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = 6; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getInt("count"));
+                    } else {
+                        data.add(0);
+                    }
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
+     * Get total bookings count
+     */
+    public int getTotalBookingsCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get total revenue
+     */
+    public double getTotalRevenue() throws SQLException {
+        String sql = "SELECT ISNULL(SUM(totalPrice), 0) FROM Bookings WHERE status = 'COMPLETED'";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+        }
+        return 0.0;
+    }
+
+    /**
+     * Get booking growth percentage
+     */
+    public double getBookingGrowthPercentage(String period) throws SQLException {
+        String sql = getGrowthSQL(period, "Bookings", "COUNT(*)");
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                int currentPeriod = rs.getInt("current_period");
+                int previousPeriod = rs.getInt("previous_period");
+
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+
+                return ((double) (currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Get revenue growth percentage
+     */
+    public double getRevenueGrowthPercentage(String period) throws SQLException {
+        String sql = getGrowthSQL(period, "Bookings", "ISNULL(SUM(totalPrice), 0)", "AND status = 'COMPLETED'");
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                double currentPeriod = rs.getDouble("current_period");
+                double previousPeriod = rs.getDouble("previous_period");
+
+                if (previousPeriod == 0) {
+                    return currentPeriod > 0 ? 100.0 : 0.0;
+                }
+
+                return ((currentPeriod - previousPeriod) / previousPeriod) * 100.0;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Get monthly booking trends
+     */
+    public List<Integer> getMonthlyBookingTrends(int months) throws SQLException {
+        List<Integer> data = new ArrayList<>();
+
+        String sql = """
+            SELECT COUNT(*) as count
+            FROM Bookings 
+            WHERE createdAt >= DATEADD(MONTH, ?, GETDATE())
+            AND createdAt < DATEADD(MONTH, ?, GETDATE())
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getInt("count"));
+                    } else {
+                        data.add(0);
+                    }
+                }
+            }
+        }
+
+        return data;
+    }
+
+    /**
+     * Get monthly revenue trends
+     */
+    public List<Double> getMonthlyRevenueTrends(int months) throws SQLException {
+        List<Double> data = new ArrayList<>();
+
+        String sql = """
+            SELECT ISNULL(SUM(totalPrice), 0) as revenue
+            FROM Bookings 
+            WHERE createdAt >= DATEADD(MONTH, ?, GETDATE())
+            AND createdAt < DATEADD(MONTH, ?, GETDATE())
+            AND status = 'COMPLETED'
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (int i = months - 1; i >= 0; i--) {
+                ps.setInt(1, -i - 1);
+                ps.setInt(2, -i);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        data.add(rs.getDouble("revenue"));
+                    } else {
+                        data.add(0.0);
+                    }
+                }
+            }
+        }
+
+        return data;
+    }
+
+    // ========== HELPER METHODS ==========
+    /**
+     * Map ResultSet to Booking object
+     */
+    private Booking mapBookingFromResultSet(ResultSet rs) throws SQLException {
+        Booking booking = new Booking();
+        booking.setBookingId(rs.getInt("bookingId"));
+        booking.setExperienceId(rs.getObject("experienceId") != null ? rs.getInt("experienceId") : null);
+        booking.setAccommodationId(rs.getObject("accommodationId") != null ? rs.getInt("accommodationId") : null);
+        booking.setTravelerId(rs.getInt("travelerId"));
+        booking.setBookingDate(rs.getDate("bookingDate"));
+        booking.setBookingTime(rs.getTime("bookingTime"));
+        booking.setNumberOfPeople(rs.getInt("numberOfPeople"));
+        booking.setTotalPrice(rs.getDouble("totalPrice"));
+        booking.setStatus(rs.getString("status"));
+        booking.setSpecialRequests(rs.getString("specialRequests"));
+        booking.setContactInfo(rs.getString("contactInfo"));
+        booking.setCreatedAt(rs.getDate("createdAt"));
+
+        // Set experience or accommodation name if available
+        if (rs.getString("experienceName") != null) {
+            booking.setExperienceName(rs.getString("experienceName"));
+        }
+        if (rs.getString("accommodationName") != null) {
+            booking.setAccommodationName(rs.getString("accommodationName"));
+        }
+
+        return booking;
+    }
+
+    /**
+     * Generate growth SQL based on period
+     */
+    private String getGrowthSQL(String period, String tableName, String aggregateFunction, String... additionalConditions) {
+        String condition = additionalConditions.length > 0 ? additionalConditions[0] : "";
+
+        return switch (period) {
+            case "week" ->
+                String.format("""
+                SELECT 
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(DAY, -7, GETDATE()) %s) as current_period,
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(DAY, -14, GETDATE()) 
+                     AND createdAt < DATEADD(DAY, -7, GETDATE()) %s) as previous_period
+                """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
+            case "year" ->
+                String.format("""
+                SELECT 
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(YEAR, -1, GETDATE()) %s) as current_period,
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(YEAR, -2, GETDATE()) 
+                     AND createdAt < DATEADD(YEAR, -1, GETDATE()) %s) as previous_period
+                """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
+            default ->
+                String.format("""
+                SELECT 
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(MONTH, -1, GETDATE()) %s) as current_period,
+                    (SELECT %s FROM %s WHERE createdAt >= DATEADD(MONTH, -2, GETDATE()) 
+                     AND createdAt < DATEADD(MONTH, -1, GETDATE()) %s) as previous_period
+                """, aggregateFunction, tableName, condition, aggregateFunction, tableName, condition);
+        };
+    }
+
+    /**
+     * Delete booking by ID (for cleaning up failed payments)
+     */
+    public boolean deleteBooking(int bookingId) throws SQLException {
+        String sql = "DELETE FROM Bookings WHERE bookingId = ? AND status = 'PENDING'";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+
+            int rowsAffected = ps.executeUpdate();
+
+            if (rowsAffected > 0) {
+                LOGGER.info("Deleted pending booking: " + bookingId);
+                return true;
+            } else {
+                LOGGER.warning("No pending booking found to delete with ID: " + bookingId);
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Check if booking exists and is pending
+     */
+    public boolean isPendingBooking(int bookingId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE bookingId = ? AND status = 'PENDING'";
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, bookingId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Kiểm tra số booking của user cho một experience nhất định
+     */
+    public int getTotalBookingsByUserAndExperience(int userId, int experienceId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, experienceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Kiểm tra số booking của user cho một accommodation nhất định
+     */
+    public int getTotalBookingsByUserAndAccommodation(int userId, int accommodationId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND accommodationId = ? AND status = 'COMPLETED'";
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, accommodationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        }
+        return 0;
+    }
+// Thêm vào BookingDAO.java - Các phương thức validation cho room booking
+
+    /**
+     * Kiểm tra số phòng còn trống cho accommodation (dùng transaction và lock)
+     */
+    public boolean isAccommodationRoomAvailable(Connection conn, int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        // Lấy thông tin accommodation
+        AccommodationDAO accommodationDAO = new AccommodationDAO();
+        Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
+
+        if (accommodation == null || !accommodation.isActive()) {
+            return false;
+        }
+
+        int totalRooms = accommodation.getNumberOfRooms();
+
+        // SỬA: Sử dụng query an toàn hơn để tránh lỗi JSON parsing
+        String sql = """
+        SELECT ISNULL(SUM(
+            CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.rooms') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.rooms'), JSON_VALUE(b.contactInfo, '$.roomQuantity')) AS INT)
+                ELSE 0
+            END
+        ), 0) as bookedRooms
+        FROM Bookings b WITH (UPDLOCK, ROWLOCK)
+        WHERE b.accommodationId = ? 
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
+                ELSE NULL
+            END > ?)
+            OR
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
+                ELSE NULL
+            END > ?)
+            OR
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkIn') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkIn'), JSON_VALUE(b.contactInfo, '$.checkInDate')) AS DATE)
+                ELSE NULL
+            END >= ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND (JSON_VALUE(b.contactInfo, '$.checkOut') IS NOT NULL OR JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL)
+                THEN CAST(ISNULL(JSON_VALUE(b.contactInfo, '$.checkOut'), JSON_VALUE(b.contactInfo, '$.checkOutDate')) AS DATE)
+                ELSE NULL
+            END <= ?)
+        )
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int bookedRooms = rs.getInt("bookedRooms");
+                    int availableRooms = totalRooms - bookedRooms;
+
+                    LOGGER.info("[TX] Accommodation " + accommodationId + " - Date range: " + checkInDate + " to " + checkOutDate
+                            + " - Booked: " + bookedRooms + " - Total: " + totalRooms + " - Available: " + availableRooms);
+
+                    return availableRooms >= requestedRooms;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Kiểm tra người dùng đã đặt accommodation nào trong cùng khoảng thời gian
+     * chưa
+     *
+     * @param userId ID người dùng
+     * @param checkInDate Ngày nhận phòng
+     * @param checkOutDate Ngày trả phòng
+     * @param excludeBookingId ID booking cần loại trừ (khi update)
+     * @return true nếu đã có booking trùng lặp về thời gian
+     */
+    public boolean hasConflictingAccommodationBooking(int userId, Date checkInDate, Date checkOutDate, Integer excludeBookingId) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+        SELECT COUNT(*) as conflictCount
+        FROM Bookings b
+        INNER JOIN Accommodations a ON b.accommodationId = a.accommodationId
+        WHERE b.travelerId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+    """);
+
+        if (excludeBookingId != null) {
+            sql.append(" AND b.bookingId != ?");
+        }
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            ps.setInt(1, userId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            if (excludeBookingId != null) {
+                ps.setInt(8, excludeBookingId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int conflictCount = rs.getInt("conflictCount");
+                    LOGGER.info("User " + userId + " accommodation conflict check - Date range: " + checkInDate + " to " + checkOutDate
+                            + " - Conflicts: " + conflictCount);
+                    return conflictCount > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lấy thống kê phòng đã đặt cho accommodation theo khoảng thời gian
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày bắt đầu
+     * @param checkOutDate Ngày kết thúc
+     * @return Số phòng đã được đặt
+     */
+    public int getBookedRoomsCount(int accommodationId, Date checkInDate, Date checkOutDate) throws SQLException {
+        String sql = """
+        SELECT ISNULL(SUM(
+            CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.roomQuantity') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.roomQuantity') AS INT)
+                ELSE 0
+            END
+        ), 0) as bookedRooms
+        FROM Bookings b
+        WHERE b.accommodationId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
+            OR
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END < ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END > ?)
+            OR
+            (CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkInDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE)
+                ELSE NULL
+            END >= ? 
+             AND CASE 
+                WHEN ISJSON(b.contactInfo) = 1 
+                AND JSON_VALUE(b.contactInfo, '$.checkOutDate') IS NOT NULL
+                THEN CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE)
+                ELSE NULL
+            END <= ?)
+        )
+    """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("bookedRooms");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Lấy thông tin chi tiết về tình trạng phòng của accommodation
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày check-in
+     * @param checkOutDate Ngày check-out
+     * @param requestedRooms Số phòng yêu cầu
+     * @return Thông tin chi tiết về tình trạng phòng
+     */
+    public RoomAvailabilityInfo getRoomAvailabilityInfo(int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        // Lấy thông tin accommodation
+        AccommodationDAO accommodationDAO = new AccommodationDAO();
+        Accommodation accommodation = accommodationDAO.getAccommodationById(accommodationId);
+
+        if (accommodation == null || !accommodation.isActive()) {
+            return new RoomAvailabilityInfo(false, 0, 0, 0, "Chỗ lưu trú không tồn tại hoặc đã bị vô hiệu hóa.");
+        }
+
+        int totalRooms = accommodation.getNumberOfRooms();
+        int bookedRooms = getBookedRoomsCount(accommodationId, checkInDate, checkOutDate);
+        int availableRooms = totalRooms - bookedRooms;
+        boolean isAvailable = availableRooms >= requestedRooms;
+
+        String message;
+        if (isAvailable) {
+            message = String.format("Còn %d phòng trống cho khoảng thời gian này.", availableRooms);
+        } else {
+            message = String.format("Chỉ còn %d phòng trống (cần %d phòng). Vui lòng chọn ít phòng hơn hoặc thay đổi ngày.", 
+                availableRooms, requestedRooms);
+        }
+
+        return new RoomAvailabilityInfo(isAvailable, totalRooms, bookedRooms, availableRooms, message);
+    }
+
+    /**
+     * Class chứa thông tin chi tiết về tình trạng phòng
+     */
+    public static class RoomAvailabilityInfo {
+        private final boolean available;
+        private final int totalRooms;
+        private final int bookedRooms;
+        private final int availableRooms;
+        private final String message;
+
+        public RoomAvailabilityInfo(boolean available, int totalRooms, int bookedRooms, int availableRooms, String message) {
+            this.available = available;
+            this.totalRooms = totalRooms;
+            this.bookedRooms = bookedRooms;
+            this.availableRooms = availableRooms;
+            this.message = message;
+        }
+
+        public boolean isAvailable() { return available; }
+        public int getTotalRooms() { return totalRooms; }
+        public int getBookedRooms() { return bookedRooms; }
+        public int getAvailableRooms() { return availableRooms; }
+        public String getMessage() { return message; }
+    }
+
+    /**
+     * Lấy danh sách booking accommodation theo khoảng thời gian
+     *
+     * @param accommodationId ID accommodation
+     * @param checkInDate Ngày bắt đầu
+     * @param checkOutDate Ngày kết thúc
+     * @return Danh sách booking
+     */
+    public List<Booking> getAccommodationBookingsByDateRange(int accommodationId, Date checkInDate, Date checkOutDate) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+
+        String sql = """
+        SELECT b.bookingId, b.accommodationId, b.travelerId,
+               b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+               b.status, b.specialRequests, b.contactInfo, b.createdAt,
+               a.name as accommodationName, u.fullName as travelerName, u.email as travelerEmail
+        FROM Bookings b
+        INNER JOIN Accommodations a ON b.accommodationId = a.accommodationId
+        INNER JOIN Users u ON b.travelerId = u.userId
+        WHERE b.accommodationId = ?
+        AND b.status IN ('CONFIRMED', 'COMPLETED', 'PENDING')
+        AND (
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) < ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) > ?)
+            OR
+            (CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) >= ? 
+             AND CAST(JSON_VALUE(b.contactInfo, '$.checkOutDate') AS DATE) <= ?)
+        )
+        ORDER BY CAST(JSON_VALUE(b.contactInfo, '$.checkInDate') AS DATE) ASC
+    """;
+
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, accommodationId);
+            ps.setDate(2, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(3, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(4, new java.sql.Date(checkOutDate.getTime()));
+            ps.setDate(5, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(6, new java.sql.Date(checkInDate.getTime()));
+            ps.setDate(7, new java.sql.Date(checkOutDate.getTime()));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    booking.setTravelerName(rs.getString("travelerName"));
+                    booking.setTravelerEmail(rs.getString("travelerEmail"));
+
+                    // Parse additional info from contactInfo JSON
+                    String contactInfo = rs.getString("contactInfo");
+                    if (contactInfo != null) {
+                        try {
+                            // Extract room quantity and dates from JSON
+                            // This is a simple extraction - in production, consider using a JSON library
+                            if (contactInfo.contains("\"roomQuantity\":")) {
+                                // Extract room quantity value
+                                // Implementation depends on your JSON parsing preference
+                            }
+                        } catch (Exception e) {
+                            LOGGER.log(Level.WARNING, "Error parsing contact info JSON", e);
+                        }
+                    }
+
+                    bookings.add(booking);
+                }
+            }
+        }
+
+        return bookings;
+    }
+
+    /**
+     * Get all bookings by host (no pagination)
+     */
+    public List<Booking> getAllBookingsByHost(int hostId) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+        String sql = """
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName,
+                   u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            LEFT JOIN Users u ON b.travelerId = u.userId
+            WHERE (e.hostId = ? OR a.hostId = ?)
+            ORDER BY b.createdAt DESC
+        """;
+        try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, hostId);
+            ps.setInt(2, hostId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    if (rs.getString("travelerName") != null) {
+                        booking.setTravelerName(rs.getString("travelerName"));
+                        booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    }
+                    bookings.add(booking);
+                }
+            }
+        }
+        return bookings;
+    }
+
+    // Hàm cũ giữ lại để không lỗi các chỗ gọi cũ
+    public boolean isAccommodationRoomAvailable(int accommodationId, Date checkInDate, Date checkOutDate, int requestedRooms) throws SQLException {
+        try (Connection conn = DBUtils.getConnection()) {
+            return isAccommodationRoomAvailable(conn, accommodationId, checkInDate, checkOutDate, requestedRooms);
+        }
+    }
+
+    // ========== ADMIN BOOKING MANAGEMENT METHODS ==========
+    
+    /**
+     * Get all bookings with pagination and filtering for admin
+     */
+    public List<Booking> getAllBookings(int offset, int limit, String statusFilter, String typeFilter, String searchFilter) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+        
+        StringBuilder sql = new StringBuilder("""
+            SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId,
+                   b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice,
+                   b.status, b.specialRequests, b.contactInfo, b.createdAt,
+                   e.title as experienceName, a.name as accommodationName,
+                   u.fullName as travelerName, u.email as travelerEmail
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            LEFT JOIN Users u ON b.travelerId = u.userId
+            WHERE 1=1
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        // Status filter
+        if (statusFilter != null && !statusFilter.isEmpty() && !"ALL".equals(statusFilter)) {
+            sql.append(" AND b.status = ?");
+            parameters.add(statusFilter);
+        }
+
+        // Type filter (EXPERIENCE hoặc ACCOMMODATION)
+        if (typeFilter != null && !typeFilter.isEmpty() && !"ALL".equals(typeFilter)) {
+            if ("EXPERIENCE".equals(typeFilter)) {
+                sql.append(" AND b.experienceId IS NOT NULL");
+            } else if ("ACCOMMODATION".equals(typeFilter)) {
+                sql.append(" AND b.accommodationId IS NOT NULL");
+            }
+        }
+
+        // Search filter (tìm kiếm theo tên traveler, email, tên experience/accommodation)
+        if (searchFilter != null && !searchFilter.trim().isEmpty()) {
+            sql.append(" AND (u.fullName LIKE ? OR u.email LIKE ? OR e.title LIKE ? OR a.name LIKE ?)");
+            String searchPattern = "%" + searchFilter.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        sql.append(" ORDER BY b.createdAt DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        parameters.add(offset);
+        parameters.add(limit);
+
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            // Set parameters
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    if (rs.getString("travelerName") != null) {
+                        booking.setTravelerName(rs.getString("travelerName"));
+                        booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    }
+                    bookings.add(booking);
+                }
+            }
+        }
+
+        return bookings;
+    }
+
+    /**
+     * Get total count of bookings with filters for pagination
+     */
+    public int getTotalBookingsCount(String statusFilter, String typeFilter, String searchFilter) throws SQLException {
+        StringBuilder sql = new StringBuilder("""
+            SELECT COUNT(*) as total
+            FROM Bookings b
+            LEFT JOIN Experiences e ON b.experienceId = e.experienceId
+            LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId
+            LEFT JOIN Users u ON b.travelerId = u.userId
+            WHERE 1=1
+        """);
+
+        List<Object> parameters = new ArrayList<>();
+
+        // Status filter
+        if (statusFilter != null && !statusFilter.isEmpty() && !"ALL".equals(statusFilter)) {
+            sql.append(" AND b.status = ?");
+            parameters.add(statusFilter);
+        }
+
+        // Type filter
+        if (typeFilter != null && !typeFilter.isEmpty() && !"ALL".equals(typeFilter)) {
+            if ("EXPERIENCE".equals(typeFilter)) {
+                sql.append(" AND b.experienceId IS NOT NULL");
+            } else if ("ACCOMMODATION".equals(typeFilter)) {
+                sql.append(" AND b.accommodationId IS NOT NULL");
+            }
+        }
+
+        // Search filter
+        if (searchFilter != null && !searchFilter.trim().isEmpty()) {
+            sql.append(" AND (u.fullName LIKE ? OR u.email LIKE ? OR e.title LIKE ? OR a.name LIKE ?)");
+            String searchPattern = "%" + searchFilter.trim() + "%";
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+            parameters.add(searchPattern);
+        }
+
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            // Set parameters
+            for (int i = 0; i < parameters.size(); i++) {
+                ps.setObject(i + 1, parameters.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("total");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get booking statistics for admin dashboard
+     */
+    public Map<String, Object> getBookingStatistics() throws SQLException {
+        Map<String, Object> stats = new HashMap<>();
+        
+        String sql = """
+            SELECT 
+                COUNT(*) as totalBookings,
+                COUNT(CASE WHEN status = 'PENDING' THEN 1 END) as pendingBookings,
+                COUNT(CASE WHEN status = 'CONFIRMED' THEN 1 END) as confirmedBookings,
+                COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) as completedBookings,
+                COUNT(CASE WHEN status = 'CANCELLED' THEN 1 END) as cancelledBookings,
+                COUNT(CASE WHEN experienceId IS NOT NULL THEN 1 END) as experienceBookings,
+                COUNT(CASE WHEN accommodationId IS NOT NULL THEN 1 END) as accommodationBookings,
+                ISNULL(SUM(totalPrice), 0) as totalRevenue,
+                COUNT(CASE WHEN CAST(createdAt AS DATE) = CAST(GETDATE() AS DATE) THEN 1 END) as todayBookings
+            FROM Bookings
+        """;
+
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                stats.put("totalBookings", rs.getInt("totalBookings"));
+                stats.put("pendingBookings", rs.getInt("pendingBookings"));
+                stats.put("confirmedBookings", rs.getInt("confirmedBookings"));
+                stats.put("completedBookings", rs.getInt("completedBookings"));
+                stats.put("cancelledBookings", rs.getInt("cancelledBookings"));
+                stats.put("experienceBookings", rs.getInt("experienceBookings"));
+                stats.put("accommodationBookings", rs.getInt("accommodationBookings"));
+                stats.put("totalRevenue", rs.getDouble("totalRevenue"));
+                stats.put("todayBookings", rs.getInt("todayBookings"));
+            }
+        }
+
+        return stats;
+    }
+}
