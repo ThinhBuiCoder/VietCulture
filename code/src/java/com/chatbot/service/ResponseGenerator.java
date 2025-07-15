@@ -6,7 +6,6 @@ import com.chatbot.utils.IntentClassifier;
 import com.chatbot.utils.IntentClassifier.Intent;
 import com.chatbot.GeminiApiClient;
 import com.chatbot.constants.ChatConstants;
-import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import com.chatbot.exception.*;
 import com.chatbot.validation.MessageValidator;
@@ -43,11 +42,28 @@ public class ResponseGenerator {
     /**
      * Generate response based on user message and session context
      */
-    public String generateResponse(String userMessage, HttpSession session, List<ChatMessage> chatHistory) {
+    public String generateResponse(String userMessage, Object session, List<ChatMessage> chatHistory) {
         try {
-            User currentUser = (User) session.getAttribute("user");
-            Intent intent = IntentClassifier.classifyIntent(userMessage);
+            // Lấy thông tin user từ session nếu có
+            User currentUser = null;
+            Object userObj = null;
             
+            // Lấy attribute từ session thông qua reflection để tránh phụ thuộc vào kiểu HttpSession
+            try {
+                // Gọi session.getAttribute("user") bằng reflection
+                java.lang.reflect.Method getAttributeMethod = session.getClass().getMethod("getAttribute", String.class);
+                userObj = getAttributeMethod.invoke(session, "user");
+                
+                // Kiểm tra nếu userObj là kiểu com.chatbot.model.User
+                if (userObj instanceof User) {
+                    currentUser = (User) userObj;
+                }
+                // Trường hợp là model.User từ hệ thống chính - giữ currentUser là null
+            } catch (Exception e) {
+                // Bỏ qua exception, giữ currentUser là null
+            }
+            
+            Intent intent = IntentClassifier.classifyIntent(userMessage);
             return handleIntent(intent, userMessage, currentUser, session);
             
         } catch (Exception e) {
@@ -56,7 +72,7 @@ public class ResponseGenerator {
         }
     }
     
-    private String handleIntent(Intent intent, String userMessage, User currentUser, HttpSession session) {
+    private String handleIntent(Intent intent, String userMessage, User currentUser, Object session) {
         switch (intent) {
             case PASSWORD_GUIDE:
                 return guideService.handlePasswordGuide(userMessage.toLowerCase(), currentUser);
@@ -124,7 +140,13 @@ public class ResponseGenerator {
             case CITY_SELECTION:
                 String cityName = extractCityFromMessage(userMessage);
                 if (cityName != null) {
-                    session.setAttribute("userPreferredCity", cityName);
+                    try {
+                        // Gọi session.setAttribute("userPreferredCity", cityName) bằng reflection
+                        java.lang.reflect.Method setAttributeMethod = session.getClass().getMethod("setAttribute", String.class, Object.class);
+                        setAttributeMethod.invoke(session, "userPreferredCity", cityName);
+                    } catch (Exception e) {
+                        // Bỏ qua nếu không thể set attribute
+                    }
                     return cityService.handleCitySelection(cityName);
                 }
                 return getDefaultResponse(userMessage);

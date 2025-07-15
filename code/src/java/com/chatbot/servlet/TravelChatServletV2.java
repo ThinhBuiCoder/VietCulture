@@ -60,6 +60,8 @@ public class TravelChatServletV2 extends HttpServlet {
             }
             
             List<ChatMessage> chatHistory = ChatSessionManager.getChatHistory(session);
+            
+            // Sử dụng session như là Object thay vì ép kiểu HttpSession
             String aiResponse = responseGenerator.generateResponse(cleanedMessage, session, chatHistory);
             
             ChatSessionManager.addConversationToHistory(session, cleanedMessage, aiResponse);

@@ -11,7 +11,11 @@ public class DBUtils {
     private static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
 
     // Cấu hình kết nối database
+<<<<<<< HEAD
     private static final String DB_URL = "jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
+=======
+    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
+>>>>>>> 90c26804cf4dba276314791caef05f96675805f4
     private static final String USERNAME = "sa";
     private static final String PASSWORD = "123";
 
@@ -38,23 +42,15 @@ public class DBUtils {
      */
     public static Connection getConnection() throws SQLException {
         try {
-            LOGGER.info("Attempting to connect to database: " + DB_URL);
             Connection connection = DriverManager.getConnection(DB_URL, USERNAME, PASSWORD);
             LOGGER.info("Database connection established successfully");
-            
-            // Test query để kiểm tra kết nối
-            try (var stmt = connection.createStatement()) {
-                var rs = stmt.executeQuery("SELECT COUNT(*) FROM Experiences");
-                if (rs.next()) {
-                    LOGGER.info("Database test query successful. Total experiences: " + rs.getInt(1));
-                }
-            } catch (SQLException e) {
-                LOGGER.log(Level.WARNING, "Test query failed, but connection is established", e);
-            }
-            
             return connection;
         } catch (SQLException e) {
+<<<<<<< HEAD
             LOGGER.log(Level.SEVERE, "Database connection error: " + e.getMessage(), e);
+=======
+            LOGGER.log(Level.SEVERE, "Database connection error", e);
+>>>>>>> 90c26804cf4dba276314791caef05f96675805f4
             throw e;
         }
     }

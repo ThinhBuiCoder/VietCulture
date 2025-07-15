@@ -340,6 +340,31 @@
                                 </div>
                             </div>
 
+                            <div class="col-md-6 mb-3">
+                                <label for="promotion_percent" class="form-label">
+                                    Khuyến Mãi (%)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="promotion_percent" name="promotion_percent" min="0" max="100" value="0">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="help-text">Phần trăm giảm giá khuyến mãi (nếu có)</div>
+                            </div>
+
+                            <!-- Promotion Start Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="promotion_start" class="form-label">Khuyến Mãi Từ Ngày</label>
+                                <input type="datetime-local" class="form-control" id="promotion_start" name="promotion_start">
+                                <div class="help-text">Thời gian bắt đầu khuyến mãi (tùy chọn)</div>
+                            </div>
+                            
+                            <!-- Promotion End Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="promotion_end" class="form-label">Khuyến Mãi Đến Ngày</label>
+                                <input type="datetime-local" class="form-control" id="promotion_end" name="promotion_end">
+                                <div class="help-text">Thời gian kết thúc khuyến mãi (tùy chọn)</div>
+                            </div>
+
                             <!-- Location Section với Region/City Selection -->
                             <div class="col-md-6 mb-3">
                                 <label for="regionId" class="form-label">
@@ -974,6 +999,83 @@ document.addEventListener('DOMContentLoaded', function() {
             // Check if regions dropdown has options
             const regionSelect = document.getElementById('regionId');
             console.log('Region options count:', regionSelect.options.length);
+        });
+    </script>
+    <script>
+        // Validate form for handling promotion fields
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get promotion fields
+            const promotionPercentInput = document.getElementById('promotion_percent');
+            const promotionStartInput = document.getElementById('promotion_start');
+            const promotionEndInput = document.getElementById('promotion_end');
+            
+            // Function to update promotion date fields status
+            function updatePromotionDateFields() {
+                const percentValue = parseInt(promotionPercentInput.value) || 0;
+                
+                if (percentValue > 0) {
+                    // If there's a promotion percent, enable date fields
+                    promotionStartInput.disabled = false;
+                    promotionEndInput.disabled = false;
+                    
+                    // Set default dates if empty
+                    if (!promotionStartInput.value) {
+                        const now = new Date();
+                        promotionStartInput.value = now.toISOString().slice(0, 16);
+                    }
+                    
+                    if (!promotionEndInput.value) {
+                        const oneMonthLater = new Date();
+                        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+                        promotionEndInput.value = oneMonthLater.toISOString().slice(0, 16);
+                    }
+                } else {
+                    // If no promotion percent, disable and clear date fields
+                    promotionStartInput.disabled = true;
+                    promotionEndInput.disabled = true;
+                    promotionStartInput.value = '';
+                    promotionEndInput.value = '';
+                }
+            }
+            
+            // Initialize fields status
+            updatePromotionDateFields();
+            
+            // Add event listener to update when promotion percent changes
+            promotionPercentInput.addEventListener('change', updatePromotionDateFields);
+            promotionPercentInput.addEventListener('input', updatePromotionDateFields);
+            
+            // Add validation to ensure promotion dates are valid
+            document.getElementById('serviceForm').addEventListener('submit', function(e) {
+                const percentValue = parseInt(promotionPercentInput.value) || 0;
+                
+                if (percentValue > 0) {
+                    const startDate = new Date(promotionStartInput.value);
+                    const endDate = new Date(promotionEndInput.value);
+                    
+                    // Validate dates if promotion is set
+                    if (isNaN(startDate.getTime())) {
+                        e.preventDefault();
+                        alert('Vui lòng nhập ngày bắt đầu khuyến mãi hợp lệ.');
+                        promotionStartInput.focus();
+                        return;
+                    }
+                    
+                    if (isNaN(endDate.getTime())) {
+                        e.preventDefault();
+                        alert('Vui lòng nhập ngày kết thúc khuyến mãi hợp lệ.');
+                        promotionEndInput.focus();
+                        return;
+                    }
+                    
+                    if (startDate >= endDate) {
+                        e.preventDefault();
+                        alert('Ngày kết thúc khuyến mãi phải sau ngày bắt đầu.');
+                        promotionEndInput.focus();
+                        return;
+                    }
+                }
+            });
         });
     </script>
 </body>

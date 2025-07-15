@@ -1485,7 +1485,7 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
+                   <div class="form-group">
                         <label for="citySelect">Thành Phố</label>
                         <select class="form-control" name="city" id="citySelect" ${empty param.region ? 'disabled' : ''}>
                             <option value="">Chọn Thành Phố</option>
