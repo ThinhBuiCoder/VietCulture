@@ -120,6 +120,7 @@ public class AccommodationsServlet extends HttpServlet {
                 }
             }
             request.setAttribute("hasBooked", hasBooked);
+            request.setAttribute("canReportAccommodation", hasBooked);
 
             // Forward to detail page - Updated path to match project structure
             request.getRequestDispatcher("/view/jsp/home/accommodation-detail.jsp")
@@ -161,11 +162,10 @@ public class AccommodationsServlet extends HttpServlet {
 
         try {
             // Get accommodations based on filters
-            accommodations = getFilteredAccommodations(typeFilter, regionFilter, cityFilter,
-                    filter, sortBy, page, pageSize);
+            accommodations = accommodationDAO.getPublicAccommodations(page, pageSize);
 
             // Get total count for pagination
-            totalAccommodations = getTotalAccommodationsCount(typeFilter, regionFilter, cityFilter, filter);
+            totalAccommodations = accommodationDAO.getPublicAccommodationsCount();
 
             // Get regions and cities for dropdowns
             regions = regionDAO.getAllRegionsWithCities();

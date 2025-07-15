@@ -973,7 +973,7 @@ public class BookingDAO {
      * Kiểm tra số booking của user cho một experience nhất định
      */
     public int getTotalBookingsByUserAndExperience(int userId, int experienceId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status = 'COMPLETED'";
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND experienceId = ? AND status IN ('CONFIRMED', 'COMPLETED')";
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, experienceId);
@@ -990,7 +990,7 @@ public class BookingDAO {
      * Kiểm tra số booking của user cho một accommodation nhất định
      */
     public int getTotalBookingsByUserAndAccommodation(int userId, int accommodationId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND accommodationId = ? AND status = 'COMPLETED'";
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE travelerId = ? AND accommodationId = ? AND status IN ('CONFIRMED', 'COMPLETED')";
         try (Connection conn = DBUtils.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, accommodationId);

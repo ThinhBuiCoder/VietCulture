@@ -138,6 +138,7 @@ public class ExperiencesServlet extends HttpServlet {
                 }
             }
             request.setAttribute("hasBooked", hasBooked);
+            request.setAttribute("canReportExperience", hasBooked);
 
             // Log access
             LOGGER.info("Experience detail accessed - ID: " + experienceId

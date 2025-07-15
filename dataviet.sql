@@ -820,3 +820,14 @@ SET lockReason = 'Tài khoản bị khóa bởi admin (lý do không xác địn
 WHERE isActive = 0 AND lockReason IS NULL;
 
 PRINT 'lockReason column setup completed';
+
+CREATE TABLE Reports (
+    reportId INT IDENTITY(1,1) PRIMARY KEY,
+    contentType NVARCHAR(50),
+    contentId INT,
+    reporterId INT,
+    reason NVARCHAR(255),
+    description NVARCHAR(1000),
+    createdAt DATETIME DEFAULT GETDATE(),
+    status NVARCHAR(20) DEFAULT 'PENDING'
+);

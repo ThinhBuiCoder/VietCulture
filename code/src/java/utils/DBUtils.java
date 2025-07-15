@@ -7,14 +7,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBUtils {
-
     // Sử dụng Logger thay cho System.out
     private static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
 
-// Cấu hình kết nối database
-private static final String DB_URL = "jdbc:sqlserver://ADMIN-PC\\MSSQLSERVER01;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
-private static final String USERNAME = "sa";
-private static final String PASSWORD = "123";
+    // Cấu hình kết nối database
+    private static final String DB_URL = "jdbc:sqlserver://DESKTOP-09LI1S6\\SQLEXPRESS;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
+    private static final String USERNAME = "sa";
+    private static final String PASSWORD = "123";
 
     // Prevent instantiation
     private DBUtils() {
@@ -34,24 +33,34 @@ private static final String PASSWORD = "123";
 
     /**
      * Lấy kết nối đến database
-     *
      * @return Connection tới database
      * @throws SQLException nếu không thể kết nối
      */
     public static Connection getConnection() throws SQLException {
         try {
+            LOGGER.info("Attempting to connect to database: " + DB_URL);
             Connection connection = DriverManager.getConnection(DB_URL, USERNAME, PASSWORD);
             LOGGER.info("Database connection established successfully");
+            
+            // Test query để kiểm tra kết nối
+            try (var stmt = connection.createStatement()) {
+                var rs = stmt.executeQuery("SELECT COUNT(*) FROM Experiences");
+                if (rs.next()) {
+                    LOGGER.info("Database test query successful. Total experiences: " + rs.getInt(1));
+                }
+            } catch (SQLException e) {
+                LOGGER.log(Level.WARNING, "Test query failed, but connection is established", e);
+            }
+            
             return connection;
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database connection error", e);
+                        LOGGER.log(Level.SEVERE, "Database connection error", e);
             throw e;
         }
     }
 
     /**
      * Đóng kết nối an toàn
-     *
      * @param conn Connection cần đóng
      */
     public static void closeConnection(Connection conn) {
@@ -67,7 +76,6 @@ private static final String PASSWORD = "123";
 
     /**
      * Kiểm tra kết nối database
-     *
      * @return true nếu kết nối thành công, false nếu không
      */
     public static boolean testConnection() {
@@ -82,7 +90,6 @@ private static final String PASSWORD = "123";
 
     /**
      * Kiểm tra thông tin kết nối
-     *
      * @return Thông tin chi tiết về kết nối
      */
     public static String getConnectionInfo() {
@@ -91,12 +98,11 @@ private static final String PASSWORD = "123";
 
     /**
      * Main method để kiểm tra kết nối trực tiếp
-     *
      * @param args Tham số dòng lệnh
      */
     public static void main(String[] args) {
         LOGGER.info("Testing database connection...");
-
+        
         if (testConnection()) {
             LOGGER.info("Connection successful!");
             LOGGER.info("Connection Details: " + getConnectionInfo());

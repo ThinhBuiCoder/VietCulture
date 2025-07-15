@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<jsp:useBean id="now" class="java.util.Date" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -605,27 +604,6 @@
                 font-weight: 500;
             }
 
-            /* Promotion Badge */
-            .promotion-badge {
-                background: linear-gradient(45deg, #ff6b35, #ff385c);
-                color: white;
-                padding: 8px 12px;
-                border-radius: 15px;
-                font-size: 0.75rem;
-                font-weight: 600;
-                text-transform: uppercase;
-                box-shadow: 0 4px 12px rgba(255, 56, 92, 0.3);
-                animation: pulse 2s infinite;
-                margin-top: 10px;
-                display: inline-block;
-            }
-
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-                100% { transform: scale(1); }
-            }
-
             /* Date Selection Wrapper */
             .date-selection-wrapper {
                 margin-bottom: 20px;
@@ -825,34 +803,6 @@
             .contact-host-section h6 {
                 color: var(--dark-color);
                 font-weight: 600;
-            }
-
-            .contact-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .contact-buttons .btn {
-                border-radius: 8px;
-                font-weight: 500;
-                transition: all 0.3s ease;
-            }
-
-            .contact-buttons .btn-chat.chat-pulse {
-                animation: chatPulse 2s infinite;
-            }
-
-            @keyframes chatPulse {
-                0% {
-                    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
-                }
-                70% {
-                    box-shadow: 0 0 0 8px rgba(13, 110, 253, 0);
-                }
-                100% {
-                    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
-                }
             }
 
             /* Safety Info Section */
@@ -1644,6 +1594,11 @@
                             <i class="ri-map-pin-line"></i>
                             <span>Vị trí</span>
                         </a>
+                        <!-- Nút Báo cáo -->
+                        <a href="#" class="action-btn" onclick="openAccommodationReportModal(); return false;">
+                            <i class="ri-flag-2-line"></i>
+                            <span>Báo cáo</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1927,29 +1882,9 @@
                 <div class="sidebar">
                     <div class="booking-card">
                         <div class="price-display">
-                            <c:set var="isPromo" value="${accommodation.promotionPercent > 0 
-                                && accommodation.promotionStart != null 
-                                && accommodation.promotionEnd != null 
-                                && now.time >= accommodation.promotionStart.time 
-                                && now.time <= accommodation.promotionEnd.time}" />
-                            <c:choose>
-                                <c:when test="${isPromo}">
-                                    <div class="price-amount" style="text-decoration: line-through; color: #888; font-size: 1.5rem;">
-                                        <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
-                                    </div>
-                                    <div class="price-amount" style="color: #ff385c; font-weight: bold;">
-                                        <fmt:formatNumber value="${accommodation.pricePerNight * (1 - accommodation.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
-                                    </div>
-                                    <div class="promotion-badge">
-                                        Khuyến mãi ${accommodation.promotionPercent}%
-                                    </div>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="price-amount">
-                                        <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
-                                    </div>
-                                </c:otherwise>
-                            </c:choose>
+                            <div class="price-amount">
+                                <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                            </div>
                             <div class="price-unit">mỗi đêm</div>
                         </div>
 
@@ -2049,39 +1984,13 @@
                     <!-- Contact Host Section -->
                     <div class="contact-host-section">
                         <h6 class="mb-3">Liên hệ chủ nhà</h6>
-                        <div class="contact-buttons">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.user}">
-                                    <c:choose>
-                                        <c:when test="${sessionScope.user.userId == accommodation.hostId}">
-                                            <button class="btn btn-secondary btn-sm" disabled>
-                                                <i class="ri-user-line me-2"></i>Đây là chỗ lưu trú của bạn
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm">
+                                <i class="ri-message-3-line me-2"></i>Gửi tin nhắn
                             </button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <button class="btn btn-primary btn-sm btn-chat chat-pulse" 
-                                                    onclick="chatWithAccommodationHost()"
-                                                    data-host-id="${accommodation.hostId}"
-                                                    data-accommodation-id="${accommodation.accommodationId}"
-                                                    data-current-user-id="${sessionScope.user.userId}">
-                                                <i class="ri-message-3-line me-2"></i>Chat với Chủ nhà
+                            <button class="btn btn-outline-primary btn-sm">
+                                <i class="ri-phone-line me-2"></i>Gọi điện thoại
                             </button>
-                                            <button class="btn btn-outline-primary btn-sm" onclick="showAccommodationContactInfo()">
-                                                <i class="ri-phone-line me-2"></i>Thông tin liên hệ
-                                            </button>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </c:when>
-                                <c:otherwise>
-                                    <a href="${pageContext.request.contextPath}/login?redirect=chat&accommodationId=${accommodation.accommodationId}" 
-                                       class="btn btn-primary btn-sm">
-                                        <i class="ri-message-3-line me-2"></i>Đăng nhập để Chat
-                                    </a>
-                                    <button class="btn btn-outline-primary btn-sm" onclick="showLoginRequired()">
-                                        <i class="ri-phone-line me-2"></i>Thông tin liên hệ
-                                    </button>
-                                </c:otherwise>
-                            </c:choose>
                         </div>
                     </div>
 
@@ -2853,129 +2762,6 @@
             
             console.log("🏨 Accommodation map vars exported:", window.debugVars);
 
-            // Chat với chủ nhà accommodation
-            function chatWithAccommodationHost() {
-                const chatBtn = document.querySelector('[data-host-id]');
-                if (!chatBtn) {
-                    console.error('Chat button not found');
-                    return;
-                }
-
-                const hostId = chatBtn.getAttribute('data-host-id');
-                const accommodationId = chatBtn.getAttribute('data-accommodation-id');
-                const currentUserId = chatBtn.getAttribute('data-current-user-id');
-
-                console.log('Chat data:', {hostId, accommodationId, currentUserId});
-
-                if (!hostId) {
-                    showToast('Không tìm thấy thông tin chủ nhà', 'error');
-                    return;
-                }
-
-                if (!currentUserId) {
-                    // Redirect to login with current page as return URL
-                    const currentPath = window.location.pathname + window.location.search;
-                    window.location.href = '${pageContext.request.contextPath}/login?redirect=' + encodeURIComponent(currentPath);
-                    return;
-                }
-
-                if (hostId === currentUserId) {
-                    showToast('Bạn không thể chat với chính mình', 'info');
-                    return;
-                }
-
-                const originalText = chatBtn.innerHTML;
-                chatBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang tạo chat...';
-                chatBtn.disabled = true;
-
-                const formData = new FormData();
-                formData.append('hostId', hostId);
-                if (accommodationId) {
-                    formData.append('accommodationId', accommodationId);
-                }
-
-                // Tạo hoặc tìm chat room cho accommodation
-                fetch('${pageContext.request.contextPath}/chat/api/create-room', {
-                    method: 'POST',
-                    body: formData
-                })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Chuyển đến room chat với tin nhắn cũ được load
-                                window.location.href = '${pageContext.request.contextPath}/chat/room/' + data.chatRoomId;
-                            } else {
-                                showToast('Lỗi: ' + (data.message || 'Không thể tạo chat'), 'error');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Chat error:', error);
-                            showToast('Có lỗi xảy ra: ' + error.message, 'error');
-                        })
-                        .finally(() => {
-                            chatBtn.innerHTML = originalText;
-                            chatBtn.disabled = false;
-                        });
-            }
-
-            function showAccommodationContactInfo() {
-                const accommodationName = '${accommodation.name}';
-                const hostName = '${accommodation.hostName}';
-
-                const modal = createModal('accommodationContactInfoModal', 'Thông Tin Liên Hệ',
-                        '<div class="text-center mb-4">' +
-                        '<img src="https://cdn.pixabay.com/photo/2020/07/01/12/58/icon-5359553_1280.png" ' +
-                        'alt="Host Avatar" ' +
-                        'style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid var(--secondary-color);">' +
-                        '<h4 class="mt-3 mb-1">' + hostName + '</h4>' +
-                        '<p class="text-muted">Chủ nhà ' + accommodationName + '</p>' +
-                        '</div>' +
-                        '<div class="contact-info">' +
-                        '<div class="contact-item d-flex align-items-center mb-3">' +
-                        '<div class="contact-icon me-3">' +
-                        '<i class="ri-phone-line" style="font-size: 1.2rem; color: var(--primary-color);"></i>' +
-                        '</div>' +
-                        '<div>' +
-                        '<strong>Điện thoại:</strong><br>' +
-                        '<span>0123 456 789</span>' +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="contact-item d-flex align-items-center mb-3">' +
-                        '<div class="contact-icon me-3">' +
-                        '<i class="ri-mail-line" style="font-size: 1.2rem; color: var(--primary-color);"></i>' +
-                        '</div>' +
-                        '<div>' +
-                        '<strong>Email:</strong><br>' +
-                        '<span>host@vietculture.com</span>' +
-                        '</div>' +
-                        '</div>' +
-                        '<div class="contact-item d-flex align-items-center">' +
-                        '<div class="contact-icon me-3">' +
-                        '<i class="ri-star-fill" style="font-size: 1.2rem; color: #FFD700;"></i>' +
-                        '</div>' +
-                        '<div>' +
-                        '<strong>Đánh giá:</strong><br>' +
-                        '<span>${accommodation.averageRating}/5 (${accommodation.totalBookings} đánh giá)</span>' +
-                        '</div>' +
-                        '</div>' +
-                        '</div>', [
-                            {
-                                text: 'Đóng',
-                                class: 'btn-secondary',
-                                action: 'dismiss'
-                            },
-                            {
-                                text: '<i class="ri-message-3-line me-1"></i>Bắt Đầu Chat',
-                                class: 'btn-primary',
-                                action: 'chatWithAccommodationHost()'
-                            }
-                        ]);
-            }
-
-            function showLoginRequired() {
-                showToast('Vui lòng đăng nhập để liên hệ với chủ nhà', 'info');
-            }
-
         </script>
         
         <!-- Modal chứa form đánh giá đặt ngay sau action-buttons -->
@@ -2992,5 +2778,130 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Báo Cáo Lưu Trú -->
+        <div class="modal fade" id="accommodationReportModal" tabindex="-1" aria-labelledby="accommodationReportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" id="accommodationReportModalContent">
+                    <!-- Nội dung sẽ được render bằng JS -->
+                </div>
+            </div>
+        </div>
+
+        <script>
+        var canReportAccommodation = ${canReportAccommodation ? "true" : "false"};
+        var accommodationId = "${accommodation.accommodationId}";
+        </script>
+
+        <script>
+        function openAccommodationReportModal() {
+            var isLoggedIn = ('${not empty sessionScope.user ? "true" : "false"}' === 'true');
+            var canReport = canReportAccommodation;
+            const modal = document.getElementById('accommodationReportModal');
+            const modalContent = document.getElementById('accommodationReportModalContent');
+            if (!modal || !modalContent) return;
+            if (!isLoggedIn || !canReport) {
+                modalContent.innerHTML = `
+                    <div class="modal-header">
+                        <h5 class="modal-title">Báo cáo lưu trú</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <i class="ri-information-line" style="font-size:3rem;color:#FF385C"></i>
+                        <h5 class="mt-3 mb-2">Chỉ khách đã đặt phòng mới có thể báo cáo</h5>
+                        <p class="text-muted mb-4">Vui lòng đặt và hoàn thành lưu trú để gửi báo cáo.</p>
+                        <a href='${pageContext.request.contextPath}/booking?accommodationId=${accommodation.accommodationId}' class='btn btn-primary'>Đặt ngay</a>
+                    </div>
+                `;
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                } else {
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    document.body.classList.add('modal-open');
+                }
+                return;
+            }
+            modalContent.innerHTML = `
+                <div class="modal-header">
+                    <h5 class="modal-title" id="accommodationReportModalLabel">Báo cáo lưu trú</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="accommodationReportForm">
+                        <div class="mb-3">
+                            <label for="accommodationReportReason" class="form-label">Lý do báo cáo</label>
+                            <select class="form-control" id="accommodationReportReason" required>
+                                <option value="">Chọn lý do</option>
+                                <option value="spam">Spam/quảng cáo</option>
+                                <option value="inappropriate">Nội dung không phù hợp</option>
+                                <option value="fraud">Lừa đảo</option>
+                                <option value="other">Khác</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="accommodationReportDetail" class="form-label">Chi tiết (tuỳ chọn)</label>
+                            <textarea class="form-control" id="accommodationReportDetail" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Gửi báo cáo</button>
+                    </form>
+                </div>
+            `;
+
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                const bsModal = new bootstrap.Modal(modal);
+                bsModal.show();
+            } else {
+                modal.style.display = 'block';
+                modal.classList.add('show');
+                document.body.classList.add('modal-open');
+            }
+
+            // Gắn lại event submit cho form nếu có
+            setTimeout(() => {
+                const reportForm = document.getElementById('accommodationReportForm');
+                if (reportForm) {
+                    reportForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        // Lấy dữ liệu từ form
+                        const reason = document.getElementById('accommodationReportReason').value;
+                        const description = document.getElementById('accommodationReportDetail').value;
+                        const accommodationId = "${accommodation.accommodationId}";
+
+                        // Gửi AJAX POST tới JSP handler
+                        fetch('${pageContext.request.contextPath}/view/jsp/report-handler.jsp', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: new URLSearchParams({
+                                contentType: 'accommodation',
+                                contentId: accommodationId,
+                                reason: reason,
+                                description: description
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                showToast('Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét trong thời gian sớm nhất!', 'success');
+                            } else {
+                                showToast('Gửi báo cáo thất bại!', 'error');
+                            }
+                            // Đóng modal
+                            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('accommodationReportModal'));
+                                if (modal) modal.hide();
+                            }
+                            reportForm.reset();
+                        })
+                        .catch(() => {
+                            showToast('Gửi báo cáo thất bại!', 'error');
+                        });
+                    });
+                }
+            }, 200);
+        }
+        </script>
     </body>
 </html>
