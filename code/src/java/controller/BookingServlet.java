@@ -9,6 +9,7 @@ import model.Accommodation;
 import model.User;
 import utils.EmailUtils;
 import utils.PayOSConfig;
+import utils.PromotionUtils;
 
 import vn.payos.PayOS;
 import vn.payos.type.CheckoutResponseData;
@@ -48,6 +49,7 @@ public class BookingServlet extends HttpServlet {
     private static final String BOOKING_CONFIRM_PAGE = "/view/jsp/home/booking-confirm.jsp";
     private static final String BOOKING_SUCCESS_PAGE = "/view/jsp/home/booking-success.jsp";
     private static final String BOOKING_FAIL_PAGE = "/view/jsp/home/booking-fail.jsp";
+    private static final String BOOKING_DETAIL_PAGE = "/view/jsp/home/booking-detail.jsp";
     private static final String PAYOS_PAYMENT_PAGE = "/view/jsp/home/payos-payment.jsp";
 
     // Experience booking constraints
@@ -93,6 +95,8 @@ public class BookingServlet extends HttpServlet {
                 handleBookingFail(request, response);
             } else if (pathInfo.equals("/history")) {
                 handleBookingHistory(request, response);
+            } else if (pathInfo.equals("/detail")) {
+                handleBookingDetail(request, response);
             } else if (pathInfo.equals("/cancel")) {
                 handleCancelBooking(request, response, getUserFromSession(request));
             } else {
@@ -1155,18 +1159,29 @@ public class BookingServlet extends HttpServlet {
 
     // ==================== PRICING CALCULATION ====================
     /**
-     * Enhanced pricing calculation for both service types
+     * Enhanced pricing calculation for both service types with promotion support
      */
     private double calculateTotalPrice(BookingFormData formData) throws SQLException {
     double basePrice = 0;
     double multiplier = 1;
+    double finalPrice = 0;
 
     if (formData.hasExperience()) {
         Experience experience = experienceDAO.getExperienceById(formData.getExperienceId());
         basePrice = experience.getPrice();
         multiplier = formData.getNumberOfPeople();
 
-        LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
+        // Apply promotion if active
+        if (PromotionUtils.isPromotionActive(experience.getPromotionPercent(), 
+                experience.getPromotionStart(), experience.getPromotionEnd())) {
+            finalPrice = PromotionUtils.calculatePromotionPrice(basePrice, experience.getPromotionPercent());
+            LOGGER.info("Experience pricing with promotion - Original: " + basePrice + 
+                       ", Promotion: " + experience.getPromotionPercent() + "%, Final: " + finalPrice + 
+                       ", People: " + multiplier);
+        } else {
+            finalPrice = basePrice;
+            LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
+        }
 
     } else if (formData.hasAccommodation()) {
         Accommodation accommodation = accommodationDAO.getAccommodationById(formData.getAccommodationId());
@@ -1176,10 +1191,20 @@ public class BookingServlet extends HttpServlet {
         int roomQuantity = formData.getRoomQuantity();
         multiplier = nights * roomQuantity; // NEW: Price = nights × rooms
 
-        LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights + ", Rooms: " + roomQuantity);
+        // Apply promotion if active
+        if (PromotionUtils.isPromotionActive(accommodation.getPromotionPercent(), 
+                accommodation.getPromotionStart(), accommodation.getPromotionEnd())) {
+            finalPrice = PromotionUtils.calculatePromotionPrice(basePrice, accommodation.getPromotionPercent());
+            LOGGER.info("Accommodation pricing with promotion - Original: " + basePrice + 
+                       ", Promotion: " + accommodation.getPromotionPercent() + "%, Final: " + finalPrice + 
+                       ", Nights: " + nights + ", Rooms: " + roomQuantity);
+        } else {
+            finalPrice = basePrice;
+            LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights + ", Rooms: " + roomQuantity);
+        }
     }
 
-    double subtotal = basePrice * multiplier;
+    double subtotal = finalPrice * multiplier;
     double serviceFee = subtotal * 0.05; // 5% service fee
     double total = subtotal + serviceFee;
 
@@ -1623,8 +1648,22 @@ public class BookingServlet extends HttpServlet {
             
             // Check if booking can be cancelled
             if (!"PENDING".equals(booking.getStatus()) && !"CONFIRMED".equals(booking.getStatus())) {
-                sendErrorResponse(request, response, "This booking cannot be cancelled");
+                sendErrorResponse(request, response, "Chỉ có thể hủy đặt chỗ có trạng thái PENDING hoặc CONFIRMED");
                 return;
+            }
+            
+            // Additional check for CONFIRMED bookings - check if it's not too close to booking date
+            if ("CONFIRMED".equals(booking.getStatus())) {
+                Date bookingDate = booking.getBookingDate();
+                Date currentDate = new Date();
+                long diffInMillies = bookingDate.getTime() - currentDate.getTime();
+                long diffInHours = diffInMillies / (60 * 60 * 1000);
+                
+                // Không cho phép hủy nếu còn dưới 24 giờ trước ngày đặt chỗ
+                if (diffInHours < 24) {
+                    sendErrorResponse(request, response, "Không thể hủy đặt chỗ trong vòng 24 giờ trước ngày tham gia");
+                    return;
+                }
             }
             
             // Update booking status to CANCELLED
@@ -1640,6 +1679,64 @@ public class BookingServlet extends HttpServlet {
             } else {
                 sendErrorResponse(request, response, "Failed to cancel booking");
             }
+            
+        } catch (NumberFormatException e) {
+            sendErrorResponse(request, response, "Invalid booking ID");
+        }
+    }
+
+    /**
+     * Handle booking detail view
+     */
+    private void handleBookingDetail(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SQLException {
+        
+        // Kiểm tra đăng nhập
+        User user = getUserFromSession(request);
+        if (user == null) {
+            redirectToLogin(request, response);
+            return;
+        }
+        
+        String bookingIdParam = request.getParameter("id");
+        
+        if (bookingIdParam == null || bookingIdParam.trim().isEmpty()) {
+            sendErrorResponse(request, response, "Booking ID is required");
+            return;
+        }
+        
+        try {
+            int bookingId = Integer.parseInt(bookingIdParam);
+            
+            // Lấy thông tin đặt chỗ
+            Booking booking = bookingDAO.getBookingById(bookingId);
+            if (booking == null) {
+                sendErrorResponse(request, response, "Booking not found");
+                return;
+            }
+            
+            // Kiểm tra quyền truy cập - chỉ chủ đặt chỗ mới được xem
+            if (booking.getTravelerId() != user.getUserId()) {
+                sendErrorResponse(request, response, "You can only view your own bookings");
+                return;
+            }
+            
+            // Lấy thông tin dịch vụ tương ứng
+            if (booking.isExperienceBooking()) {
+                Experience experience = experienceDAO.getExperienceById(booking.getExperienceId());
+                request.setAttribute("experience", experience);
+                request.setAttribute("bookingType", "experience");
+            } else if (booking.isAccommodationBooking()) {
+                Accommodation accommodation = accommodationDAO.getAccommodationById(booking.getAccommodationId());
+                request.setAttribute("accommodation", accommodation);
+                request.setAttribute("bookingType", "accommodation");
+            }
+            
+            // Set booking vào request
+            request.setAttribute("booking", booking);
+            
+            // Forward đến trang chi tiết
+            request.getRequestDispatcher(BOOKING_DETAIL_PAGE).forward(request, response);
             
         } catch (NumberFormatException e) {
             sendErrorResponse(request, response, "Invalid booking ID");

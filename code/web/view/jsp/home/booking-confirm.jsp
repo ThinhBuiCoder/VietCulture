@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<jsp:useBean id="now" class="java.util.Date" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -892,11 +893,30 @@
 
                         <!-- Experience Pricing -->
                         <c:if test="${bookingType == 'experience'}">
+                            <c:set var="isPromo" value="${experience.promotionPercent > 0 
+                                && experience.promotionStart != null 
+                                && experience.promotionEnd != null 
+                                && now.time >= experience.promotionStart.time 
+                                && now.time <= experience.promotionEnd.time}" />
                             <div class="price-row">
                                 <span>
                                     <c:choose>
                                         <c:when test="${not empty experience}">
-                                            <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfPeople} người
+                                            <c:choose>
+                                                <c:when test="${isPromo}">
+                                                    <span style="text-decoration: line-through; color: #888; font-size: 0.9em;">
+                                                        <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                                    </span>
+                                                    <span style="color: #ff385c; font-weight: bold;">
+                                                        <fmt:formatNumber value="${experience.price * (1 - experience.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                                    </span>
+                                                    <span style="color: #ff385c; font-size: 0.8em;"> (Khuyến mãi ${experience.promotionPercent}%)</span>
+                                                    × ${formData.numberOfPeople} người
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfPeople} người
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:when>
                                         <c:otherwise>
                                             Giá cơ bản × ${formData.numberOfPeople} người
@@ -911,11 +931,30 @@
 
                         <!-- Accommodation Pricing -->
                         <c:if test="${bookingType == 'accommodation'}">
+                            <c:set var="isPromo" value="${accommodation.promotionPercent > 0 
+                                && accommodation.promotionStart != null 
+                                && accommodation.promotionEnd != null 
+                                && now.time >= accommodation.promotionStart.time 
+                                && now.time <= accommodation.promotionEnd.time}" />
                             <div class="price-row">
                                 <span>
                                     <c:choose>
                                         <c:when test="${not empty accommodation}">
-                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng
+                                            <c:choose>
+                                                <c:when test="${isPromo}">
+                                                    <span style="text-decoration: line-through; color: #888; font-size: 0.9em;">
+                                                        <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                                    </span>
+                                                    <span style="color: #ff385c; font-weight: bold;">
+                                                        <fmt:formatNumber value="${accommodation.pricePerNight * (1 - accommodation.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                                    </span>
+                                                    <span style="color: #ff385c; font-size: 0.8em;"> (Khuyến mãi ${accommodation.promotionPercent}%)</span>
+                                                    × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:when>
                                         <c:otherwise>
                                             Giá phòng × ${formData.numberOfNights} đêm × ${formData.roomQuantity} phòng

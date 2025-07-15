@@ -1494,16 +1494,32 @@
                             </div>
 
                             <div class="price-display">
-                                <div class="price-amount">
-                                    <c:choose>
-                                        <c:when test="${experience.price == 0}">
-                                            Miễn phí
-                                        </c:when>
-                                        <c:otherwise>
+                                <c:set var="isPromo" value="${experience.promotionPercent > 0 
+                                    && experience.promotionStart != null 
+                                    && experience.promotionEnd != null 
+                                    && now.time >= experience.promotionStart.time 
+                                    && now.time <= experience.promotionEnd.time}" />
+                                <c:choose>
+                                    <c:when test="${experience.price == 0}">
+                                        <div class="price-amount">Miễn phí</div>
+                                    </c:when>
+                                    <c:when test="${isPromo}">
+                                        <div class="price-amount" style="text-decoration: line-through; color: #888; font-size: 0.9em;">
                                             <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
+                                        </div>
+                                        <div class="price-amount" style="color: #ff385c; font-weight: bold;">
+                                            <fmt:formatNumber value="${experience.price * (1 - experience.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </div>
+                                        <div class="promotion-badge" style="margin-top: 5px;">
+                                            Khuyến mãi ${experience.promotionPercent}%
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="price-amount">
+                                            <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                                 <div class="price-unit">mỗi người</div>
                             </div>
                         </c:if>
@@ -1545,9 +1561,29 @@
                             </div>
 
                             <div class="price-display accommodation">
-                                <div class="price-amount accommodation">
-                                    <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
-                                </div>
+                                <c:set var="isPromo" value="${accommodation.promotionPercent > 0 
+                                    && accommodation.promotionStart != null 
+                                    && accommodation.promotionEnd != null 
+                                    && now.time >= accommodation.promotionStart.time 
+                                    && now.time <= accommodation.promotionEnd.time}" />
+                                <c:choose>
+                                    <c:when test="${isPromo}">
+                                        <div class="price-amount accommodation" style="text-decoration: line-through; color: #888; font-size: 0.9em;">
+                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </div>
+                                        <div class="price-amount accommodation" style="color: #ff385c; font-weight: bold;">
+                                            <fmt:formatNumber value="${accommodation.pricePerNight * (1 - accommodation.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </div>
+                                        <div class="promotion-badge" style="margin-top: 5px;">
+                                            Khuyến mãi ${accommodation.promotionPercent}%
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="price-amount accommodation">
+                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                                 <div class="price-unit">mỗi đêm</div>
                             </div>
                         </c:if>
@@ -1722,7 +1758,10 @@
                 "experienceId": ${experience.experienceId},
                 "price": ${experience.price},
                 "maxGroupSize": ${experience.maxGroupSize},
-                "title": "${experience.title}"
+                "title": "${experience.title}",
+                "promotionPercent": ${experience.promotionPercent},
+                "promotionStart": "${experience.promotionStart}",
+                "promotionEnd": "${experience.promotionEnd}"
                 }
             </script>
         </c:if>
@@ -1733,7 +1772,10 @@
                 "pricePerNight": ${accommodation.pricePerNight},
                 "name": "${accommodation.name}",
                 "maxOccupancy": ${accommodation.maxOccupancy},
-                "numberOfRooms": ${accommodation.numberOfRooms}
+                "numberOfRooms": ${accommodation.numberOfRooms},
+                "promotionPercent": ${accommodation.promotionPercent},
+                "promotionStart": "${accommodation.promotionStart}",
+                "promotionEnd": "${accommodation.promotionEnd}"
                 }
             </script>
             <!-- Debug info -->
@@ -3147,12 +3189,59 @@
                                         });
                                     }
                                 });
+                                // Check if promotion is active
+                                function isPromotionActive(promotionPercent, promotionStart, promotionEnd) {
+                                    if (!promotionPercent || promotionPercent <= 0) {
+                                        return false;
+                                    }
+                                    
+                                    if (!promotionStart || !promotionEnd) {
+                                        return false;
+                                    }
+                                    
+                                    const now = new Date();
+                                    const startDate = new Date(promotionStart);
+                                    const endDate = new Date(promotionEnd);
+                                    
+                                    return now >= startDate && now <= endDate;
+                                }
+
+                                // Calculate promotion price
+                                function calculatePromotionPrice(originalPrice, promotionPercent) {
+                                    if (!promotionPercent || promotionPercent <= 0 || promotionPercent > 100) {
+                                        return originalPrice;
+                                    }
+                                    
+                                    return originalPrice * (1 - promotionPercent / 100.0);
+                                }
+
                                 function updatePriceCalculation(quantity, unitPrice) {
-                                    const basePrice = quantity * unitPrice;
+                                    // Get promotion data from current service
+                                    const promotionPercent = currentServiceData?.promotionPercent || 0;
+                                    const promotionStart = currentServiceData?.promotionStart;
+                                    const promotionEnd = currentServiceData?.promotionEnd;
+                                    
+                                    // Check if promotion is active
+                                    const isPromo = isPromotionActive(promotionPercent, promotionStart, promotionEnd);
+                                    
+                                    // Calculate final unit price
+                                    let finalUnitPrice = unitPrice;
+                                    if (isPromo) {
+                                        finalUnitPrice = calculatePromotionPrice(unitPrice, promotionPercent);
+                                    }
+                                    
+                                    const basePrice = quantity * finalUnitPrice;
                                     const serviceFee = Math.round(basePrice * 0.05);
                                     const totalPrice = basePrice + serviceFee;
 
-                                    updateElement('basePrice', formatCurrency(basePrice));
+                                    // Update display with promotion info if applicable
+                                    if (isPromo) {
+                                        const originalPrice = quantity * unitPrice;
+                                        updateElement('basePrice', formatCurrency(originalPrice) + ' → ' + formatCurrency(basePrice));
+                                    } else {
+                                        updateElement('basePrice', formatCurrency(basePrice));
+                                    }
+                                    
                                     updateElement('serviceFee', formatCurrency(serviceFee));
                                     updateElement('totalPrice', formatCurrency(totalPrice));
                                 }

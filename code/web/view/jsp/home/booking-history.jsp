@@ -203,7 +203,7 @@
 
         .booking-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 20px;
         }
@@ -357,9 +357,37 @@
             color: white;
         }
 
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            color: white;
+            transform: translateY(-1px);
+        }
+
         .btn-sm {
             padding: 6px 12px;
             font-size: 0.85rem;
+        }
+
+        /* Loading state for buttons */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn i.ri-loader-4-line {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         /* Empty State */
@@ -680,21 +708,31 @@
                             </div>
                         </c:if>
 
+                        <!-- Thông tin chính sách hủy -->
+                        <c:if test="${booking.status == 'CONFIRMED'}">
+                            <div class="mt-3 p-3 bg-warning bg-opacity-10 rounded border border-warning">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <i class="ri-information-line text-warning"></i>
+                                    <strong class="text-warning">Chính sách hủy đặt chỗ</strong>
+                                </div>
+                                <p class="mb-0 small text-muted">
+                                    Bạn có thể hủy đặt chỗ này miễn phí trước 24 giờ so với ngày tham gia. 
+                                    Sau thời gian này, có thể áp dụng phí hủy theo chính sách của host.
+                                </p>
+                            </div>
+                        </c:if>
+
                         <div class="booking-actions">
-                            <c:if test="${booking.status == 'PENDING'}">
-                                <button class="btn btn-primary btn-sm" onclick="cancelBooking(${booking.bookingId})">
+                            <!-- Nút hủy đặt chỗ cho PENDING và CONFIRMED -->
+                            <c:if test="${booking.status == 'PENDING' || booking.status == 'CONFIRMED'}">
+                                <button class="btn btn-danger btn-sm" onclick="cancelBooking('${booking.bookingId}')">
                                     <i class="ri-close-line"></i>Hủy đặt chỗ
                                 </button>
                             </c:if>
                             
-                            <c:if test="${booking.status == 'CONFIRMED' && booking.isExperienceBooking()}">
-                                <a href="${pageContext.request.contextPath}/experiences/detail?id=${booking.experienceId}" class="btn btn-outline-primary btn-sm">
-                                    <i class="ri-eye-line"></i>Xem chi tiết
-                                </a>
-                            </c:if>
-                            
-                            <c:if test="${booking.status == 'CONFIRMED' && booking.isAccommodationBooking()}">
-                                <a href="${pageContext.request.contextPath}/accommodations/detail?id=${booking.accommodationId}" class="btn btn-outline-primary btn-sm">
+                            <!-- Nút xem chi tiết cho tất cả trạng thái -->
+                            <c:if test="${booking.status != 'CANCELLED'}">
+                                <a href="${pageContext.request.contextPath}/booking/detail?id=${booking.bookingId}" class="btn btn-outline-primary btn-sm">
                                     <i class="ri-eye-line"></i>Xem chi tiết
                                 </a>
                             </c:if>
@@ -724,7 +762,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function cancelBooking(bookingId) {
-            if (confirm('Bạn có chắc chắn muốn hủy đặt chỗ này?')) {
+            const confirmMessage = 'Bạn có chắc chắn muốn hủy đặt chỗ này? Hành động này không thể hoàn tác.';
+            if (confirm(confirmMessage)) {
+                // Hiển thị loading state
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="ri-loader-4-line"></i>Đang hủy...';
+                button.disabled = true;
+                
                 // Gửi request hủy đặt chỗ
                 fetch('${pageContext.request.contextPath}/booking/cancel', {
                     method: 'POST',
@@ -737,17 +782,70 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Đã hủy đặt chỗ thành công!');
-                        location.reload();
+                        // Hiển thị thông báo thành công
+                        showNotification('Đã hủy đặt chỗ thành công!', 'success');
+                        // Reload trang sau 1 giây
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
                     } else {
-                        alert('Có lỗi xảy ra: ' + data.message);
+                        showNotification('Có lỗi xảy ra: ' + data.message, 'error');
+                        // Khôi phục button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Có lỗi xảy ra khi hủy đặt chỗ');
+                    showNotification('Có lỗi xảy ra khi hủy đặt chỗ', 'error');
+                    // Khôi phục button
+                    button.innerHTML = originalText;
+                    button.disabled = false;
                 });
             }
+        }
+
+        function showNotification(message, type) {
+            // Tạo notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            
+            if (type === 'success') {
+                notification.style.backgroundColor = '#28a745';
+            } else {
+                notification.style.backgroundColor = '#dc3545';
+            }
+            var iconClass = 'ri-' + (type === 'success' ? 'check-line' : 'error-warning-line');
+            notification.innerHTML =
+                '<div style="display: flex; align-items: center; gap: 10px;">' +
+                '<i class="' + iconClass + '" style="font-size: 1.2rem;"></i>' +
+                '<span>' + message + '</span>' +
+                '</div>';
+            document.body.appendChild(notification);
+            // Hiển thị notification
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            // Tự động ẩn sau 3 giây
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
         }
     </script>
 </body>
