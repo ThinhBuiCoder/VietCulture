@@ -421,7 +421,7 @@
         .typing-dot:nth-child(3) { animation-delay: 0.6s; }
 
         @keyframes typingDots {
-            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+            0%, 60% , 100% { opacity: 0.3; transform: scale(0.8); }
             30% { opacity: 1; transform: scale(1); }
         }
 

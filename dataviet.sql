@@ -120,6 +120,10 @@ CREATE TABLE Experiences (
     FOREIGN KEY (cityId) REFERENCES Cities(cityId)
 );
 GO
+ALTER TABLE Experiences
+ADD promotion_percent INT DEFAULT 0,
+    promotion_start DATETIME,
+    promotion_end DATETIME;
 
 -- Bảng Experience_Categories
 CREATE TABLE Experience_Categories (
@@ -152,6 +156,10 @@ CREATE TABLE Accommodations (
     FOREIGN KEY (cityId) REFERENCES Cities(cityId)
 );
 GO
+ALTER TABLE Accommodations
+ADD promotion_percent INT DEFAULT 0,
+    promotion_start DATETIME,
+    promotion_end DATETIME;
 
 -- Thêm cột maxOccupancy vào bảng Accommodations
 ALTER TABLE Accommodations 
@@ -820,7 +828,8 @@ SET lockReason = 'Tài khoản bị khóa bởi admin (lý do không xác địn
 WHERE isActive = 0 AND lockReason IS NULL;
 
 PRINT 'lockReason column setup completed';
-
+USE TravelerDB;
+GO
 CREATE TABLE Reports (
     reportId INT IDENTITY(1,1) PRIMARY KEY,
     contentType NVARCHAR(50),
@@ -829,5 +838,36 @@ CREATE TABLE Reports (
     reason NVARCHAR(255),
     description NVARCHAR(1000),
     createdAt DATETIME DEFAULT GETDATE(),
-    status NVARCHAR(20) DEFAULT 'PENDING'
+    status NVARCHAR(20) DEFAULT 'PENDING',
+
+    -- Thêm trạng thái duyệt của admin
+    adminApprovalStatus NVARCHAR(20) NOT NULL DEFAULT 'PENDING'
+        CHECK (adminApprovalStatus IN ('PENDING', 'APPROVED', 'REJECTED')),
+
+    -- Người admin duyệt
+    adminApprovedBy INT NULL,
+
+    -- Thời điểm duyệt
+    adminApprovedAt DATETIME NULL,
+
+    -- Lý do từ chối
+    adminRejectReason NVARCHAR(500) NULL,
+
+    -- Ghi chú nội bộ của admin
+    adminNotes NVARCHAR(MAX) NULL
 );
+
+-- Thêm khóa ngoại đến bảng Users (giả sử Users đã tồn tại với userId là khóa chính)
+ALTER TABLE Reports
+ADD CONSTRAINT FK_Reports_AdminApprovedBy FOREIGN KEY (adminApprovedBy) REFERENCES Users(userId);
+
+-- Thêm khóa ngoại cho reporterId nếu cần (tuỳ hệ thống bạn có hỗ trợ liên kết reporter không)
+-- ALTER TABLE Reports
+-- ADD CONSTRAINT FK_Reports_Reporter FOREIGN KEY (reporterId) REFERENCES Users(userId);
+
+-- Truy vấn dữ liệu: join với bảng Users để lấy tên người báo cáo
+SELECT 
+    r.*, 
+    u.fullName AS reporterName
+FROM Reports r
+LEFT JOIN Users u ON r.reporterId = u.userId;

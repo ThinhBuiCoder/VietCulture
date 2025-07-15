@@ -785,6 +785,13 @@
                     <div class="col-lg-10">
                         <h2 class="text-center mb-5 fade-up">Chọn Loại Dịch Vụ Bạn Muốn Tạo</h2>
                         
+                        <!-- Thông báo về tính năng khuyến mãi mới -->
+                        <div class="alert alert-info mb-4 fade-up">
+                            <h5><i class="ri-gift-line me-2"></i> Tính Năng Mới: Khuyến Mãi</h5>
+                            <p>Giờ đây bạn có thể thêm khuyến mãi cho dịch vụ của mình! Tính năng này cho phép bạn cài đặt phần trăm giảm giá và thời hạn khuyến mãi khi tạo hoặc chỉnh sửa dịch vụ.</p>
+                            <p class="mb-0"><strong>Lưu ý:</strong> Khuyến mãi sẽ được hiển thị cho khách hàng và giá sẽ được tính tự động trong quá trình đặt chỗ.</p>
+                        </div>
+                        
                         <div class="row">
                             <!-- Experience Card -->
                             <div class="col-md-6 mb-4 stagger-item">
