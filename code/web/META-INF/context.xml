@@ -10,6 +10,6 @@
         username="sa" 
         password="123"
         driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        url="jdbc:sqlserver://DESKTOP-09LI1S6\\SQLEXPRESS;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true"
+        url="jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true"
     />
 </Context>

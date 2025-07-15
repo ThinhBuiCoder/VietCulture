@@ -1417,7 +1417,7 @@
     <!-- Search Container -->
     <div class="container">
         <div class="search-container">
-            <form class="search-form" method="GET" action="${pageContext.request.contextPath}/experiences">
+            <form class="search-form" method="GET" action="${pageContext.request.contextPath}/experiences" id="experienceFilterForm">
                 <!-- Main Search Row: Keyword + Search Button -->
                 <div class="search-row-main">
                     <div class="form-group keyword-search-main">
@@ -1475,7 +1475,7 @@
 
                     <div class="form-group">
                         <label for="regionSelect">Vùng Miền</label>
-                        <select class="form-control" name="region" id="regionSelect">
+                        <select class="form-control" name="region" id="regionSelect" onchange="onRegionChange()">
                             <option value="">Chọn Vùng Miền</option>
                             <c:forEach var="region" items="${regions}">
                                 <option value="${region.regionId}" ${param.region == region.regionId ? 'selected' : ''}>
@@ -3272,7 +3272,103 @@
 
         // Make debug function available globally
         window.debugExperiences = debugExperiences;
+
+        function onRegionChange() {
+            var regionSelect = document.getElementById('regionSelect');
+            var citySelect = document.getElementById('citySelect');
+            if (regionSelect && citySelect) {
+                if (regionSelect.value) {
+                    citySelect.disabled = false;
+                    // Cập nhật lại options cho citySelect
+                    var regions = window.EXPERIENCE_REGIONS || [];
+                    var selectedRegion = regions.find(r => r.regionId == regionSelect.value);
+                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+                    if (selectedRegion && selectedRegion.cities) {
+                        selectedRegion.cities.forEach(function(city) {
+                            var opt = document.createElement('option');
+                            opt.value = city.cityId;
+                            opt.textContent = city.vietnameseName;
+                            citySelect.appendChild(opt);
+                        });
+                    }
+                } else {
+                    citySelect.disabled = true;
+                    citySelect.innerHTML = '<option value="">Chọn Thành Phố</option>';
+                }
+            }
+            // Không submit form, chỉ trigger AJAX
+            submitExperienceAjaxForm();
+        }
+
+        // --- AJAX filter update ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('experienceFilterForm');
+            if (form) {
+                const dropdowns = form.querySelectorAll('select, input[type="checkbox"], input[type="radio"]');
+                dropdowns.forEach(function(el) {
+                    el.addEventListener('change', function() {
+                        submitExperienceAjaxForm();
+                    });
+                });
+            }
+        });
+
+        function submitExperienceAjaxForm() {
+            const form = document.getElementById('experienceFilterForm');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value !== null && value !== undefined) params.append(key, value);
+            }
+            const url = form.action + '?' + params.toString();
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.text())
+                .then(html => {
+                    // Parse HTML và lấy phần #experiencesContainer
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.getElementById('experiencesContainer');
+                    const oldContainer = document.getElementById('experiencesContainer');
+                    if (newContainer && oldContainer) {
+                        oldContainer.innerHTML = newContainer.innerHTML;
+                    }
+                    // Cập nhật lại tiêu đề kết quả nếu có
+                    const newTitle = doc.getElementById('resultsTitle');
+                    const oldTitle = document.getElementById('resultsTitle');
+                    if (newTitle && oldTitle) {
+                        oldTitle.innerHTML = newTitle.innerHTML;
+                    }
+                    // Nếu có phân trang, cập nhật lại
+                    const newPagination = doc.querySelector('.pagination-container');
+                    const oldPagination = document.querySelector('.pagination-container');
+                    if (newPagination && oldPagination) {
+                        oldPagination.innerHTML = newPagination.innerHTML;
+                    }
+                    // Nếu có các sự kiện JS khác (favorite, v.v.), cần re-attach nếu cần
+                })
+                .catch(err => {
+                    console.error('Lỗi khi tải dữ liệu trải nghiệm:', err);
+                });
+        }
     </script>
 
+    <!-- Sau thẻ <form ... id="experienceFilterForm"> -->
+    <script>
+    // Tạo biến JS lưu toàn bộ regions và cities từ backend
+    window.EXPERIENCE_REGIONS = [
+    <c:forEach var="region" items="${regions}" varStatus="regionStatus">
+      {
+        regionId: "${region.regionId}",
+        vietnameseName: "${region.vietnameseName}",
+        cities: [
+          <c:forEach var="city" items="${region.cities}" varStatus="cityStatus">
+            { cityId: "${city.cityId}", vietnameseName: "${city.vietnameseName}" }<c:if test="${!cityStatus.last}">,</c:if>
+          </c:forEach>
+        ]
+      }<c:if test="${!regionStatus.last}">,</c:if>
+    </c:forEach>
+    ];
+    </script>
 </body>
 </html>

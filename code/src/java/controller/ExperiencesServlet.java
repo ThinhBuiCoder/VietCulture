@@ -199,7 +199,7 @@ public class ExperiencesServlet extends HttpServlet {
 
         try {
             // Load dropdown data for filters
-            regions = regionDAO.getAllRegions();
+            regions = regionDAO.getAllRegionsWithCities(); // Sửa dòng này để lấy cả cities
             categories = categoryDAO.getAllCategories();
 
             // Get experiences based on filters (including distance)

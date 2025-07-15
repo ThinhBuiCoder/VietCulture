@@ -1272,7 +1272,7 @@
     <!-- Search Container -->
     <div class="container">
         <div class="search-container">
-            <form class="search-form" method="GET" action="${pageContext.request.contextPath}/accommodations">
+            <form class="search-form" method="GET" action="${pageContext.request.contextPath}/accommodations" id="accommodationFilterForm">
                 <!-- Main Search Row: Keyword + Search Button -->
                 <div class="search-row-main">
                     <div class="form-group keyword-search-main">
@@ -2854,6 +2854,59 @@
             const currentDisplayedItems = document.querySelectorAll('.card-item').length;
             if (currentDisplayedItems > 0) itemsPerPage = currentDisplayedItems;
         });
+
+        // --- AJAX filter update ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('accommodationFilterForm');
+            if (form) {
+                const dropdowns = form.querySelectorAll('select, input[type="checkbox"], input[type="radio"]');
+                dropdowns.forEach(function(el) {
+                    el.addEventListener('change', function() {
+                        submitAccommodationAjaxForm();
+                    });
+                });
+                // Nếu có input search, cũng có thể thêm sự kiện input nếu muốn
+            }
+        });
+
+        function submitAccommodationAjaxForm() {
+            const form = document.getElementById('accommodationFilterForm');
+            if (!form) return;
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                if (value !== null && value !== undefined) params.append(key, value);
+            }
+            const url = form.action + '?' + params.toString();
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.text())
+                .then(html => {
+                    // Parse HTML và lấy phần #accommodationsContainer
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.getElementById('accommodationsContainer');
+                    const oldContainer = document.getElementById('accommodationsContainer');
+                    if (newContainer && oldContainer) {
+                        oldContainer.innerHTML = newContainer.innerHTML;
+                    }
+                    // Cập nhật lại tiêu đề kết quả nếu có
+                    const newTitle = doc.getElementById('resultsTitle');
+                    const oldTitle = document.getElementById('resultsTitle');
+                    if (newTitle && oldTitle) {
+                        oldTitle.innerHTML = newTitle.innerHTML;
+                    }
+                    // Nếu có phân trang, cập nhật lại
+                    const newPagination = doc.querySelector('.pagination-container');
+                    const oldPagination = document.querySelector('.pagination-container');
+                    if (newPagination && oldPagination) {
+                        oldPagination.innerHTML = newPagination.innerHTML;
+                    }
+                    // Nếu có các sự kiện JS khác (favorite, v.v.), cần re-attach nếu cần
+                })
+                .catch(err => {
+                    console.error('Lỗi khi tải dữ liệu lưu trú:', err);
+                });
+        }
     </script>
 </body>
 </html>

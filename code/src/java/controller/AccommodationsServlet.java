@@ -162,10 +162,10 @@ public class AccommodationsServlet extends HttpServlet {
 
         try {
             // Get accommodations based on filters
-            accommodations = accommodationDAO.getPublicAccommodations(page, pageSize);
+            accommodations = getFilteredAccommodations(typeFilter, regionFilter, cityFilter, filter, sortBy, page, pageSize);
 
             // Get total count for pagination
-            totalAccommodations = accommodationDAO.getPublicAccommodationsCount();
+            totalAccommodations = getTotalAccommodationsCount(typeFilter, regionFilter, cityFilter, filter);
 
             // Get regions and cities for dropdowns
             regions = regionDAO.getAllRegionsWithCities();
