@@ -168,11 +168,16 @@
           <% for (String img : images) { 
                String fileName = img != null ? img.trim() : "";
                if (!fileName.isEmpty()) { %>
-            <img src="<%=request.getContextPath()%>/<%= fileName %>" alt="Ảnh trải nghiệm" style="width:110px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e3e8f0;" onerror="this.onerror=null;this.src='<%=request.getContextPath()%>/view/assets/images/experiences/exp.png';" />
+            <img src="<%=request.getContextPath()%>/images/experiences/<%= fileName %>"
+                 alt="Ảnh trải nghiệm"
+                 style="width:110px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e3e8f0;"
+                 onerror="this.onerror=null;this.src='<%=request.getContextPath()%>/images/experiences/exp.png';" />
           <%   } 
              } %>
         </div>
       </div>
+      <% } else { %>
+      <div style="margin-top:14px; color:#888;">Không có ảnh trải nghiệm</div>
       <% } %>
     </div>
     <%  } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {

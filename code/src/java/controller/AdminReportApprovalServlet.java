@@ -3,6 +3,7 @@ package controller;
 import dao.ReportDAO;
 import dao.ExperienceDAO;
 import dao.AccommodationDAO;
+import dao.UserDAO;
 import model.Report;
 import model.User;
 import jakarta.servlet.ServletException;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.chatbot.service.NotificationService;
+import utils.EmailUtils;
 
 @WebServlet(name = "AdminReportApprovalServlet", urlPatterns = {"/admin/reports", "/admin/reports/*"})
 public class AdminReportApprovalServlet extends HttpServlet {
@@ -25,6 +27,7 @@ public class AdminReportApprovalServlet extends HttpServlet {
     private ExperienceDAO experienceDAO = new ExperienceDAO();
     private AccommodationDAO accommodationDAO = new AccommodationDAO();
     private NotificationService notificationService = new NotificationService();
+    private UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -109,6 +112,23 @@ public class AdminReportApprovalServlet extends HttpServlet {
                 success = reportDAO.approveReport(reportId, admin.getUserId(), notes);
                 Report report = reportDAO.getReportById(reportId);
                 if (report != null) {
+                    // Gửi email cảm ơn user báo cáo
+                    try {
+                        User reporter = userDAO.getUserById(report.getReporterId());
+                        String postTitle = "";
+                        if ("experience".equalsIgnoreCase(report.getContentType())) {
+                            model.Experience exp = experienceDAO.getExperienceById(report.getContentId());
+                            if (exp != null) postTitle = exp.getTitle();
+                        } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+                            model.Accommodation acc = accommodationDAO.getAccommodationById(report.getContentId());
+                            if (acc != null) postTitle = acc.getName();
+                        }
+                        if (reporter != null && reporter.getEmail() != null) {
+                            utils.EmailUtils.sendReportThankYouEmail(reporter.getEmail(), reporter.getFullName(), postTitle);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.log(Level.WARNING, "Failed to send thank you email to reporter", e);
+                    }
                     // Nếu là kháng cáo (APPEAL) và được duyệt, mở lại bài đăng
                     if ("APPEAL".equalsIgnoreCase(report.getReason())) {
                         if ("experience".equalsIgnoreCase(report.getContentType())) {
@@ -118,8 +138,8 @@ public class AdminReportApprovalServlet extends HttpServlet {
                         }
                     } else {
                         // Xử lý ẩn bài khi duyệt report vi phạm như cũ
-                        if ("experience".equalsIgnoreCase(report.getContentType())) {
-                            experienceDAO.updateExperienceStatus(report.getContentId(), false); // ẩn trải nghiệm
+                    if ("experience".equalsIgnoreCase(report.getContentType())) {
+                        experienceDAO.updateExperienceStatus(report.getContentId(), false); // ẩn trải nghiệm
                             // Gửi thông báo cho host
                             model.Experience exp = experienceDAO.getExperienceById(report.getContentId());
                             if (exp != null) {
@@ -130,8 +150,8 @@ public class AdminReportApprovalServlet extends HttpServlet {
                                     notificationService.notifyUser(hostId, title, msg, "report_approved", "experience", exp.getExperienceId());
                                 }
                             }
-                        } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
-                            accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẨN accommodation thay vì xóa cứng
+                    } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+                        accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẨN accommodation thay vì xóa cứng
                             // Gửi thông báo cho host
                             model.Accommodation acc = accommodationDAO.getAccommodationById(report.getContentId());
                             if (acc != null) {

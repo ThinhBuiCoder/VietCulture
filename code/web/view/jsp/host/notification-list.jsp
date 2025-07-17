@@ -476,8 +476,8 @@
         </div>
 
         <div class="notifications-container">
-            <c:choose>
-                <c:when test="${empty notifications}">
+    <c:choose>
+        <c:when test="${empty notifications}">
                     <div class="empty-state">
                         <div class="empty-icon">
                             <i class="fas fa-bell-slash"></i>
@@ -485,11 +485,11 @@
                         <div class="empty-title">Không có thông báo nào</div>
                         <div class="empty-message">Bạn chưa có thông báo nào. Chúng tôi sẽ thông báo khi có cập nhật mới.</div>
                     </div>
-                </c:when>
-                <c:otherwise>
-                    <c:forEach var="noti" items="${notifications}">
+        </c:when>
+        <c:otherwise>
+            <c:forEach var="noti" items="${notifications}">
                         <a class="noti-link" href="${pageContext.request.contextPath}/host/notification-detail?id=${noti.notificationId}">
-                            <div class="notification-item ${noti.read ? '' : 'unread'}">
+                <div class="notification-item ${noti.read ? '' : 'unread'}">
                                 <div class="notification-header">
                                     <div class="noti-icon 
                                         <c:choose>
@@ -517,12 +517,12 @@
                                     <div class="noti-content">
                                         <div class="noti-title">${noti.title}</div>
                                         <div class="noti-message">
-                                            <c:out value="${noti.message}" escapeXml="false"/>
-                                        </div>
+                        <c:out value="${noti.message}" escapeXml="false"/>
+                    </div>
                                         <div class="noti-meta">
                                             <div class="noti-time">
                                                 <i class="fas fa-clock"></i>
-                                                <fmt:formatDate value="${noti.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
+                        <fmt:formatDate value="${noti.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                             </div>
                                             <div class="noti-status ${noti.read ? 'status-read' : 'status-unread'}">
                                                 <c:choose>
@@ -544,13 +544,13 @@
                                             Đánh dấu đã đọc
                                         </span>
                                     </c:if>
-                                </div>
-                            </div>
+                    </div>
+                </div>
                         </a>
-                    </c:forEach>
-                </c:otherwise>
-            </c:choose>
+            </c:forEach>
+        </c:otherwise>
+    </c:choose>
         </div>
-    </div>
+</div>
 </body>
-</html>
+</html> 

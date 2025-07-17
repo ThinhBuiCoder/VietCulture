@@ -77,12 +77,22 @@
     <ul class="nav">
         <li class="nav-item">
             <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/dashboard') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/dashboard">
-                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                <i class="fas fa-chart-bar me-2"></i> Thống kê
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/users') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/users">
                 <i class="fas fa-users me-2"></i> Quản lý Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/experiences') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/experiences">
+                <i class="fas fa-compass me-2"></i> Quản lý trải nghiệm
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/accommodations') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/accommodations">
+                <i class="fas fa-hotel me-2"></i> Quản lý dịch vụ
             </a>
         </li>
         <li class="nav-item">

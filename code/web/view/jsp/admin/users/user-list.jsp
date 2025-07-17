@@ -25,6 +25,7 @@
         .admin-content {
             background-color: #f8f9fa;
             min-height: 100vh;
+            padding-left: 250px;
         }
         .user-avatar {
             width: 50px;
@@ -56,7 +57,105 @@
             align-items: center;
             margin-top: 1rem;
         }
+        
+        /* Stat card styles */
+        .stat-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        /* Gradient backgrounds */
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-success-gradient {
+            background: linear-gradient(135deg, #2dd36f 0%, #1db954 100%);
+        }
+        
+        .bg-danger-gradient {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+        }
+        
+        .bg-warning-gradient {
+            background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);
+        }
+        
+        .bg-info-gradient {
+            background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);
+        }
+        
+        .bg-secondary-gradient {
+            background: linear-gradient(135deg, #778ca3 0%, #546e7a 100%);
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.6s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .stat-card:hover .stat-icon::before {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0.5rem 0;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        
         @media (max-width: 768px) {
+            .admin-content {
+                padding-left: 0;
+            }
             .action-btn {
                 padding: 0.2rem 0.4rem;
                 font-size: 0.875rem;
@@ -92,6 +191,64 @@
                 <!-- Alert Messages -->
                 <div id="alertContainer"></div>
 
+                <!-- Statistics -->
+                <div class="row mb-4">
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-primary-gradient">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-label">Tổng người dùng</div>
+                            <div class="stat-value">${totalUsers != null ? totalUsers : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-info-gradient">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="stat-label">Traveler</div>
+                            <div class="stat-value">${travelerCount != null ? travelerCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-success-gradient">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="stat-label">Host</div>
+                            <div class="stat-value">${hostCount != null ? hostCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-danger-gradient">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="stat-label">Admin</div>
+                            <div class="stat-value">${adminCount != null ? adminCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-warning-gradient">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                            <div class="stat-label">Tài khoản bị khóa</div>
+                            <div class="stat-value">${lockedCount != null ? lockedCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-secondary-gradient">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="stat-label">Mới trong tháng</div>
+                            <div class="stat-value">${newUsersThisMonth != null ? newUsersThisMonth : '0'}</div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Filters -->
                 <div class="card mb-4">
                     <div class="card-body">

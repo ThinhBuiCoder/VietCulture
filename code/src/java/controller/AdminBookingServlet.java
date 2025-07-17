@@ -101,12 +101,14 @@ public class AdminBookingServlet extends HttpServlet {
      * Handle bookings list with pagination and filters
      */
     private void handleBookingsList(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, ServletException, IOException {
+            throws ServletException, IOException, SQLException {
         
         // Get filter parameters
-        String statusFilter = sanitizeParameter(request.getParameter("status"));
-        String typeFilter = sanitizeParameter(request.getParameter("type"));
-        String searchFilter = sanitizeParameter(request.getParameter("search"));
+        String status = sanitizeParameter(request.getParameter("status"));
+        String type = sanitizeParameter(request.getParameter("type"));
+        String search = sanitizeParameter(request.getParameter("search"));
+        String startDate = sanitizeParameter(request.getParameter("startDate"));
+        String endDate = sanitizeParameter(request.getParameter("endDate"));
         
         // Pagination parameters
         int page = getIntParameter(request, "page", 1);
@@ -116,54 +118,45 @@ public class AdminBookingServlet extends HttpServlet {
         if (page < 1) page = 1;
         if (pageSize < 5 || pageSize > 100) pageSize = DEFAULT_PAGE_SIZE;
         
-        // Calculate offset
-        int offset = (page - 1) * pageSize;
-        
         try {
-            // Get bookings with filters and pagination
-            List<Booking> bookings = bookingDAO.getAllBookings(offset, pageSize, statusFilter, typeFilter, searchFilter);
-            int totalBookings = bookingDAO.getTotalBookingsCount(statusFilter, typeFilter, searchFilter);
+            // Get filtered bookings
+            List<Booking> bookings = bookingDAO.getBookingsWithFilters(status, type, search, startDate, endDate, page, pageSize);
+            int totalBookings = bookingDAO.getTotalBookingsWithFilters(status, type, search, startDate, endDate);
             int totalPages = (int) Math.ceil((double) totalBookings / pageSize);
             
-            // Ensure current page is valid
-            if (page > totalPages && totalPages > 0) {
-                page = totalPages;
-                offset = (page - 1) * pageSize;
-                bookings = bookingDAO.getAllBookings(offset, pageSize, statusFilter, typeFilter, searchFilter);
-            }
-            
             // Get booking statistics
-            Map<String, Object> statistics = bookingDAO.getBookingStatistics();
+            int pendingCount = bookingDAO.getBookingCountByStatus("PENDING");
+            int confirmedCount = bookingDAO.getBookingCountByStatus("CONFIRMED");
+            int completedCount = bookingDAO.getBookingCountByStatus("COMPLETED");
+            int cancelledCount = bookingDAO.getBookingCountByStatus("CANCELLED");
+            int currentMonthCount = bookingDAO.getCurrentMonthBookingsCount();
             
             // Set attributes for JSP
             request.setAttribute("bookings", bookings);
+            request.setAttribute("totalBookings", totalBookings);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
-            request.setAttribute("totalBookings", totalBookings);
             request.setAttribute("pageSize", pageSize);
-            request.setAttribute("statistics", statistics);
             
-            // Current filter values
-            request.setAttribute("currentStatus", statusFilter);
-            request.setAttribute("currentType", typeFilter);
-            request.setAttribute("currentSearch", searchFilter);
+            // Set filter parameters
+            request.setAttribute("currentStatus", status);
+            request.setAttribute("currentType", type);
+            request.setAttribute("currentSearch", search);
+            request.setAttribute("startDate", startDate);
+            request.setAttribute("endDate", endDate);
             
-            // Success/Error messages from redirects
-            String successMsg = request.getParameter("success");
-            String errorMsg = request.getParameter("error");
-            if (successMsg != null) {
-                request.setAttribute("successMessage", successMsg);
-            }
-            if (errorMsg != null) {
-                request.setAttribute("errorMessage", errorMsg);
-            }
+            // Set statistics attributes
+            request.setAttribute("pendingCount", pendingCount);
+            request.setAttribute("confirmedCount", confirmedCount);
+            request.setAttribute("completedCount", completedCount);
+            request.setAttribute("cancelledCount", cancelledCount);
+            request.setAttribute("currentMonthCount", currentMonthCount);
             
-            // Forward to JSP
-            request.getRequestDispatcher("/view/jsp/admin/bookings/booking-list.jsp")
-                    .forward(request, response);
-                    
+            // Forward to JSP view
+            request.getRequestDispatcher("/view/jsp/admin/bookings/booking-list.jsp").forward(request, response);
+            
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving bookings list", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving bookings list: " + e.getMessage(), e);
             throw e;
         }
     }

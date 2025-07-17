@@ -24,6 +24,7 @@
         .admin-content {
             background-color: #f8f9fa;
             min-height: 100vh;
+            padding-left: 250px;
         }
         .booking-card {
             border: none;
@@ -49,26 +50,101 @@
             margin: 0.1rem;
             border-radius: 6px;
         }
-        .stats-card {
-            background: white;
-            border-radius: 12px;
+        
+        /* Stat card styles */
+        .stat-card {
+            background: #ffffff;
+            border-radius: 18px;
             padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .stats-card:hover {
-            transform: translateY(-2px);
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
-        .stats-number {
+        
+        /* Gradient backgrounds */
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-success-gradient {
+            background: linear-gradient(135deg, #2dd36f 0%, #1db954 100%);
+        }
+        
+        .bg-danger-gradient {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+        }
+        
+        .bg-warning-gradient {
+            background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);
+        }
+        
+        .bg-info-gradient {
+            background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);
+        }
+        
+        .bg-secondary-gradient {
+            background: linear-gradient(135deg, #778ca3 0%, #546e7a 100%);
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 2rem;
-            font-weight: bold;
+            color: white;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.6s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .stat-card:hover .stat-icon::before {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0.5rem 0;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 0.5rem;
         }
-        .stats-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
+        
         .filter-card {
             background: white;
             border-radius: 12px;
@@ -92,6 +168,9 @@
             margin-top: 1rem;
         }
         @media (max-width: 768px) {
+            .admin-content {
+                padding-left: 0;
+            }
             .action-btn {
                 padding: 0.2rem 0.4rem;
                 font-size: 0.875rem;
@@ -140,64 +219,64 @@
                     </c:if>
                 </div>
 
-                <!-- Statistics Cards -->
+                <!-- Statistics -->
                 <div class="row mb-4">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-primary">${statistics.totalBookings}</div>
-                            <div class="stats-label">Tổng Bookings</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-warning">${statistics.pendingBookings}</div>
-                            <div class="stats-label">Chờ xác nhận</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-success">${statistics.confirmedBookings}</div>
-                            <div class="stats-label">Đã xác nhận</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-info">${statistics.todayBookings}</div>
-                            <div class="stats-label">Booking hôm nay</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Statistics Row -->
-                <div class="row mb-4">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-info">${statistics.experienceBookings}</div>
-                            <div class="stats-label">Experience Bookings</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-purple">${statistics.accommodationBookings}</div>
-                            <div class="stats-label">Accommodation Bookings</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-danger">${statistics.cancelledBookings}</div>
-                            <div class="stats-label">Đã hủy</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stats-card">
-                            <div class="stats-number text-success">
-                                <fmt:formatNumber value="${statistics.totalRevenue}" type="currency" currencyCode="VND" pattern="#,##0"/>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-primary-gradient">
+                                <i class="fas fa-calendar-check"></i>
                             </div>
-                            <div class="stats-label">Tổng doanh thu</div>
+                            <div class="stat-label">Tổng Bookings</div>
+                            <div class="stat-value">${totalBookings != null ? totalBookings : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-warning-gradient">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-label">Chờ xác nhận</div>
+                            <div class="stat-value">${pendingCount != null ? pendingCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-success-gradient">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-label">Đã xác nhận</div>
+                            <div class="stat-value">${confirmedCount != null ? confirmedCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-info-gradient">
+                                <i class="fas fa-check-double"></i>
+                            </div>
+                            <div class="stat-label">Hoàn thành</div>
+                            <div class="stat-value">${completedCount != null ? completedCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-danger-gradient">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-label">Đã hủy</div>
+                            <div class="stat-value">${cancelledCount != null ? cancelledCount : '0'}</div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-secondary-gradient">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="stat-label">Tháng này</div>
+                            <div class="stat-value">${currentMonthCount != null ? currentMonthCount : '0'}</div>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Filters -->
                 <div class="filter-card">
                     <div class="card-body">

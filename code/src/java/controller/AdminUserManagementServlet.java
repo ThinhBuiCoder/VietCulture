@@ -234,32 +234,53 @@ public class AdminUserManagementServlet extends HttpServlet {
      */
     private void handleUsersList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-
+        LOGGER.info("Handling users list");
+        
         // Get filter parameters
         String role = sanitizeParameter(request.getParameter("role"));
         String status = sanitizeParameter(request.getParameter("status"));
         String search = sanitizeParameter(request.getParameter("search"));
-        
-        // Pagination parameters
         int page = getIntParameter(request, "page", 1);
         int pageSize = getIntParameter(request, "pageSize", DEFAULT_PAGE_SIZE);
         
         // Validate pagination
         if (page < 1) page = 1;
         if (pageSize < 5 || pageSize > 100) pageSize = DEFAULT_PAGE_SIZE;
-
+        
         try {
             // Get users with filters and pagination
             List<User> users = userDAO.getUsersWithFilters(role, status, search, page, pageSize);
             int totalUsers = userDAO.getTotalUsersWithFilters(role, status, search);
             int totalPages = (int) Math.ceil((double) totalUsers / pageSize);
-
+            
             // Ensure current page is valid
             if (page > totalPages && totalPages > 0) {
                 page = totalPages;
                 users = userDAO.getUsersWithFilters(role, status, search, page, pageSize);
             }
-
+            
+            // Thống kê cho giao diện mới
+            Map<String, Integer> roleCounts = userDAO.getUserRolesCounts();
+            int travelerCount = roleCounts.getOrDefault("TRAVELER", 0);
+            int hostCount = roleCounts.getOrDefault("HOST", 0);
+            int adminCount = roleCounts.getOrDefault("ADMIN", 0);
+            
+            // Các thống kê khác (sử dụng phương thức có sẵn hoặc tính toán từ dữ liệu hiện có)
+            int lockedCount = 0;
+            int newUsersThisMonth = 0;
+            
+            try {
+                // Đếm người dùng bị khóa
+                List<User> lockedUsers = userDAO.getUsersWithFilters(null, "inactive", null, 1, Integer.MAX_VALUE);
+                lockedCount = lockedUsers != null ? lockedUsers.size() : 0;
+                
+                // Đếm người dùng mới trong tháng (chưa có hàm sẵn nên tạm thời để 0)
+                newUsersThisMonth = 0;
+            } catch(Exception e) {
+                LOGGER.log(Level.WARNING, "Error getting stats: " + e.getMessage());
+                // Không làm gì, chỉ log lỗi và tiếp tục
+            }
+            
             // Set attributes for JSP
             request.setAttribute("users", users);
             request.setAttribute("currentPage", page);
@@ -271,6 +292,13 @@ public class AdminUserManagementServlet extends HttpServlet {
             request.setAttribute("currentRole", role);
             request.setAttribute("currentStatus", status);
             request.setAttribute("currentSearch", search);
+            
+            // Thống kê cho biểu đồ
+            request.setAttribute("travelerCount", travelerCount);
+            request.setAttribute("hostCount", hostCount);
+            request.setAttribute("adminCount", adminCount);
+            request.setAttribute("lockedCount", lockedCount);
+            request.setAttribute("newUsersThisMonth", newUsersThisMonth);
 
             // Success/Error messages from redirects
             String successMsg = request.getParameter("success");
@@ -281,10 +309,9 @@ public class AdminUserManagementServlet extends HttpServlet {
             if (errorMsg != null && !errorMsg.isEmpty()) {
                 request.setAttribute("errorMessage", errorMsg);
             }
-
+            
             // Forward to JSP
             request.getRequestDispatcher("/view/jsp/admin/users/user-list.jsp").forward(request, response);
-
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error retrieving users list", e);
             throw e;

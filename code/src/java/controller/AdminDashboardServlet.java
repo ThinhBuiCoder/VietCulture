@@ -92,6 +92,19 @@ public class AdminDashboardServlet extends HttpServlet {
         List<Integer> weeklyBookings = bookingDAO.getWeeklyBookingsData(); // Assumes BookingDAO method
         stats.put("weeklyBookings", weeklyBookings.toString().replaceAll("[\\[\\]]", ""));
 
+        // Lấy dữ liệu doanh thu theo tuần/tháng/năm
+        List<Double> weeklyRevenue = bookingDAO.getWeeklyRevenue();
+        stats.put("weeklyRevenue", weeklyRevenue.toString().replaceAll("[\\[\\]]", ""));
+
+        List<Double> monthlyRevenue = bookingDAO.getMonthlyRevenue();
+        stats.put("monthlyRevenue", monthlyRevenue.toString().replaceAll("[\\[\\]]", ""));
+
+        List<Double> yearlyRevenue = bookingDAO.getYearlyRevenue();
+        stats.put("yearlyRevenue", yearlyRevenue.toString().replaceAll("[\\[\\]]", ""));
+
+        List<Integer> yearLabels = bookingDAO.getYearLabels();
+        stats.put("yearLabels", yearLabels.toString().replaceAll("[\\[\\]]", ""));
+
         Map<String, Integer> userRoleCounts = userDAO.getUserRolesCounts(); // Changed to getUserRolesCounts
         stats.put("travelerCount", userRoleCounts.getOrDefault("TRAVELER", 0));
         stats.put("hostCount", userRoleCounts.getOrDefault("HOST", 0));

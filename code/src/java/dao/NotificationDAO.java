@@ -1,4 +1,4 @@
-package com.chatbot.dao;
+package DAO;
 
 import com.chatbot.model.Notification;
 import utils.DBUtils;
@@ -76,3 +76,5 @@ public class NotificationDAO {
         return false;
     }
 }
+
+

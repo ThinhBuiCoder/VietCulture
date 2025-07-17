@@ -82,6 +82,100 @@
             justify-content: center;
             border-radius: 8px 8px 0 0;
         }
+
+        /* Stat card styles */
+        .stat-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            height: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        /* Gradient backgrounds */
+        .bg-primary-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .bg-success-gradient {
+            background: linear-gradient(135deg, #2dd36f 0%, #1db954 100%);
+        }
+        
+        .bg-danger-gradient {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+        }
+        
+        .bg-warning-gradient {
+            background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);
+        }
+        
+        .bg-info-gradient {
+            background: linear-gradient(135deg, #54a0ff 0%, #2e86de 100%);
+        }
+        
+        .bg-secondary-gradient {
+            background: linear-gradient(135deg, #778ca3 0%, #546e7a 100%);
+        }
+        
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            transition: all 0.6s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .stat-card:hover .stat-icon::before {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0.5rem 0;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -130,70 +224,58 @@
 
                 <!-- Statistics -->
                 <div class="row mb-4">
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-warning mb-2">
-                                    <i class="fas fa-clock fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-warning">${stats.totalPending}</h5>
-                                <p class="card-text mb-0 small">Chờ duyệt</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-warning-gradient">
+                                <i class="fas fa-clock"></i>
                             </div>
+                            <div class="stat-label">Chờ duyệt</div>
+                            <div class="stat-value">${stats.totalPending}</div>
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-success mb-2">
-                                    <i class="fas fa-check-circle fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-success">${stats.totalApproved}</h5>
-                                <p class="card-text mb-0 small">Đã duyệt</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-success-gradient">
+                                <i class="fas fa-check-circle"></i>
                             </div>
+                            <div class="stat-label">Đã duyệt</div>
+                            <div class="stat-value">${stats.totalApproved}</div>
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-danger mb-2">
-                                    <i class="fas fa-times-circle fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-danger">${stats.totalRejected}</h5>
-                                <p class="card-text mb-0 small">Bị từ chối</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-danger-gradient">
+                                <i class="fas fa-times-circle"></i>
                             </div>
+                            <div class="stat-label">Bị từ chối</div>
+                            <div class="stat-value">${stats.totalRejected}</div>
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-info mb-2">
-                                    <i class="fas fa-map-marked-alt fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-info">${stats.experienceTotal}</h5>
-                                <p class="card-text mb-0 small">Tổng Exp</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-info-gradient">
+                                <i class="fas fa-map-marked-alt"></i>
                             </div>
+                            <div class="stat-label">Tổng Exp</div>
+                            <div class="stat-value">${stats.experienceTotal}</div>
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-primary mb-2">
-                                    <i class="fas fa-home fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-primary">${stats.accommodationTotal}</h5>
-                                <p class="card-text mb-0 small">Tổng Acc</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-primary-gradient">
+                                <i class="fas fa-home"></i>
                             </div>
+                            <div class="stat-label">Tổng Acc</div>
+                            <div class="stat-value">${stats.accommodationTotal}</div>
                         </div>
                     </div>
-                    <div class="col-lg-2 col-md-4 col-6 mb-3">
-                        <div class="card text-center stats-card h-100">
-                            <div class="card-body">
-                                <div class="text-secondary mb-2">
-                                    <i class="fas fa-eye-slash fa-2x"></i>
-                                </div>
-                                <h5 class="card-title text-secondary">${stats.experienceHidden + stats.accommodationHidden}</h5>
-                                <p class="card-text mb-0 small">Host ẩn</p>
+                    <div class="col-xl-2 col-md-4 col-6 mb-3">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-secondary-gradient">
+                                <i class="fas fa-eye-slash"></i>
                             </div>
+                            <div class="stat-label">Host ẩn</div>
+                            <div class="stat-value">${stats.experienceHidden + stats.accommodationHidden}</div>
                         </div>
                     </div>
                 </div>
@@ -799,159 +881,7 @@
             new bootstrap.Modal(document.getElementById('imageGalleryModal')).show();
         }
 
-        function showContentDetail(contentType, contentId, title) {
-            // Lưu thông tin hiện tại
-            currentContentType = contentType;
-            currentContentId = contentId;
-            
-            // Hiển thị loading
-            document.getElementById('detailContentTitle').textContent = title || 'Đang tải...';
-            document.getElementById('detailTitle').textContent = 'Đang tải...';
-            document.getElementById('detailDescription').textContent = 'Đang tải thông tin chi tiết...';
-            
-            // Hiện hoặc ẩn các nút tùy theo trạng thái
-            document.getElementById('detailApproveBtn').style.display = 'none';
-            document.getElementById('detailRejectBtn').style.display = 'none';
-            document.getElementById('detailRejectReason').style.display = 'none';
-            
-            // Thiết lập badge loại nội dung
-            const contentTypeBadge = document.getElementById('detailContentType');
-            if (contentType === 'experience') {
-                contentTypeBadge.className = 'badge experience-badge text-white';
-                contentTypeBadge.innerHTML = '<i class="fas fa-map-marked-alt me-1"></i>Experience';
-            } else {
-                contentTypeBadge.className = 'badge accommodation-badge text-white';
-                contentTypeBadge.innerHTML = '<i class="fas fa-home me-1"></i>Accommodation';
-            }
-            
-            // Fetch nội dung chi tiết
-            const url = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/detail';
-            
-            fetch(url, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.data) {
-                    const item = data.data;
-                    
-                    // Cập nhật thông tin
-                    document.getElementById('detailContentTitle').textContent = item.title || 'N/A';
-                    document.getElementById('detailTitle').textContent = item.title || 'N/A';
-                    document.getElementById('detailDescription').textContent = item.description || 'Không có mô tả';
-                    document.getElementById('detailLocation').textContent = (item.location || 'N/A') + (item.cityName ? ', ' + item.cityName : '');
-                    document.getElementById('detailPrice').textContent = new Intl.NumberFormat('vi-VN').format(item.price || 0) + ' VND' + (item.type === 'accommodation' ? ' /đêm' : '');
-                    
-                    // Thông tin host
-                    document.getElementById('detailHostName').textContent = item.hostName || 'N/A';
-                    document.getElementById('detailHostId').textContent = item.hostId || 'N/A';
-                    document.getElementById('detailHostInitial').textContent = item.hostName ? item.hostName.charAt(0) : 'N';
-                    
-                    // Ngày tạo và cập nhật
-                    document.getElementById('detailCreatedDate').textContent = item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : 'N/A';
-                    document.getElementById('detailUpdatedDate').textContent = item.updatedAt ? new Date(item.updatedAt).toLocaleString('vi-VN') : 'N/A';
-                    
-                    // Trạng thái
-                    let statusText = '';
-                    const statusElement = document.getElementById('detailStatus');
-                    
-                    switch (item.adminApprovalStatus) {
-                        case 'PENDING':
-                            statusText = 'Nội dung đang chờ duyệt';
-                            statusElement.parentElement.className = 'alert alert-warning';
-                            document.getElementById('detailApproveBtn').style.display = 'inline-block';
-                            document.getElementById('detailRejectBtn').style.display = 'inline-block';
-                            break;
-                        case 'APPROVED':
-                            statusText = item.active ? 'Nội dung đã được duyệt và đang hiển thị' : 'Nội dung đã được duyệt nhưng host đang ẩn';
-                            statusElement.parentElement.className = 'alert alert-success';
-                            break;
-                        case 'REJECTED':
-                            statusText = 'Nội dung đã bị từ chối';
-                            statusElement.parentElement.className = 'alert alert-danger';
-                            document.getElementById('detailApproveBtn').style.display = 'inline-block';
-                            
-                            if (item.adminRejectReason) {
-                                document.getElementById('detailRejectReason').style.display = 'block';
-                                document.getElementById('detailRejectReasonText').textContent = item.adminRejectReason;
-                            }
-                            break;
-                        default:
-                            statusText = 'Trạng thái không xác định';
-                            statusElement.parentElement.className = 'alert alert-secondary';
-                    }
-                    
-                    statusElement.textContent = statusText;
-                    
-                    // Xử lý carousel hình ảnh
-                    const carouselInner = document.getElementById('detailCarouselInner');
-                    carouselInner.innerHTML = '';
-                    
-                    if (item.images && item.images.trim() !== '') {
-                        const images = item.images.split(',').map(img => img.trim()).filter(img => img !== '');
-                        
-                        if (images.length > 0) {
-                            images.forEach((image, index) => {
-                                const imagePath = '${pageContext.request.contextPath}/images/' + item.type + 's/' + encodeURIComponent(image);
-                                
-                                const carouselItem = document.createElement('div');
-                                carouselItem.className = 'carousel-item' + (index === 0 ? ' active' : '');
-                                carouselItem.innerHTML = `
-                                    <img src="${imagePath}" class="d-block w-100" alt="Hình ${index + 1}" 
-                                         style="height: 300px; object-fit: cover;" 
-                                         onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/placeholder.jpg';">
-                                `;
-                                carouselInner.appendChild(carouselItem);
-                            });
-                        } else {
-                            addPlaceholderImage(carouselInner);
-                        }
-                    } else {
-                        addPlaceholderImage(carouselInner);
-                    }
-                    
-                    // Các thông tin bổ sung
-                    const additionalInfoContainer = document.getElementById('detailAdditionalInfo');
-                    additionalInfoContainer.innerHTML = '';
-                    
-                    // Thêm các thông tin bổ sung tùy theo loại nội dung (experience/accommodation)
-                    if (item.type === 'experience') {
-                        addDetailField(additionalInfoContainer, 'Thời gian diễn ra', item.duration + ' phút', 'fas fa-clock');
-                        addDetailField(additionalInfoContainer, 'Số người tối đa', item.maxGroupSize + ' người', 'fas fa-users');
-                        addDetailField(additionalInfoContainer, 'Bao gồm', item.includedItems || 'Không có', 'fas fa-check-circle');
-                        addDetailField(additionalInfoContainer, 'Không bao gồm', item.excludedItems || 'Không có', 'fas fa-times-circle');
-                        addDetailField(additionalInfoContainer, 'Yêu cầu', item.requirements || 'Không có', 'fas fa-exclamation-circle');
-                    } else {
-                        addDetailField(additionalInfoContainer, 'Loại chỗ ở', item.propertyType || 'Không xác định', 'fas fa-building');
-                        addDetailField(additionalInfoContainer, 'Số phòng ngủ', item.bedrooms || '0', 'fas fa-bed');
-                        addDetailField(additionalInfoContainer, 'Số phòng tắm', item.bathrooms || '0', 'fas fa-bath');
-                        addDetailField(additionalInfoContainer, 'Số khách tối đa', item.maxGuests + ' người', 'fas fa-users');
-                        addDetailField(additionalInfoContainer, 'Tiện nghi', item.amenities || 'Không có', 'fas fa-concierge-bell');
-                    }
-                    
-                    // Thêm event listener cho các nút
-                    document.getElementById('detailApproveBtn').onclick = function() {
-                        approveContent(item.type, item.id);
-                    };
-                    
-                    document.getElementById('detailRejectBtn').onclick = function() {
-                        rejectContent(item.type, item.id, item.title);
-                        bootstrap.Modal.getInstance(document.getElementById('contentDetailModal')).hide();
-                    };
-                } else {
-                    showToast('Không thể tải thông tin chi tiết: ' + (data.message || 'Lỗi không xác định'), 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Có lỗi xảy ra khi tải thông tin chi tiết', 'error');
-            });
-            
-            // Hiển thị modal
-            new bootstrap.Modal(document.getElementById('contentDetailModal')).show();
-        }
+    
         
         function addPlaceholderImage(container) {
             const placeholder = document.createElement('div');

@@ -1565,4 +1565,35 @@ private static String createPaymentFailureTemplate(String userName, int bookingI
             </html>
             """.formatted(hostName, accommodationName, address, pricePerNight);
     }
+
+    public static boolean sendReportThankYouEmail(String toEmail, String userName, String postTitle) {
+        LOGGER.info("📧 Sending thank you for report email to: " + toEmail);
+        try {
+            Session session = getEmailSession();
+            MimeMessage message = new MimeMessage(session);
+
+            message.setFrom(new InternetAddress(FROM_EMAIL, FROM_NAME, "UTF-8"));
+            message.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
+            message.setSubject("Cảm ơn bạn đã báo cáo nội dung - VietCulture", "UTF-8");
+
+            String htmlContent = """
+                <html>
+                <body>
+                    <h2>Xin chào %s,</h2>
+                    <p>Cảm ơn bạn đã báo cáo nội dung <b>%s</b> trên VietCulture.</p>
+                    <p>Chúng tôi đã tiếp nhận và xử lý báo cáo của bạn. Đóng góp của bạn giúp cộng đồng an toàn và tích cực hơn!</p>
+                    <p>Trân trọng,<br>Đội ngũ VietCulture</p>
+                </body>
+                </html>
+            """.formatted(userName, postTitle);
+
+            message.setContent(htmlContent, "text/html; charset=UTF-8");
+            Transport.send(message);
+            LOGGER.info("✅ Thank you for report email sent successfully to: " + toEmail);
+            return true;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "❌ Failed to send thank you for report email to: " + toEmail, e);
+            return false;
+        }
+    }
 }
