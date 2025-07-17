@@ -86,6 +86,16 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/experiences') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/experiences">
+                <i class="fas fa-compass me-2"></i> Quản lý trải nghiệm
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/accommodations') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/accommodations">
+                <i class="fas fa-hotel me-2"></i> Quản lý dịch vụ
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/content/approval') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/content/approval">
                 <i class="fas fa-shield-alt me-2"></i> Kiểm duyệt nội dung
             </a>
