@@ -33,7 +33,8 @@ import java.util.logging.Logger;
  */
 @WebServlet(name = "AdminContentApproval", urlPatterns = {
     "/admin/content/approval",
-    "/admin/content/approval/*"
+    "/admin/content/approval/*",
+    "/admin/content/detail"
 })
 public class AdminContentApprovalServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AdminContentApprovalServlet.class.getName());
@@ -74,6 +75,9 @@ public class AdminContentApprovalServlet extends HttpServlet {
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 handleContentList(request, response);
+            } else if (pathInfo.equals("/detail")) {
+                // Handle: /admin/content/detail?type=experience&id=123
+                handleDetailWithParams(request, response);
             } else if (pathInfo.equals("/export-pending")) {
                 handleExportPending(request, response);
             } else if (pathInfo.matches("/\\w+/\\d+")) {
@@ -97,6 +101,30 @@ public class AdminContentApprovalServlet extends HttpServlet {
             request.getRequestDispatcher("/view/jsp/admin/content/content-approval.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             LOGGER.log(Level.SEVERE, "Invalid content ID format", e);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID không hợp lệ");
+        }
+    }
+
+    /**
+     * Handle detail with URL parameters: /admin/content/detail?type=experience&id=123
+     */
+    private void handleDetailWithParams(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SQLException {
+        
+        String contentType = request.getParameter("type");
+        String idParam = request.getParameter("id");
+        
+        LOGGER.info("Detail with params - Type: " + contentType + ", ID: " + idParam);
+        
+        if (contentType == null || idParam == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Thiếu tham số type hoặc id");
+            return;
+        }
+        
+        try {
+            int contentId = Integer.parseInt(idParam);
+            handleContentDetail(request, response, contentType, contentId);
+        } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID không hợp lệ");
         }
     }
@@ -680,34 +708,51 @@ public class AdminContentApprovalServlet extends HttpServlet {
                                    String contentType, int contentId)
             throws SQLException, ServletException, IOException {
         
+        LOGGER.info("=== HANDLE CONTENT DETAIL ===");
+        LOGGER.info("Content Type: " + contentType + ", ID: " + contentId);
+        
         try {
             if ("experience".equals(contentType)) {
                 Experience experience = experienceDAO.getExperienceById(contentId);
                 if (experience == null) {
+                    LOGGER.warning("Experience not found with ID: " + contentId);
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Experience không tồn tại");
                     return;
                 }
                 
                 enrichExperienceData(experience);
+                
+                // Set both attributes for compatibility
+                request.setAttribute("content", experience);
                 request.setAttribute("contentItem", new ContentItem(experience));
                 request.setAttribute("contentType", "experience");
+                
+                LOGGER.info("Experience found: " + experience.getTitle());
                 
             } else if ("accommodation".equals(contentType)) {
                 Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
                 if (accommodation == null) {
+                    LOGGER.warning("Accommodation not found with ID: " + contentId);
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Accommodation không tồn tại");
                     return;
                 }
                 
                 enrichAccommodationData(accommodation);
+                
+                // Set both attributes for compatibility
+                request.setAttribute("content", accommodation);
                 request.setAttribute("contentItem", new ContentItem(accommodation));
                 request.setAttribute("contentType", "accommodation");
                 
+                LOGGER.info("Accommodation found: " + accommodation.getName());
+                
             } else {
+                LOGGER.warning("Invalid content type: " + contentType);
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Content type không hợp lệ");
                 return;
             }
             
+            LOGGER.info("Forwarding to JSP...");
             request.getRequestDispatcher("/view/jsp/admin/content/content-detail.jsp").forward(request, response);
             
         } catch (SQLException e) {
