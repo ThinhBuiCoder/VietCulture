@@ -319,8 +319,16 @@ public class AdminContentApprovalServlet extends HttpServlet {
                                    String contentType, int contentId) throws IOException {
 
         try {
+            LOGGER.info("=== HANDLING REJECT CONTENT ===");
+            LOGGER.info("ContentType: " + contentType + ", ContentId: " + contentId);
+
+            // Lấy lý do từ chối từ request
             String reason = request.getParameter("reason");
+            LOGGER.info("Raw reason parameter: " + reason);
+
+            // Kiểm tra reason có trống không
             if (reason == null || reason.trim().isEmpty()) {
+                LOGGER.warning("Reject reason is empty");
                 sendJsonResponse(response, false, "Lý do từ chối không được để trống", null);
                 return;
             }
@@ -328,31 +336,45 @@ public class AdminContentApprovalServlet extends HttpServlet {
             // Get admin info
             HttpSession session = request.getSession();
             User admin = (User) session.getAttribute("user");
+            if (admin == null) {
+                LOGGER.warning("Admin user not found in session");
+                sendJsonResponse(response, false, "Phiên đăng nhập hết hạn", null);
+                return;
+            }
             int adminUserId = admin.getUserId();
+            LOGGER.info("Admin UserId: " + adminUserId);
 
             boolean success = false;
             String message = "";
 
+            // Xử lý reject cho experience
             if ("experience".equals(contentType)) {
                 Experience experience = experienceDAO.getExperienceById(contentId);
                 if (experience == null) {
+                    LOGGER.warning("Experience not found with ID: " + contentId);
                     sendJsonResponse(response, false, "Experience không tồn tại", null);
                     return;
                 }
                 
+                LOGGER.info("Processing reject for Experience ID: " + contentId + " with reason: " + reason);
                 success = experienceDAO.rejectExperience(contentId, adminUserId, reason);
                 message = success ? "Experience đã bị từ chối!" : "Có lỗi xảy ra khi từ chối experience";
+                LOGGER.info("Experience reject result: " + success);
                 
             } else if ("accommodation".equals(contentType)) {
                 Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
                 if (accommodation == null) {
+                    LOGGER.warning("Accommodation not found with ID: " + contentId);
                     sendJsonResponse(response, false, "Accommodation không tồn tại", null);
                     return;
                 }
                 
+                LOGGER.info("Processing reject for Accommodation ID: " + contentId + " with reason: " + reason);
                 success = accommodationDAO.rejectAccommodation(contentId, adminUserId, reason);
                 message = success ? "Accommodation đã bị từ chối!" : "Có lỗi xảy ra khi từ chối accommodation";
+                LOGGER.info("Accommodation reject result: " + success);
             } else {
+                LOGGER.warning("Invalid content type: " + contentType);
                 sendJsonResponse(response, false, "Content type không hợp lệ", null);
                 return;
             }
@@ -367,6 +389,9 @@ public class AdminContentApprovalServlet extends HttpServlet {
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error in handleRejectContent", e);
             sendJsonResponse(response, false, "Lỗi cơ sở dữ liệu: " + e.getMessage(), null);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Unexpected error in handleRejectContent", e);
+            sendJsonResponse(response, false, "Lỗi hệ thống: " + e.getMessage(), null);
         }
     }
 

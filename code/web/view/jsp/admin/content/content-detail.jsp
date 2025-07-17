@@ -557,24 +557,67 @@
     </div>
 
     <!-- Reject Modal -->
-    <div class="modal fade" id="rejectModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade" id="rejectModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Từ chối nội dung</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-times-circle me-2"></i>
+                        Từ chối nội dung
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="rejectForm" method="POST">
                     <div class="modal-body">
-                        <p>Bạn có chắc chắn muốn từ chối nội dung <strong id="rejectContentName"></strong>?</p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Bạn sắp từ chối nội dung "<strong id="rejectContentName" class="text-danger"></strong>".
+                            <br>Hành động này sẽ thông báo cho host và họ có thể chỉnh sửa nội dung.
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-comment-alt me-1"></i>
+                                Lý do từ chối <span class="text-danger">*</span>
+                            </label>
+                            <div class="form-text mb-2">Hãy cung cấp lý do cụ thể để host có thể hiểu và sửa đổi nội dung.</div>
+                            <textarea class="form-control" name="reason" rows="4" required 
+                                      placeholder="Ví dụ: Nội dung không phù hợp với tiêu chuẩn cộng đồng"
+                                      style="border-radius: 8px; border: 1px solid #ced4da;"></textarea>
+                        </div>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
-                            <textarea class="form-control" name="reason" rows="4" required placeholder="Nhập lý do từ chối..."></textarea>
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-list-ul me-1"></i>
+                                Lý do thông thường
+                            </label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm reason-option" 
+                                        onclick="addReason('Nội dung không phù hợp với tiêu chuẩn cộng đồng')">
+                                    Không phù hợp
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm reason-option" 
+                                        onclick="addReason('Cần thêm thông tin chi tiết về dịch vụ')">
+                                    Thiếu thông tin
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm reason-option" 
+                                        onclick="addReason('Hình ảnh chất lượng kém hoặc không liên quan')">
+                                    Hình ảnh kém
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm reason-option" 
+                                        onclick="addReason('Giá cả không hợp lý cho dịch vụ cung cấp')">
+                                    Giá không hợp lý
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-danger">Từ chối</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Hủy bỏ
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-ban me-1"></i>Xác nhận từ chối
+                        </button>
                     </div>
                 </form>
             </div>
@@ -654,10 +697,24 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
             btn.disabled = true;
             
+            const reason = this.querySelector('textarea[name="reason"]').value;
+            if (!reason || reason.trim() === '') {
+                showToast('Lý do từ chối không được để trống', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                return;
+            }
+            
+            const formData = new URLSearchParams();
+            formData.append('reason', reason);
+            
             fetch(this.action, {
                 method: 'POST',
-                body: new FormData(this),
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                body: formData,
+                headers: { 
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest' 
+                }
             })
             .then(response => response.json())
             .then(data => {
@@ -681,6 +738,47 @@
         // Reset modal when hidden
         document.getElementById('rejectModal').addEventListener('hidden.bs.modal', function() {
             document.getElementById('rejectForm').reset();
+        });
+        
+        // Thêm lý do từ chối thông thường vào textarea
+        function addReason(reasonText) {
+            const textarea = document.querySelector('#rejectForm textarea[name="reason"]');
+            const currentText = textarea.value.trim();
+            
+            if (currentText === '') {
+                textarea.value = reasonText;
+            } else {
+                textarea.value = currentText + '\n\n' + reasonText;
+            }
+            
+            // Focus và cuộn xuống cuối textarea
+            textarea.focus();
+            textarea.scrollTop = textarea.scrollHeight;
+            
+            // Hiệu ứng highlight
+            textarea.style.backgroundColor = '#fff9db';
+            setTimeout(() => {
+                textarea.style.backgroundColor = '';
+                textarea.style.transition = 'background-color 0.5s ease';
+            }, 100);
+        }
+        
+        // Hiệu ứng cho các nút lý do từ chối thông thường
+        document.querySelectorAll('.reason-option').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.reason-option').forEach(b => {
+                    b.classList.remove('btn-primary');
+                    b.classList.add('btn-outline-secondary');
+                });
+                
+                this.classList.remove('btn-outline-secondary');
+                this.classList.add('btn-primary');
+                
+                setTimeout(() => {
+                    this.classList.remove('btn-primary');
+                    this.classList.add('btn-outline-secondary');
+                }, 500);
+            });
         });
     </script>
 </body>

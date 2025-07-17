@@ -387,7 +387,8 @@
                                             
                                             <div class="d-flex gap-2">
                                                 <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
-                                                   class="btn btn-outline-primary btn-sm flex-fill">
+                                                   class="btn btn-outline-primary btn-sm flex-fill"
+                                                   onclick="showContentDetail('${item.type}', '${item.id}', '${fn:escapeXml(item.title)}')">
                                                     <i class="fas fa-eye me-1"></i>Chi tiết
                                                 </a>
                                                 <c:if test="${not empty item.images}">
@@ -404,7 +405,8 @@
                                     <c:if test="${item.adminApprovalStatus eq 'APPROVED'}">
                                         <div class="approval-actions">
                                             <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
-                                               class="btn btn-outline-primary btn-sm w-100">
+                                               class="btn btn-outline-primary btn-sm w-100"
+                                               onclick="showContentDetail('${item.type}', '${item.id}', '${fn:escapeXml(item.title)}')">
                                                 <i class="fas fa-eye me-1"></i>Xem chi tiết
                                             </a>
                                         </div>
@@ -419,7 +421,8 @@
                                                     <i class="fas fa-check me-1"></i>Duyệt lại
                                                 </button>
                                                 <a href="${pageContext.request.contextPath}/admin/content/approval/${item.type}/${item.id}" 
-                                                   class="btn btn-outline-primary btn-sm flex-fill">
+                                                   class="btn btn-outline-primary btn-sm flex-fill"
+                                                   onclick="showContentDetail('${item.type}', '${item.id}', '${fn:escapeXml(item.title)}')">
                                                     <i class="fas fa-eye me-1"></i>Chi tiết
                                                 </a>
                                             </div>
@@ -528,6 +531,131 @@
                 <div class="modal-body">
                     <div id="imageGallery" class="row g-2">
                         <!-- Images will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Detail Modal -->
+    <div class="modal fade" id="contentDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span id="detailContentType" class="badge me-1"></span>
+                        Chi tiết nội dung: <span id="detailContentTitle"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Hình ảnh -->
+                        <div class="col-md-5 mb-3">
+                            <div id="detailImageCarousel" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner" id="detailCarouselInner">
+                                    <!-- Images will be loaded here -->
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#detailImageCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#detailImageCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Thông tin chi tiết -->
+                        <div class="col-md-7">
+                            <h4 id="detailTitle" class="mb-2"></h4>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <p class="mb-1">
+                                    <i class="fas fa-map-marker-alt me-1"></i> 
+                                    <span id="detailLocation"></span>
+                                </p>
+                                <p class="mb-1">
+                                    <i class="fas fa-dollar-sign me-1"></i>
+                                    <span id="detailPrice" class="fw-bold text-primary"></span>
+                                </p>
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Mô tả</h5>
+                                    <p id="detailDescription" class="card-text"></p>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Thông tin Host</h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 40px; height: 40px;">
+                                            <span class="text-white fw-bold" id="detailHostInitial"></span>
+                                        </div>
+                                        <div>
+                                            <strong id="detailHostName"></strong>
+                                            <br>
+                                            <small class="text-muted">Host ID: <span id="detailHostId"></span></small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="detailStatus"></span>
+                            </div>
+                            
+                            <div id="detailRejectReason" class="alert alert-danger" style="display: none">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                <strong>Lý do từ chối:</strong> <span id="detailRejectReasonText"></span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Tạo ngày: <span id="detailCreatedDate"></span>
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Cập nhật: <span id="detailUpdatedDate"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Các thông tin bổ sung -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">Thông tin chi tiết</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row" id="detailAdditionalInfo">
+                                        <!-- Additional info will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex justify-content-between w-100">
+                        <div>
+                            <button id="detailApproveBtn" type="button" class="btn btn-success me-2" style="display: none;">
+                                <i class="fas fa-check me-1"></i>Duyệt
+                            </button>
+                            <button id="detailRejectBtn" type="button" class="btn btn-danger" style="display: none;">
+                                <i class="fas fa-times me-1"></i>Từ chối
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                     </div>
                 </div>
             </div>
@@ -671,6 +799,192 @@
             new bootstrap.Modal(document.getElementById('imageGalleryModal')).show();
         }
 
+        function showContentDetail(contentType, contentId, title) {
+            // Lưu thông tin hiện tại
+            currentContentType = contentType;
+            currentContentId = contentId;
+            
+            // Hiển thị loading
+            document.getElementById('detailContentTitle').textContent = title || 'Đang tải...';
+            document.getElementById('detailTitle').textContent = 'Đang tải...';
+            document.getElementById('detailDescription').textContent = 'Đang tải thông tin chi tiết...';
+            
+            // Hiện hoặc ẩn các nút tùy theo trạng thái
+            document.getElementById('detailApproveBtn').style.display = 'none';
+            document.getElementById('detailRejectBtn').style.display = 'none';
+            document.getElementById('detailRejectReason').style.display = 'none';
+            
+            // Thiết lập badge loại nội dung
+            const contentTypeBadge = document.getElementById('detailContentType');
+            if (contentType === 'experience') {
+                contentTypeBadge.className = 'badge experience-badge text-white';
+                contentTypeBadge.innerHTML = '<i class="fas fa-map-marked-alt me-1"></i>Experience';
+            } else {
+                contentTypeBadge.className = 'badge accommodation-badge text-white';
+                contentTypeBadge.innerHTML = '<i class="fas fa-home me-1"></i>Accommodation';
+            }
+            
+            // Fetch nội dung chi tiết
+            const url = '${pageContext.request.contextPath}/admin/content/approval/' + contentType + '/' + contentId + '/detail';
+            
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const item = data.data;
+                    
+                    // Cập nhật thông tin
+                    document.getElementById('detailContentTitle').textContent = item.title || 'N/A';
+                    document.getElementById('detailTitle').textContent = item.title || 'N/A';
+                    document.getElementById('detailDescription').textContent = item.description || 'Không có mô tả';
+                    document.getElementById('detailLocation').textContent = (item.location || 'N/A') + (item.cityName ? ', ' + item.cityName : '');
+                    document.getElementById('detailPrice').textContent = new Intl.NumberFormat('vi-VN').format(item.price || 0) + ' VND' + (item.type === 'accommodation' ? ' /đêm' : '');
+                    
+                    // Thông tin host
+                    document.getElementById('detailHostName').textContent = item.hostName || 'N/A';
+                    document.getElementById('detailHostId').textContent = item.hostId || 'N/A';
+                    document.getElementById('detailHostInitial').textContent = item.hostName ? item.hostName.charAt(0) : 'N';
+                    
+                    // Ngày tạo và cập nhật
+                    document.getElementById('detailCreatedDate').textContent = item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : 'N/A';
+                    document.getElementById('detailUpdatedDate').textContent = item.updatedAt ? new Date(item.updatedAt).toLocaleString('vi-VN') : 'N/A';
+                    
+                    // Trạng thái
+                    let statusText = '';
+                    const statusElement = document.getElementById('detailStatus');
+                    
+                    switch (item.adminApprovalStatus) {
+                        case 'PENDING':
+                            statusText = 'Nội dung đang chờ duyệt';
+                            statusElement.parentElement.className = 'alert alert-warning';
+                            document.getElementById('detailApproveBtn').style.display = 'inline-block';
+                            document.getElementById('detailRejectBtn').style.display = 'inline-block';
+                            break;
+                        case 'APPROVED':
+                            statusText = item.active ? 'Nội dung đã được duyệt và đang hiển thị' : 'Nội dung đã được duyệt nhưng host đang ẩn';
+                            statusElement.parentElement.className = 'alert alert-success';
+                            break;
+                        case 'REJECTED':
+                            statusText = 'Nội dung đã bị từ chối';
+                            statusElement.parentElement.className = 'alert alert-danger';
+                            document.getElementById('detailApproveBtn').style.display = 'inline-block';
+                            
+                            if (item.adminRejectReason) {
+                                document.getElementById('detailRejectReason').style.display = 'block';
+                                document.getElementById('detailRejectReasonText').textContent = item.adminRejectReason;
+                            }
+                            break;
+                        default:
+                            statusText = 'Trạng thái không xác định';
+                            statusElement.parentElement.className = 'alert alert-secondary';
+                    }
+                    
+                    statusElement.textContent = statusText;
+                    
+                    // Xử lý carousel hình ảnh
+                    const carouselInner = document.getElementById('detailCarouselInner');
+                    carouselInner.innerHTML = '';
+                    
+                    if (item.images && item.images.trim() !== '') {
+                        const images = item.images.split(',').map(img => img.trim()).filter(img => img !== '');
+                        
+                        if (images.length > 0) {
+                            images.forEach((image, index) => {
+                                const imagePath = '${pageContext.request.contextPath}/images/' + item.type + 's/' + encodeURIComponent(image);
+                                
+                                const carouselItem = document.createElement('div');
+                                carouselItem.className = 'carousel-item' + (index === 0 ? ' active' : '');
+                                carouselItem.innerHTML = `
+                                    <img src="${imagePath}" class="d-block w-100" alt="Hình ${index + 1}" 
+                                         style="height: 300px; object-fit: cover;" 
+                                         onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/placeholder.jpg';">
+                                `;
+                                carouselInner.appendChild(carouselItem);
+                            });
+                        } else {
+                            addPlaceholderImage(carouselInner);
+                        }
+                    } else {
+                        addPlaceholderImage(carouselInner);
+                    }
+                    
+                    // Các thông tin bổ sung
+                    const additionalInfoContainer = document.getElementById('detailAdditionalInfo');
+                    additionalInfoContainer.innerHTML = '';
+                    
+                    // Thêm các thông tin bổ sung tùy theo loại nội dung (experience/accommodation)
+                    if (item.type === 'experience') {
+                        addDetailField(additionalInfoContainer, 'Thời gian diễn ra', item.duration + ' phút', 'fas fa-clock');
+                        addDetailField(additionalInfoContainer, 'Số người tối đa', item.maxGroupSize + ' người', 'fas fa-users');
+                        addDetailField(additionalInfoContainer, 'Bao gồm', item.includedItems || 'Không có', 'fas fa-check-circle');
+                        addDetailField(additionalInfoContainer, 'Không bao gồm', item.excludedItems || 'Không có', 'fas fa-times-circle');
+                        addDetailField(additionalInfoContainer, 'Yêu cầu', item.requirements || 'Không có', 'fas fa-exclamation-circle');
+                    } else {
+                        addDetailField(additionalInfoContainer, 'Loại chỗ ở', item.propertyType || 'Không xác định', 'fas fa-building');
+                        addDetailField(additionalInfoContainer, 'Số phòng ngủ', item.bedrooms || '0', 'fas fa-bed');
+                        addDetailField(additionalInfoContainer, 'Số phòng tắm', item.bathrooms || '0', 'fas fa-bath');
+                        addDetailField(additionalInfoContainer, 'Số khách tối đa', item.maxGuests + ' người', 'fas fa-users');
+                        addDetailField(additionalInfoContainer, 'Tiện nghi', item.amenities || 'Không có', 'fas fa-concierge-bell');
+                    }
+                    
+                    // Thêm event listener cho các nút
+                    document.getElementById('detailApproveBtn').onclick = function() {
+                        approveContent(item.type, item.id);
+                    };
+                    
+                    document.getElementById('detailRejectBtn').onclick = function() {
+                        rejectContent(item.type, item.id, item.title);
+                        bootstrap.Modal.getInstance(document.getElementById('contentDetailModal')).hide();
+                    };
+                } else {
+                    showToast('Không thể tải thông tin chi tiết: ' + (data.message || 'Lỗi không xác định'), 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Có lỗi xảy ra khi tải thông tin chi tiết', 'error');
+            });
+            
+            // Hiển thị modal
+            new bootstrap.Modal(document.getElementById('contentDetailModal')).show();
+        }
+        
+        function addPlaceholderImage(container) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'carousel-item active';
+            placeholder.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center bg-light" 
+                     style="height: 300px; border-radius: 4px;">
+                    <div class="text-center">
+                        <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                        <p class="text-muted">Không có hình ảnh</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(placeholder);
+        }
+        
+        function addDetailField(container, label, value, iconClass) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 mb-3';
+            col.innerHTML = `
+                <div class="d-flex">
+                    <div class="me-2">
+                        <i class="${iconClass} fa-fw text-primary"></i>
+                    </div>
+                    <div>
+                        <strong>${label}:</strong>
+                        <div>${value}</div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(col);
+        }
+
         function showToast(message, type) {
             type = type || 'info';
             const toastContainer = document.getElementById('toastContainer');
@@ -709,12 +1023,22 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang xử lý...';
             submitBtn.disabled = true;
             
-            const formData = new FormData(this);
+            const reason = this.querySelector('textarea[name="reason"]').value;
+            if (!reason || reason.trim() === '') {
+                showToast('Lý do từ chối không được để trống', 'error');
+                submitBtn.innerHTML = originalContent;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            const formData = new URLSearchParams();
+            formData.append('reason', reason);
             
             fetch(this.action, {
                 method: 'POST',
                 body: formData,
                 headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
