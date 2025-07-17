@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<jsp:useBean id="now" class="java.util.Date" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -1883,7 +1884,47 @@
                     <div class="booking-card">
                         <div class="price-display">
                             <div class="price-amount">
-                                <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                <c:set var="isPromo" value="${accommodation.promotionPercent > 0 
+                                    && accommodation.promotionStart != null 
+                                    && accommodation.promotionEnd != null}" />
+                                <c:choose>
+                                    <c:when test="${accommodation.pricePerNight == 0}">
+                                        Miễn phí
+                                    </c:when>
+                                    <c:when test="${isPromo}">
+                                        <span style="text-decoration: line-through; color: #888; font-size: 0.8em; margin-right: 5px;">
+                                            <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </span>
+                                        <span style="color: #ff385c; font-weight: bold;">
+                                            <fmt:formatNumber value="${accommodation.pricePerNight * (1 - accommodation.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </span>
+                                        <div>
+                                            <c:choose>
+                                                <c:when test="${now.time < accommodation.promotionStart.time}">
+                                                    <span class="promotion-badge" style="font-size: 0.8em; background: linear-gradient(45deg, #6c757d, #495057);">
+                                                        Sắp giảm ${accommodation.promotionPercent}% (<fmt:formatDate value="${accommodation.promotionStart}" pattern="dd/MM/yyyy" />)
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${now.time > accommodation.promotionEnd.time}">
+                                                    <span class="promotion-badge" style="font-size: 0.8em; background: linear-gradient(45deg, #6c757d, #495057);">
+                                                        Đã hết khuyến mãi
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="promotion-badge" style="font-size: 0.8em;">
+                                                        Khuyến mãi ${accommodation.promotionPercent}% (đến <fmt:formatDate value="${accommodation.promotionEnd}" pattern="dd/MM/yyyy" />)
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <input type="hidden" id="promotionPercent" value="${accommodation.promotionPercent}">
+                                        <input type="hidden" id="promotionStart" value="<fmt:formatDate value="${accommodation.promotionStart}" pattern="yyyy-MM-dd" />">
+                                        <input type="hidden" id="promotionEnd" value="<fmt:formatDate value="${accommodation.promotionEnd}" pattern="yyyy-MM-dd" />">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <fmt:formatNumber value="${accommodation.pricePerNight}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                             <div class="price-unit">mỗi đêm</div>
                         </div>
@@ -2350,7 +2391,43 @@
                                                 checkOutInput.classList.contains('is-valid')) {
 
                                             const nightCount = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-                                            const roomTotal = nightCount * pricePerNight;
+                                            
+                                            // Lấy thông tin khuyến mãi
+                                            const promotionPercent = document.getElementById('promotionPercent')?.value || 0;
+                                            const promotionStart = document.getElementById('promotionStart')?.value;
+                                            const promotionEnd = document.getElementById('promotionEnd')?.value;
+                                            
+                                            // Kiểm tra xem ngày check-in có nằm trong khoảng khuyến mãi không
+                                            function isDateInPromotionRange(selectedDate, promotionStart, promotionEnd) {
+                                                if (!promotionStart || !promotionEnd) return false;
+                                                
+                                                // Chuyển về 00:00:00 local time
+                                                function toLocalDateOnly(dateStr) {
+                                                    const d = new Date(dateStr);
+                                                    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                                }
+                                                
+                                                const bookingDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                                                const startDate = toLocalDateOnly(promotionStart);
+                                                const endDate = toLocalDateOnly(promotionEnd);
+                                                
+                                                // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+                                                return bookingDate >= startDate && bookingDate <= endDate;
+                                            }
+                                            
+                                            // Lấy giá gốc
+                                            let originalPricePerNight = pricePerNight;
+                                            let finalPricePerNight = originalPricePerNight;
+                                            
+                                            // Tính giá dựa trên khuyến mãi nếu ngày check-in nằm trong khoảng khuyến mãi
+                                            if (promotionPercent > 0 && isDateInPromotionRange(checkIn, promotionStart, promotionEnd)) {
+                                                finalPricePerNight = originalPricePerNight * (1 - promotionPercent / 100.0);
+                                                console.log("Áp dụng giảm giá: " + promotionPercent + "% cho ngày " + checkIn.toLocaleDateString());
+                                            } else {
+                                                console.log("Không áp dụng giảm giá cho ngày " + checkIn.toLocaleDateString());
+                                            }
+                                            
+                                            const roomTotal = nightCount * finalPricePerNight;
                                             const serviceFee = Math.round(roomTotal * 0.05); // 5% service fee
                                             const totalAmount = roomTotal + serviceFee;
 
@@ -2361,8 +2438,19 @@
 
                                             if (nightCountEl)
                                                 nightCountEl.textContent = nightCount;
-                                            if (roomTotalEl)
-                                                roomTotalEl.textContent = formatCurrency(roomTotal);
+                                                
+                                            // Hiển thị giá gốc và giá khuyến mãi nếu có
+                                            if (roomTotalEl) {
+                                                if (promotionPercent > 0 && isDateInPromotionRange(checkIn, promotionStart, promotionEnd)) {
+                                                    const originalTotal = nightCount * originalPricePerNight;
+                                                    roomTotalEl.innerHTML = '<span style="text-decoration: line-through; color: #888; font-size: 0.8em;">' + 
+                                                        formatCurrency(originalTotal) + '</span> → <span style="color: #ff385c; font-weight: bold;">' + 
+                                                        formatCurrency(roomTotal) + '</span> <span class="badge bg-success">-' + promotionPercent + '%</span>';
+                                                } else {
+                                                    roomTotalEl.textContent = formatCurrency(roomTotal);
+                                                }
+                                            }
+                                            
                                             if (serviceFeeEl)
                                                 serviceFeeEl.textContent = formatCurrency(serviceFee);
                                             if (totalAmountEl)
@@ -2372,6 +2460,28 @@
 
                                             // Show availability info
                                             showAvailabilityInfo(nightCount + ' đêm từ ' + formatDateVN(checkIn) + ' đến ' + formatDateVN(checkOut), 'success');
+                                            
+                                            // Thêm hidden input để truyền thông tin khuyến mãi đến trang booking form
+                                            if (!document.getElementById('hiddenPromotionPercent')) {
+                                                const hiddenPromoPercent = document.createElement('input');
+                                                hiddenPromoPercent.type = 'hidden';
+                                                hiddenPromoPercent.id = 'hiddenPromotionPercent';
+                                                hiddenPromoPercent.name = 'promotionPercent';
+                                                bookingForm.appendChild(hiddenPromoPercent);
+                                            }
+                                            
+                                            if (!document.getElementById('hiddenOriginalPrice')) {
+                                                const hiddenOriginalPrice = document.createElement('input');
+                                                hiddenOriginalPrice.type = 'hidden';
+                                                hiddenOriginalPrice.id = 'hiddenOriginalPrice';
+                                                hiddenOriginalPrice.name = 'originalPrice';
+                                                bookingForm.appendChild(hiddenOriginalPrice);
+                                            }
+                                            
+                                            // Cập nhật giá trị cho hidden inputs
+                                            document.getElementById('hiddenPromotionPercent').value = 
+                                                isDateInPromotionRange(checkIn, promotionStart, promotionEnd) ? promotionPercent : 0;
+                                            document.getElementById('hiddenOriginalPrice').value = originalPricePerNight;
                                         } else {
                                             bookingSummary.style.display = 'none';
                                             hideAvailabilityInfo();
@@ -2901,6 +3011,44 @@
                     });
                 }
             }, 200);
+        }
+        </script>
+
+        <!-- Hàm kiểm tra khuyến mãi dựa trên thời gian -->
+        <script>
+        function isPromotionActive(promotionPercent, promotionStart, promotionEnd, checkDate = null) {
+            if (!promotionPercent || promotionPercent <= 0) {
+                return false;
+            }
+            
+            if (!promotionStart || !promotionEnd) {
+                return false;
+            }
+            
+            // Chuyển về 00:00:00 local time
+            function toLocalDateOnly(dateStr) {
+                const d = new Date(dateStr);
+                return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            }
+            
+            // Sử dụng ngày được truyền vào hoặc ngày hiện tại
+            const now = new Date();
+            const dateToCheck = checkDate ? new Date(checkDate) : now;
+            const today = new Date(dateToCheck.getFullYear(), dateToCheck.getMonth(), dateToCheck.getDate());
+            const startDate = toLocalDateOnly(promotionStart);
+            const endDate = toLocalDateOnly(promotionEnd);
+            
+            // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+            return today >= startDate && today <= endDate;
+        }
+
+        // Hàm tính giá khuyến mãi
+        function calculatePromotionPrice(originalPrice, promotionPercent) {
+            if (!promotionPercent || promotionPercent <= 0 || promotionPercent > 100) {
+                return originalPrice;
+            }
+            
+            return originalPrice * (1 - promotionPercent / 100.0);
         }
         </script>
     </body>

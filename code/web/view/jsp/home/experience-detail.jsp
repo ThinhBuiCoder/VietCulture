@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<jsp:useBean id="now" class="java.util.Date" />
 
 
 <!DOCTYPE html>
@@ -152,6 +153,27 @@
 
             .btn-copy i {
                 font-size: 1rem;
+            }
+            
+            /* Promotion Badge Styles */
+            .promotion-badge {
+                background: linear-gradient(45deg, #ff6b35, #ff385c);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                box-shadow: 0 2px 8px rgba(255, 56, 92, 0.3);
+                display: inline-block;
+                margin-top: 5px;
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
             }
 
             /* Google Maps Styles */
@@ -2698,9 +2720,42 @@
                     <div class="booking-card">
                         <div class="price-display">
                             <div class="price-amount">
+                                <c:set var="isPromo" value="${experience.promotionPercent > 0 
+                                    && experience.promotionStart != null 
+                                    && experience.promotionEnd != null}" />
                                 <c:choose>
                                     <c:when test="${experience.price == 0}">
                                         Miễn phí
+                                    </c:when>
+                                    <c:when test="${isPromo}">
+                                        <span style="text-decoration: line-through; color: #888; font-size: 0.8em; margin-right: 5px;">
+                                            <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </span>
+                                        <span style="color: #ff385c; font-weight: bold;">
+                                            <fmt:formatNumber value="${experience.price * (1 - experience.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
+                                        </span>
+                                        <div>
+                                            <c:choose>
+                                                <c:when test="${now.time < experience.promotionStart.time}">
+                                                    <span class="promotion-badge" style="font-size: 0.8em; background: linear-gradient(45deg, #6c757d, #495057);">
+                                                        Sắp giảm ${experience.promotionPercent}% (<fmt:formatDate value="${experience.promotionStart}" pattern="dd/MM/yyyy" />)
+                                                    </span>
+                                                </c:when>
+                                                <c:when test="${now.time > experience.promotionEnd.time}">
+                                                    <span class="promotion-badge" style="font-size: 0.8em; background: linear-gradient(45deg, #6c757d, #495057);">
+                                                        Đã hết khuyến mãi
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="promotion-badge" style="font-size: 0.8em;">
+                                                        Khuyến mãi ${experience.promotionPercent}% (đến <fmt:formatDate value="${experience.promotionEnd}" pattern="dd/MM/yyyy" />)
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <input type="hidden" id="promotionPercent" value="${experience.promotionPercent}">
+                                        <input type="hidden" id="promotionStart" value="<fmt:formatDate value="${experience.promotionStart}" pattern="yyyy-MM-dd" />">
+                                        <input type="hidden" id="promotionEnd" value="<fmt:formatDate value="${experience.promotionEnd}" pattern="yyyy-MM-dd" />">
                                     </c:when>
                                     <c:otherwise>
                                         <fmt:formatNumber value="${experience.price}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
@@ -3008,8 +3063,31 @@
                                                 // Get price from page content
                                                 const priceElement = document.querySelector('.price-amount');
                                                 if (priceElement) {
-                                                    const priceText = priceElement.textContent.replace(/[^\d]/g, '');
-                                                    this.pricePerPerson = parseInt(priceText) || 0;
+                                                    // Lấy thông tin khuyến mãi
+                                                    const promotionPercent = document.getElementById('promotionPercent')?.value || 0;
+                                                    const promotionStart = document.getElementById('promotionStart')?.value;
+                                                    const promotionEnd = document.getElementById('promotionEnd')?.value;
+                                                    
+                                                    // Lấy giá gốc
+                                                    let originalPrice = 0;
+                                                    const originalPriceElement = priceElement.querySelector('span[style*="text-decoration: line-through"]');
+                                                    if (originalPriceElement) {
+                                                        const originalPriceText = originalPriceElement.textContent.replace(/[^\d]/g, '');
+                                                        originalPrice = parseInt(originalPriceText) || 0;
+                                                    } else {
+                                                        const priceText = priceElement.textContent.replace(/[^\d]/g, '');
+                                                        originalPrice = parseInt(priceText) || 0;
+                                                    }
+                                                    
+                                                    // Kiểm tra xem khuyến mãi có đang hoạt động không
+                                                    if (promotionPercent > 0 && promotionStart && promotionEnd && 
+                                                        isPromotionActive(promotionPercent, promotionStart, promotionEnd)) {
+                                                        // Nếu khuyến mãi đang hoạt động, tính giá khuyến mãi
+                                                        this.pricePerPerson = calculatePromotionPrice(originalPrice, promotionPercent);
+                                                    } else {
+                                                        // Nếu không có khuyến mãi hoặc khuyến mãi không hoạt động, sử dụng giá gốc
+                                                        this.pricePerPerson = originalPrice;
+                                                    }
                                                 } else {
                                                     this.pricePerPerson = 0;
                                                 }
@@ -3135,8 +3213,53 @@
                                                 const participants = parseInt(this.participantsSelect.value);
                                                 const selectedDate = new Date(this.bookingDateInput.value);
                                                 const dayOfWeek = selectedDate.getDay();
-
-                                                let basePrice = participants * this.pricePerPerson;
+                                                
+                                                // Lấy thông tin khuyến mãi
+                                                const promotionPercent = document.getElementById('promotionPercent')?.value || 0;
+                                                const promotionStart = document.getElementById('promotionStart')?.value;
+                                                const promotionEnd = document.getElementById('promotionEnd')?.value;
+                                                
+                                                // Lấy giá gốc
+                                                let originalPrice = 0;
+                                                const priceElement = document.querySelector('.price-amount');
+                                                if (priceElement) {
+                                                    const originalPriceElement = priceElement.querySelector('span[style*="text-decoration: line-through"]');
+                                                    if (originalPriceElement) {
+                                                        const originalPriceText = originalPriceElement.textContent.replace(/[^\d]/g, '');
+                                                        originalPrice = parseInt(originalPriceText) || 0;
+                                                    } else {
+                                                        const priceText = priceElement.textContent.replace(/[^\d]/g, '');
+                                                        originalPrice = parseInt(priceText) || 0;
+                                                    }
+                                                }
+                                                
+                                                // Kiểm tra xem ngày được chọn có nằm trong khoảng khuyến mãi không
+                                                function isDateInPromotionRange(selectedDate, promotionStart, promotionEnd) {
+                                                    if (!promotionStart || !promotionEnd) return false;
+                                                    
+                                                    // Chuyển về 00:00:00 local time
+                                                    function toLocalDateOnly(dateStr) {
+                                                        const d = new Date(dateStr);
+                                                        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                                    }
+                                                    
+                                                    const bookingDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                                                    const startDate = toLocalDateOnly(promotionStart);
+                                                    const endDate = toLocalDateOnly(promotionEnd);
+                                                    
+                                                    // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+                                                    return bookingDate >= startDate && bookingDate <= endDate;
+                                                }
+                                                
+                                                // Tính giá dựa trên khuyến mãi nếu ngày được chọn nằm trong khoảng khuyến mãi
+                                                let basePrice = 0;
+                                                if (promotionPercent > 0 && isDateInPromotionRange(selectedDate, promotionStart, promotionEnd)) {
+                                                    basePrice = participants * calculatePromotionPrice(originalPrice, promotionPercent);
+                                                    console.log("Áp dụng giảm giá: " + promotionPercent + "% cho ngày " + selectedDate.toLocaleDateString());
+                                                } else {
+                                                    basePrice = participants * originalPrice;
+                                                    console.log("Không áp dụng giảm giá cho ngày " + selectedDate.toLocaleDateString());
+                                                }
 
                                                 // Weekend surcharge (10% extra for Saturday and Sunday)
                                                 let weekendSurcharge = 0;
@@ -3165,6 +3288,28 @@
 
                                                 // Show weekend surcharge if applicable
                                                 this.updateWeekendSurcharge(weekendSurcharge);
+                                                
+                                                // Thêm hidden input để truyền thông tin khuyến mãi đến trang booking form
+                                                if (!document.getElementById('hiddenPromotionPercent')) {
+                                                    const hiddenPromoPercent = document.createElement('input');
+                                                    hiddenPromoPercent.type = 'hidden';
+                                                    hiddenPromoPercent.id = 'hiddenPromotionPercent';
+                                                    hiddenPromoPercent.name = 'promotionPercent';
+                                                    this.form.appendChild(hiddenPromoPercent);
+                                                }
+                                                
+                                                if (!document.getElementById('hiddenOriginalPrice')) {
+                                                    const hiddenOriginalPrice = document.createElement('input');
+                                                    hiddenOriginalPrice.type = 'hidden';
+                                                    hiddenOriginalPrice.id = 'hiddenOriginalPrice';
+                                                    hiddenOriginalPrice.name = 'originalPrice';
+                                                    this.form.appendChild(hiddenOriginalPrice);
+                                                }
+                                                
+                                                // Cập nhật giá trị cho hidden inputs
+                                                document.getElementById('hiddenPromotionPercent').value = 
+                                                    isDateInPromotionRange(selectedDate, promotionStart, promotionEnd) ? promotionPercent : 0;
+                                                document.getElementById('hiddenOriginalPrice').value = originalPrice;
                                             }
 
                                             updateWeekendSurcharge(surcharge) {
@@ -4857,6 +5002,36 @@
                                                 }
                                             }, 350);
                                         }
+
+// Thêm hàm kiểm tra khuyến mãi dựa trên thời gian
+function isPromotionActive(promotionPercent, promotionStart, promotionEnd) {
+    if (!promotionPercent || promotionPercent <= 0) {
+        return false;
+    }
+    if (!promotionStart || !promotionEnd) {
+        return false;
+    }
+    // Chuyển về 00:00:00 local time
+    function toLocalDateOnly(dateStr) {
+        const d = new Date(dateStr);
+        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startDate = toLocalDateOnly(promotionStart);
+    const endDate = toLocalDateOnly(promotionEnd);
+    // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+    return today >= startDate && today <= endDate;
+}
+
+// Hàm tính giá khuyến mãi
+function calculatePromotionPrice(originalPrice, promotionPercent) {
+    if (!promotionPercent || promotionPercent <= 0 || promotionPercent > 100) {
+        return originalPrice;
+    }
+    
+    return originalPrice * (1 - promotionPercent / 100.0);
+}
         </script>
 
         <!-- Simple Map Helper Functions -->
