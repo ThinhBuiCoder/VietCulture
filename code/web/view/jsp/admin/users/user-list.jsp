@@ -79,9 +79,6 @@
                     <h1 class="h2"><i class="fas fa-users me-2"></i>Quản lý Users</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group me-2">
-                            <button type="button" class="btn btn-info" onclick="viewAllBookings()">
-                                <i class="fas fa-calendar-check me-1"></i>Tất cả Booking
-                            </button>
                             <button type="button" class="btn btn-success" id="exportUsersBtn">
                                 <i class="fas fa-download me-1"></i>Xuất Excel
                             </button>
@@ -1079,11 +1076,6 @@
             Utils.error('Uncaught error:', msg, 'at', url + ':' + lineNo + ':' + columnNo);
             Utils.showAlert('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.', 'danger');
         };
-
-        // View all bookings function
-        function viewAllBookings() {
-            window.location.href = CONFIG.contextPath + '/admin/bookings';
-        }
     </script>
 </body>
 </html>

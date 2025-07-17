@@ -71,56 +71,21 @@
         .role-icon.admin {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
-        .permission-item {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            background: white;
-        }
-        .permission-item.enabled {
-            border-color: #28a745;
-            background-color: #f8fff9;
-        }
-        .permission-item.disabled {
-            border-color: #dc3545;
-            background-color: #fff8f8;
-        }
-        .permission-toggle {
-            margin-left: auto;
-        }
-        .change-log {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1.5rem;
-        }
-        .change-item {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .change-item:last-child {
-            border-bottom: none;
-        }
-        .btn-gradient-primary {
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-            border: none;
-            color: white;
-        }
-        .btn-gradient-primary:hover {
-            background: linear-gradient(135deg, #0056b3 0%, #007bff 100%);
-            color: white;
-        }
         .warning-box {
             background: #fff3cd;
             border: 1px solid #ffeaa7;
             border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1.5rem;
+        }
+        .btn-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        .btn-gradient-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            color: white;
         }
     </style>
 </head>
@@ -143,38 +108,37 @@
         <div class="permissions-card">
             <!-- Header -->
             <div class="permissions-header">
-                <c:choose>
-                    <c:when test="${not empty user.avatar and user.avatar ne 'default-avatar.png'}">
-                        <img src="${pageContext.request.contextPath}/view/assets/images/avatars/${user.avatar}" 
-                             alt="Avatar" class="user-avatar"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="user-avatar bg-secondary d-none align-items-center justify-content-center">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center">
-                            <i class="fas fa-user text-white"></i>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                <div class="user-avatar bg-secondary d-flex align-items-center justify-content-center">
+                    <i class="fas fa-user text-white"></i>
+                </div>
                 <h3 class="mb-2">
                     <i class="fas fa-user-shield me-2"></i>Quản lý phân quyền
                 </h3>
                 <p class="mb-0">${user.fullName} (${user.email})</p>
                 <p class="mb-0">
                     <small>Vai trò hiện tại: 
-                        <span class="badge bg-light text-dark">${user.role}</span>
+                        <span class="badge bg-light text-dark" data-role="${user.role}">${user.role}</span>
                     </small>
                 </p>
             </div>
 
             <!-- Body -->
             <div class="permissions-body">
-                <form id="permissionsForm" onsubmit="updatePermissions(event)">
+                <!-- Debug info (ẩn trong production) -->
+                <div class="alert alert-info" id="debugInfo" style="display: none;">
+                    <strong>Debug Info:</strong><br>
+                    User ID: <span id="debugUserId">${user.userId}</span><br>
+                    Current Role: <span id="debugRole">${user.role}</span><br>
+                    Context Path: <span id="debugContext">${pageContext.request.contextPath}</span>
+                </div>
+
+                <form id="permissionsForm">
                     <input type="hidden" name="userId" value="${user.userId}">
                     <input type="hidden" name="currentrole" value="${user.role}">
-
+                    <input type="hidden" name="newrole" value="${user.role}">
+                    <input type="hidden" name="action" value="update-permissions">
+                    <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
+                    
                     <!-- Warning -->
                     <div class="warning-box">
                         <i class="fas fa-exclamation-triangle text-warning me-2"></i>
@@ -188,8 +152,7 @@
 
                     <div class="row">
                         <div class="col-md-4">
-                            <div class="role-card ${user.role == 'TRAVELER' ? 'selected' : ''}" 
-                                 onclick="selectRole('TRAVELER', this)">
+                            <div class="role-card ${user.role == 'TRAVELER' ? 'selected' : ''} traveler" data-role="TRAVELER" onclick="selectRole('TRAVELER', this)">
                                 <div class="role-icon traveler">
                                     <i class="fas fa-suitcase-rolling"></i>
                                 </div>
@@ -200,143 +163,47 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="role-card ${user.role == 'HOST' ? 'selected' : ''}" 
-                                 onclick="selectRole('HOST', this)">
+                            <div class="role-card ${user.role == 'HOST' ? 'selected' : ''} host" data-role="HOST" onclick="selectRole('HOST', this)">
                                 <div class="role-icon host">
-                                    <i class="fas fa-store"></i>
+                                    <i class="fas fa-home"></i>
                                 </div>
                                 <h6 class="mb-2">Host</h6>
                                 <p class="text-muted small mb-0">
-                                    Người dùng có thể tạo và quản lý các trải nghiệm du lịch.
+                                    Có thể tạo và quản lý các dịch vụ du lịch.
                                 </p>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="role-card ${user.role == 'ADMIN' ? 'selected' : ''}" 
-                                 onclick="selectRole('ADMIN', this)">
+                            <div class="role-card ${user.role == 'ADMIN' ? 'selected' : ''} admin" data-role="ADMIN" onclick="selectRole('ADMIN', this)">
                                 <div class="role-icon admin">
                                     <i class="fas fa-user-shield"></i>
                                 </div>
                                 <h6 class="mb-2">Admin</h6>
                                 <p class="text-muted small mb-0">
-                                    Full quyền quản trị hệ thống và người dùng.
+                                    Quyền quản trị hệ thống và người dùng.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <input type="hidden" name="newrole" id="selectedRole" value="${user.role}">
-
-                    <!-- Permissions Detail -->
-                    <div class="mt-5">
-                        <h5 class="mb-4">
-                            <i class="fas fa-key me-2"></i>Chi tiết quyền hạn
-                        </h5>
-
-                        <div id="permissionsDetail">
-                            <!-- Permissions will be loaded dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Additional Settings -->
+                    <!-- Reason for change -->
                     <div class="mt-4">
-                        <h6 class="mb-3">
-                            <i class="fas fa-cog me-2"></i>Cài đặt bổ sung
-                        </h6>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="sendNotification" name="sendNotification" value="true" checked>
-                            <label class="form-check-label" for="sendNotification">
-                                Gửi email thông báo thay đổi quyền hạn
-                            </label>
-                        </div>
-                        
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="logActivity" name="logActivity" value="true" checked>
-                            <label class="form-check-label" for="logActivity">
-                                Ghi log hoạt động thay đổi
-                            </label>
-                        </div>
-
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="requirePasswordReset" name="requirePasswordReset" value="true">
-                            <label class="form-check-label" for="requirePasswordReset">
-                                Yêu cầu đổi mật khẩu khi đăng nhập lần đầu
-                            </label>
+                        <h5 class="mb-3">
+                            <i class="fas fa-comment-alt me-2"></i>Lý do thay đổi
+                        </h5>
+                        <div class="form-group">
+                            <textarea class="form-control" id="changeReason" name="reason" 
+                                      rows="3" required minlength="5" maxlength="500"
+                                      placeholder="Nhập lý do thay đổi phân quyền..."></textarea>
                         </div>
                     </div>
 
-                    <!-- Reason -->
-                    <div class="mb-4">
-                        <label for="changeReason" class="form-label">
-                            <i class="fas fa-clipboard-list me-2"></i>Lý do thay đổi *
-                        </label>
-                        <textarea class="form-control" 
-                                 id="changeReason" 
-                                 name="reason" 
-                                 rows="3"
-                                 placeholder="Nhập lý do thay đổi phân quyền..."
-                                 required></textarea>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex gap-3">
-                        <button type="submit" class="btn btn-gradient-primary flex-fill">
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-gradient-primary w-100">
                             <i class="fas fa-save me-2"></i>Cập nhật phân quyền
                         </button>
-                        <a href="${pageContext.request.contextPath}/admin/users/${user.userId}" 
-                           class="btn btn-outline-secondary flex-fill">
-                            <i class="fas fa-times me-2"></i>Hủy bỏ
-                        </a>
                     </div>
                 </form>
-
-                <!-- Change History -->
-                <div class="change-log mt-5">
-                    <h6 class="mb-3">
-                        <i class="fas fa-history me-2"></i>Lịch sử thay đổi quyền hạn
-                    </h6>
-                    
-                    <div class="change-item">
-                        <div class="me-3">
-                            <i class="fas fa-arrow-right text-primary"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <strong>Thay đổi từ TRAVELER sang HOST</strong>
-                            <p class="mb-1 small text-muted">Lý do: Người dùng muốn trở thành host để cung cấp dịch vụ</p>
-                            <p class="mb-0 small text-muted">
-                                Bởi: Admin (admin@example.com) - 15/01/2024 14:30
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="change-item">
-                        <div class="me-3">
-                            <i class="fas fa-user-plus text-success"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <strong>Tài khoản được tạo</strong>
-                            <p class="mb-1 small text-muted">Vai trò ban đầu: TRAVELER</p>
-                            <p class="mb-0 small text-muted">
-                                Bởi: System - 01/01/2024 10:00
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Modal -->
-    <div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center py-4">
-                    <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mb-0">Đang cập nhật quyền hạn...</p>
-                </div>
             </div>
         </div>
     </div>
@@ -346,265 +213,184 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Xác nhận thay đổi phân quyền</h5>
+                    <h5 class="modal-title">Xác nhận thay đổi</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-exclamation-triangle text-warning fa-3x"></i>
-                    </div>
-                    <p id="confirmMessage" class="text-center"></p>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Lưu ý:</strong> Thay đổi này sẽ có hiệu lực ngay lập tức và có thể ảnh hưởng đến trải nghiệm của người dùng.
-                    </div>
+                    <p id="confirmMessage"></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="button" class="btn btn-primary" id="confirmButton">Xác nhận thay đổi</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="confirmButton">Xác nhận</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const contextPath = '${pageContext.request.contextPath}';
-        let loadingModal;
-        let confirmModal;
-        let currentSelectedRole = '${user.role}';
-        
-        // Role permissions configuration
-        const rolePermissions = {
-            'TRAVELER': [
-                { name: 'Xem danh sách trải nghiệm', enabled: true, required: true },
-                { name: 'Đặt booking trải nghiệm', enabled: true, required: true },
-                { name: 'Đánh giá trải nghiệm', enabled: true, required: false },
-                { name: 'Quản lý hồ sơ cá nhân', enabled: true, required: true },
-                { name: 'Xem lịch sử booking', enabled: true, required: true },
-                { name: 'Hủy booking', enabled: true, required: false },
-                { name: 'Chat với host', enabled: true, required: false }
-            ],
-            'HOST': [
-                { name: 'Tạo trải nghiệm mới', enabled: true, required: true },
-                { name: 'Quản lý trải nghiệm', enabled: true, required: true },
-                { name: 'Xem booking của khách', enabled: true, required: true },
-                { name: 'Xác nhận/Từ chối booking', enabled: true, required: true },
-                { name: 'Chat với traveler', enabled: true, required: true },
-                { name: 'Xem báo cáo doanh thu', enabled: true, required: false },
-                { name: 'Quản lý lịch trình', enabled: true, required: true },
-                { name: 'Cập nhật giá và khuyến mãi', enabled: true, required: false }
-            ],
-            'ADMIN': [
-                { name: 'Quản lý tất cả người dùng', enabled: true, required: true },
-                { name: 'Quản lý tất cả trải nghiệm', enabled: true, required: true },
-                { name: 'Xem tất cả báo cáo', enabled: true, required: true },
-                { name: 'Quản lý hệ thống', enabled: true, required: true },
-                { name: 'Phân quyền người dùng', enabled: true, required: true },
-                { name: 'Khóa/Mở khóa tài khoản', enabled: true, required: true },
-                { name: 'Xem logs hệ thống', enabled: true, required: true },
-                { name: 'Quản lý nội dung', enabled: true, required: false }
-            ]
-        };
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-            
-            // Load initial permissions
-            loadPermissions(currentSelectedRole);
-        });
-
         function selectRole(role, element) {
-            // Remove selection from all cards
-            document.querySelectorAll('.role-card').forEach(card => {
+            document.querySelectorAll('.role-card').forEach(function(card) {
                 card.classList.remove('selected');
             });
-            
-            // Add selection to clicked card
             element.classList.add('selected');
-            
-            // Update hidden input
-            document.getElementById('selectedRole').value = role;
-            currentSelectedRole = role;
-            
-            // Load permissions for selected role
-            loadPermissions(role);
+            document.querySelector('input[name="newrole"]').value = role;
+            checkRoleDowngrade();
         }
 
-        function loadPermissions(role) {
-            const permissionsContainer = document.getElementById('permissionsDetail');
-            const permissions = rolePermissions[role] || [];
-            
-            let html = '';
-            permissions.forEach(permission => {
-                html += `
-                    <div class="permission-item ${permission.enabled ? 'enabled' : 'disabled'}">
-                        <div class="me-3">
-                            <i class="fas ${permission.enabled ? 'fa-check-circle text-success' : 'fa-times-circle text-danger'}"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <strong>${permission.name}</strong>
-                            ${permission.required ? '<span class="badge bg-primary ms-2">Bắt buộc</span>' : ''}
-                        </div>
-                        <div class="permission-toggle">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" 
-                                       ${permission.enabled ? 'checked' : ''} 
-                                       ${permission.required ? 'disabled' : ''}
-                                       onchange="togglePermission(this, '${permission.name}')">
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            permissionsContainer.innerHTML = html;
-        }
-
-        function togglePermission(checkbox, permissionName) {
-            const permissionItem = checkbox.closest('.permission-item');
-            if (checkbox.checked) {
-                permissionItem.classList.remove('disabled');
-                permissionItem.classList.add('enabled');
-                permissionItem.querySelector('i').className = 'fas fa-check-circle text-success';
-            } else {
-                permissionItem.classList.remove('enabled');
-                permissionItem.classList.add('disabled');
-                permissionItem.querySelector('i').className = 'fas fa-times-circle text-danger';
-            }
-        }
-
-        function updatePermissions(event) {
-            event.preventDefault();
-            
-            const form = document.getElementById('permissionsForm');
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const contextPath = '${pageContext.request.contextPath}';
+        const currentRoleServer = "${user.role}";
+        function performUpdate(form) {
             const formData = new FormData(form);
             
-            const currentRole = formData.get('currentrole');
-            const newRole = formData.get('newrole');
-            const reason = formData.get('reason').trim();
+            // Get values for validation
+            const userIdValue = formData.get('userId');
+            const currentRoleValue = formData.get('currentrole');
+            const newRoleValue = formData.get('newrole');
+            const reasonValue = formData.get('reason');
+            
+            console.log('Form values:', {
+                userId: userIdValue,
+                currentRole: currentRoleValue,
+                newRole: newRoleValue,
+                reason: reasonValue
+            });
+            
+            if (!userIdValue || !currentRoleValue || !newRoleValue || !reasonValue) {
+                showAlert('danger', 'Vui lòng điền đầy đủ thông tin.');
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+            submitBtn.disabled = true;
+
+            // Convert FormData to URLSearchParams
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                params.append(key, value);
+            }
+
+            // Fix URL format - use the current URL
+            const targetUrl = window.location.href;
+            
+            fetch(targetUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params.toString()
+            })
+            .then(async response => {
+                const text = await response.text();
+                console.log('Raw response:', text);
+                
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid JSON response: ' + text);
+                }
+            })
+            .then(data => {
+                console.log('Parsed response:', data);
+                
+                if (data.success) {
+                    showAlert('success', data.message || 'Cập nhật phân quyền thành công!');
+                    setTimeout(function() {
+                        window.location.href = contextPath + "/admin/users/";
+                    }, 1200); // Wait 1.2s for user to see the alert
+                } else {
+                    showAlert('danger', data.message || 'Có lỗi xảy ra khi cập nhật phân quyền.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Có lỗi xảy ra: ' + error.message);
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+
+        document.getElementById('permissionsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const reason = document.getElementById('changeReason').value.trim();
+            // Always get current role from server-side variable
+            const currentRole = typeof currentRoleServer !== 'undefined' ? currentRoleServer : '';
+            // Get new role from selected .role-card data-role
+            let newRole = '';
+            const selectedCard = document.querySelector('.role-card.selected[data-role]');
+            if (selectedCard) newRole = selectedCard.getAttribute('data-role');
+            // Map role codes to display names
+            const roleDisplayNames = {
+                'TRAVELER': 'Khách du lịch',
+                'HOST': 'Chủ dịch vụ',
+                'ADMIN': 'Quản trị viên'
+            };
+            const currentRoleName = roleDisplayNames[currentRole] || currentRole;
+            const newRoleName = roleDisplayNames[newRole] || newRole;
             
             if (!reason) {
                 showAlert('warning', 'Vui lòng nhập lý do thay đổi phân quyền.');
                 return;
             }
             
-            if (currentRole === newRole) {
-                showAlert('info', 'Vai trò không thay đổi. Chỉ cập nhật cài đặt bổ sung.');
-                performUpdate(formData);
+            if (reason.length < 5) {
+                showAlert('warning', 'Lý do phải có ít nhất 5 ký tự.');
                 return;
             }
             
-            const message = `Bạn có chắc chắn muốn thay đổi vai trò từ "${currentRole}" sang "${newRole}"?`;
-            showConfirm(message, () => {
-                performUpdate(formData);
-            });
-        }
+            if (currentRole === newRole) {
+                showAlert('info', 'Vai trò không thay đổi.');
+                return;
+            }
+            
+            const message = `Bạn có chắc chắn muốn thay đổi vai trò của người dùng này không ?`;
+            showConfirm(message, () => performUpdate(this));
+        });
 
-        function performUpdate(formData) {
-            loadingModal.show();
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 350px;';
             
-            const userId = formData.get('userId');
+            let iconClass = '';
+            switch(type) {
+                case 'success': iconClass = 'fa-check-circle'; break;
+                case 'danger': iconClass = 'fa-exclamation-circle'; break;
+                case 'warning': iconClass = 'fa-exclamation-triangle'; break;
+                case 'info': iconClass = 'fa-info-circle'; break;
+                default: iconClass = 'fa-info-circle';
+            }
             
-            fetch(`${contextPath}/admin/users/${userId}/permissions`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                loadingModal.hide();
-                
-                if (data.success) {
-                    showAlert('success', data.message);
-                    setTimeout(() => {
-                        window.location.href = `${contextPath}/admin/users/${userId}`;
-                    }, 2000);
-                } else {
-                    showAlert('danger', data.message || 'Có lỗi xảy ra khi cập nhật phân quyền.');
-                }
-            })
-            .catch(error => {
-                loadingModal.hide();
-                console.error('Error:', error);
-                showAlert('danger', 'Có lỗi xảy ra. Vui lòng thử lại.');
-            });
+            alertDiv.innerHTML = `
+                <i class="fas ${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 5000);
         }
 
         function showConfirm(message, callback) {
             document.getElementById('confirmMessage').textContent = message;
-            
             document.getElementById('confirmButton').onclick = () => {
                 confirmModal.hide();
                 callback();
             };
-            
             confirmModal.show();
         }
 
-        function showAlert(type, message) {
-            // Remove existing alerts
-            const existingAlerts = document.querySelectorAll('.alert.position-fixed');
-            existingAlerts.forEach(alert => alert.remove());
-            
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 350px;';
-            alertDiv.innerHTML = `
-                <i class="fas ${getAlertIcon(type)} me-2"></i>
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            document.body.appendChild(alertDiv);
-            
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.parentNode.removeChild(alertDiv);
-                }
-            }, 5000);
-        }
-
-        function getAlertIcon(type) {
-            switch(type) {
-                case 'success': return 'fa-check-circle';
-                case 'danger': return 'fa-exclamation-circle';
-                case 'warning': return 'fa-exclamation-triangle';
-                case 'info': return 'fa-info-circle';
-                default: return 'fa-info-circle';
-            }
-        }
-
-        // Prevent form submission if no changes
-        function hasChanges() {
-            const currentRole = document.querySelector('input[name="currentrole"]').value;
-            const newRole = document.querySelector('input[name="newrole"]').value;
-            
-            return currentRole !== newRole;
-        }
-
-        // Auto-resize textarea
-        document.addEventListener('DOMContentLoaded', function() {
-            const textarea = document.getElementById('changeReason');
-            if (textarea) {
-                textarea.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
-                });
-            }
-        });
-
-        // Role comparison helper
         function getRoleLevel(role) {
-            switch(role) {
-                case 'TRAVELER': return 1;
-                case 'HOST': return 2;
-                case 'ADMIN': return 3;
-                default: return 0;
-            }
+            const levels = { 'TRAVELER': 1, 'HOST': 2, 'ADMIN': 3 };
+            return levels[role] || 0;
         }
 
-        // Show warning for role downgrade
         function checkRoleDowngrade() {
             const currentRole = document.querySelector('input[name="currentrole"]').value;
             const newRole = document.querySelector('input[name="newrole"]').value;
