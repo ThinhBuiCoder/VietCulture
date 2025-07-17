@@ -1732,9 +1732,7 @@
                                             <div class="price">
                                                 <c:set var="isPromo" value="${experience.promotionPercent > 0 
                                                     && experience.promotionStart != null 
-                                                    && experience.promotionEnd != null 
-                                                    && now.time >= experience.promotionStart.time 
-                                                    && now.time <= experience.promotionEnd.time}" />
+                                                    && experience.promotionEnd != null}" />
                                                 <c:choose>
                                                     <c:when test="${experience.price == 0}">
                                                         Miễn phí
@@ -1757,11 +1755,19 @@
                                             </div>
                                             <c:if test="${experience.promotionPercent > 0 
                                                 && experience.promotionStart != null 
-                                                && experience.promotionEnd != null 
-                                                && now.time >= experience.promotionStart.time 
-                                                && now.time <= experience.promotionEnd.time}">
+                                                && experience.promotionEnd != null}">
                                                 <div class="promotion-badge" style="margin-left: 12px;">
-                                                    Khuyến mãi ${experience.promotionPercent}%
+                                                    <c:choose>
+                                                        <c:when test="${now.time < experience.promotionStart.time}">
+                                                            Sắp giảm ${experience.promotionPercent}%
+                                                        </c:when>
+                                                        <c:when test="${now.time > experience.promotionEnd.time}">
+                                                            Đã hết khuyến mãi
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            Khuyến mãi ${experience.promotionPercent}%
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </c:if>
                                         </div>
@@ -2584,6 +2590,32 @@
                     }
                 }
                 
+                // Cập nhật trạng thái khuyến mãi nếu có
+                if (experience.promotionPercent > 0 && experience.promotionStart && experience.promotionEnd) {
+                    // Tìm price-row trong card
+                    const priceRow = card.querySelector('.price-row');
+                    if (priceRow) {
+                        // Xóa badge cũ nếu có
+                        const existingBadge = priceRow.querySelector('.promotion-badge');
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
+                        
+                        // Tạo badge mới dựa trên trạng thái hiện tại
+                        const promoHtml = displayPromotionStatus(
+                            experience.promotionPercent, 
+                            experience.promotionStart, 
+                            experience.promotionEnd
+                        );
+                        
+                        if (promoHtml) {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = promoHtml;
+                            priceRow.appendChild(tempDiv.firstElementChild);
+                        }
+                    }
+                }
+                
                 // Đảm bảo favorite button hoạt động đúng
                 const favoriteBtn = card.querySelector('.favorite-btn');
                 if (favoriteBtn) {
@@ -2739,15 +2771,63 @@
             const cardFooter = document.createElement('div');
             cardFooter.className = 'card-footer';
             
+            // Price-row with price and promotion
+            const priceRow = document.createElement('div');
+            priceRow.className = 'price-row';
+            priceRow.style.display = 'flex';
+            priceRow.style.alignItems = 'center';
+            
             // Price
             const price = document.createElement('div');
             price.className = 'price';
+            
+            // Check if promotion is active
+            const isPromo = isPromotionActive(experience.promotionPercent, experience.promotionStart, experience.promotionEnd);
+            
             if (experience.price === 0) {
                 price.textContent = 'Miễn phí';
+            } else if (isPromo) {
+                // Show original price with strikethrough
+                const origPrice = document.createElement('span');
+                origPrice.style.textDecoration = 'line-through';
+                origPrice.style.color = '#888';
+                origPrice.style.fontSize = '0.95em';
+                origPrice.textContent = new Intl.NumberFormat('vi-VN').format(experience.price) + ' VNĐ';
+                
+                // Show discounted price
+                const discPrice = document.createElement('span');
+                discPrice.style.color = '#ff385c';
+                discPrice.style.fontWeight = 'bold';
+                discPrice.style.marginLeft = '8px';
+                const discountedPrice = experience.price * (1 - experience.promotionPercent / 100);
+                discPrice.textContent = new Intl.NumberFormat('vi-VN').format(discountedPrice) + ' VNĐ';
+                
+                // Add per person text
+                const perPerson = document.createElement('small');
+                perPerson.textContent = '/người';
+                
+                price.appendChild(origPrice);
+                price.appendChild(discPrice);
+                price.appendChild(perPerson);
             } else {
                 price.innerHTML = new Intl.NumberFormat('vi-VN').format(experience.price) + ' VNĐ <small>/người</small>';
             }
-            cardFooter.appendChild(price);
+            
+            // Add price to price row
+            priceRow.appendChild(price);
+            
+            // Add promotion badge if applicable
+            if (experience.promotionPercent > 0 && experience.promotionStart && experience.promotionEnd) {
+                const promoHtml = displayPromotionStatus(experience.promotionPercent, experience.promotionStart, experience.promotionEnd);
+                if (promoHtml) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = promoHtml;
+                    priceRow.appendChild(tempDiv.firstElementChild);
+                }
+            }
+            
+            // Add price row to footer
+            cardFooter.appendChild(priceRow);
             
             // Rating
             if (experience.rating > 0) {
@@ -3350,6 +3430,38 @@
                 .catch(err => {
                     console.error('Lỗi khi tải dữ liệu trải nghiệm:', err);
                 });
+        }
+
+        // Add functions to handle promotions
+        function isPromotionActive(promotionPercent, promotionStart, promotionEnd) {
+            if (!promotionPercent || promotionPercent <= 0) return false;
+            if (!promotionStart || !promotionEnd) return false;
+            
+            // Promotion exists regardless of time
+            return true;
+        }
+        
+        function displayPromotionStatus(promotionPercent, promotionStart, promotionEnd) {
+            if (!promotionPercent || promotionPercent <= 0) return '';
+            if (!promotionStart || !promotionEnd) return '';
+            
+            const now = new Date();
+            const startDate = new Date(promotionStart);
+            const endDate = new Date(promotionEnd);
+            
+            if (now < startDate) {
+                return `<div class="promotion-badge" style="margin-left: 12px; background: linear-gradient(45deg, #6c757d, #495057);">
+                           Sắp giảm ${promotionPercent}%
+                       </div>`;
+            } else if (now > endDate) {
+                return `<div class="promotion-badge" style="margin-left: 12px; background: linear-gradient(45deg, #6c757d, #495057);">
+                           Đã hết khuyến mãi
+                       </div>`;
+            } else {
+                return `<div class="promotion-badge" style="margin-left: 12px;">
+                           Khuyến mãi ${promotionPercent}%
+                       </div>`;
+            }
         }
     </script>
 

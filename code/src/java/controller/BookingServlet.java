@@ -1171,16 +1171,18 @@ public class BookingServlet extends HttpServlet {
         basePrice = experience.getPrice();
         multiplier = formData.getNumberOfPeople();
 
-        // Apply promotion if active
-        if (PromotionUtils.isPromotionActive(experience.getPromotionPercent(), 
-                experience.getPromotionStart(), experience.getPromotionEnd())) {
+        // Kiểm tra ngày đặt chỗ có nằm trong khoảng khuyến mãi không
+        Date bookingDate = formData.getBookingDate();
+        if (bookingDate != null && PromotionUtils.isPromotionActiveForDate(experience.getPromotionPercent(), 
+                experience.getPromotionStart(), experience.getPromotionEnd(), bookingDate)) {
             finalPrice = PromotionUtils.calculatePromotionPrice(basePrice, experience.getPromotionPercent());
             LOGGER.info("Experience pricing with promotion - Original: " + basePrice + 
                        ", Promotion: " + experience.getPromotionPercent() + "%, Final: " + finalPrice + 
-                       ", People: " + multiplier);
+                       ", People: " + multiplier + ", Booking Date: " + bookingDate);
         } else {
             finalPrice = basePrice;
-            LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier);
+            LOGGER.info("Experience pricing - Base: " + basePrice + ", People: " + multiplier + 
+                       ", Booking Date: " + bookingDate + " (No promotion applicable)");
         }
 
     } else if (formData.hasAccommodation()) {
@@ -1191,16 +1193,18 @@ public class BookingServlet extends HttpServlet {
         int roomQuantity = formData.getRoomQuantity();
         multiplier = nights * roomQuantity; // NEW: Price = nights × rooms
 
-        // Apply promotion if active
-        if (PromotionUtils.isPromotionActive(accommodation.getPromotionPercent(), 
-                accommodation.getPromotionStart(), accommodation.getPromotionEnd())) {
+        // Kiểm tra ngày check-in có nằm trong khoảng khuyến mãi không
+        Date checkInDate = formData.getCheckInDate();
+        if (checkInDate != null && PromotionUtils.isPromotionActiveForDate(accommodation.getPromotionPercent(), 
+                accommodation.getPromotionStart(), accommodation.getPromotionEnd(), checkInDate)) {
             finalPrice = PromotionUtils.calculatePromotionPrice(basePrice, accommodation.getPromotionPercent());
             LOGGER.info("Accommodation pricing with promotion - Original: " + basePrice + 
                        ", Promotion: " + accommodation.getPromotionPercent() + "%, Final: " + finalPrice + 
-                       ", Nights: " + nights + ", Rooms: " + roomQuantity);
+                       ", Nights: " + nights + ", Rooms: " + roomQuantity + ", Check-in Date: " + checkInDate);
         } else {
             finalPrice = basePrice;
-            LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights + ", Rooms: " + roomQuantity);
+            LOGGER.info("Accommodation pricing - Base: " + basePrice + ", Nights: " + nights + 
+                       ", Rooms: " + roomQuantity + ", Check-in Date: " + checkInDate + " (No promotion applicable)");
         }
     }
 
@@ -2079,8 +2083,24 @@ public class BookingServlet extends HttpServlet {
             Exception e, String logMessage)
             throws ServletException, IOException {
         LOGGER.log(Level.SEVERE, logMessage, e);
-        request.setAttribute("errorMessage", "Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.");
-        request.getRequestDispatcher(ERROR_PAGE).forward(request, response);
+        
+        // Kiểm tra xem response đã được commit chưa
+        if (response.isCommitted()) {
+            LOGGER.warning("Response đã được commit, không thể forward đến trang lỗi");
+            try {
+                // Nếu đã commit, gửi thông báo lỗi qua PrintWriter nếu có thể
+                if (response.getWriter() != null) {
+                    response.getWriter().println("<script>alert('Đã xảy ra lỗi. Vui lòng thử lại.');</script>");
+                }
+            } catch (Exception ex) {
+                // Bỏ qua nếu không thể gửi
+                LOGGER.severe("Không thể gửi thông báo lỗi: " + ex.getMessage());
+            }
+        } else {
+            // Nếu chưa commit, forward đến trang lỗi bình thường
+            request.setAttribute("errorMessage", "Đã xảy ra lỗi khi xử lý yêu cầu. Vui lòng thử lại sau.");
+            request.getRequestDispatcher(ERROR_PAGE).forward(request, response);
+        }
     }
 
     private void sendErrorResponse(HttpServletRequest request, HttpServletResponse response, String message)
@@ -2095,9 +2115,22 @@ public class BookingServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write("{\"success\": false, \"message\": \"" + escapeJson(message) + "\"}");
         } else {
-            // Send regular error page for normal requests
-            request.setAttribute("errorMessage", message);
-            request.getRequestDispatcher(ERROR_PAGE).forward(request, response);
+            // Kiểm tra xem response đã được commit chưa
+            if (response.isCommitted()) {
+                LOGGER.warning("Response đã được commit, không thể forward đến trang lỗi");
+                try {
+                    // Nếu đã commit, gửi thông báo lỗi qua JavaScript alert
+                    if (response.getWriter() != null) {
+                        response.getWriter().println("<script>alert('" + escapeJson(message) + "'); window.history.back();</script>");
+                    }
+                } catch (Exception ex) {
+                    LOGGER.severe("Không thể gửi thông báo lỗi: " + ex.getMessage());
+                }
+            } else {
+                // Send regular error page for normal requests
+                request.setAttribute("errorMessage", message);
+                request.getRequestDispatcher(ERROR_PAGE).forward(request, response);
+            }
         }
     }
 

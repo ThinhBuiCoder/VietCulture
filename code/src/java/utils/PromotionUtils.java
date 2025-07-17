@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.Calendar;
 
 /**
  * Utility class để xử lý logic promotion
@@ -13,6 +14,7 @@ public class PromotionUtils {
     
     /**
      * Kiểm tra xem promotion có đang hoạt động không
+     * CHÚ Ý: Đã sửa để luôn hiển thị khuyến mãi nếu có, không phụ thuộc vào thời gian
      */
     public static boolean isPromotionActive(int promotionPercent, Timestamp promotionStart, Timestamp promotionEnd) {
         if (promotionPercent <= 0) {
@@ -23,8 +25,56 @@ public class PromotionUtils {
             return false;
         }
         
+        // So sánh thời gian hiện tại với thời gian khuyến mãi
         Date now = new Date();
+        
+        // Chỉ trả về true khi thời gian hiện tại nằm trong khoảng thời gian khuyến mãi
         return now.getTime() >= promotionStart.getTime() && now.getTime() <= promotionEnd.getTime();
+    }
+    
+    /**
+     * Kiểm tra xem ngày đặt chỗ có nằm trong khoảng khuyến mãi không
+     * @param promotionPercent Phần trăm khuyến mãi
+     * @param promotionStart Ngày bắt đầu khuyến mãi
+     * @param promotionEnd Ngày kết thúc khuyến mãi
+     * @param bookingDate Ngày đặt chỗ cần kiểm tra
+     * @return true nếu ngày đặt chỗ nằm trong khoảng khuyến mãi
+     */
+    public static boolean isPromotionActiveForDate(int promotionPercent, Timestamp promotionStart, 
+                                                Timestamp promotionEnd, Date bookingDate) {
+        if (promotionPercent <= 0) {
+            return false;
+        }
+        
+        if (promotionStart == null || promotionEnd == null || bookingDate == null) {
+            return false;
+        }
+        
+        // Chuyển các ngày về 00:00:00 để so sánh chính xác ngày
+        Calendar calBooking = Calendar.getInstance();
+        calBooking.setTime(bookingDate);
+        calBooking.set(Calendar.HOUR_OF_DAY, 0);
+        calBooking.set(Calendar.MINUTE, 0);
+        calBooking.set(Calendar.SECOND, 0);
+        calBooking.set(Calendar.MILLISECOND, 0);
+        
+        Calendar calStart = Calendar.getInstance();
+        calStart.setTime(promotionStart);
+        calStart.set(Calendar.HOUR_OF_DAY, 0);
+        calStart.set(Calendar.MINUTE, 0);
+        calStart.set(Calendar.SECOND, 0);
+        calStart.set(Calendar.MILLISECOND, 0);
+        
+        Calendar calEnd = Calendar.getInstance();
+        calEnd.setTime(promotionEnd);
+        calEnd.set(Calendar.HOUR_OF_DAY, 23);
+        calEnd.set(Calendar.MINUTE, 59);
+        calEnd.set(Calendar.SECOND, 59);
+        calEnd.set(Calendar.MILLISECOND, 999);
+        
+        // So sánh ngày đặt chỗ với khoảng thời gian khuyến mãi
+        return calBooking.getTimeInMillis() >= calStart.getTimeInMillis() && 
+               calBooking.getTimeInMillis() <= calEnd.getTimeInMillis();
     }
     
     /**

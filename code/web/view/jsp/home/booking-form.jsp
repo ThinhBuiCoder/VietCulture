@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<jsp:useBean id="now" class="java.util.Date" />
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -1496,9 +1497,7 @@
                             <div class="price-display">
                                 <c:set var="isPromo" value="${experience.promotionPercent > 0 
                                     && experience.promotionStart != null 
-                                    && experience.promotionEnd != null 
-                                    && now.time >= experience.promotionStart.time 
-                                    && now.time <= experience.promotionEnd.time}" />
+                                    && experience.promotionEnd != null}" />
                                 <c:choose>
                                     <c:when test="${experience.price == 0}">
                                         <div class="price-amount">Miễn phí</div>
@@ -1511,7 +1510,17 @@
                                             <fmt:formatNumber value="${experience.price * (1 - experience.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
                                         </div>
                                         <div class="promotion-badge" style="margin-top: 5px;">
-                                            Khuyến mãi ${experience.promotionPercent}%
+                                            <c:choose>
+                                                <c:when test="${now.time < experience.promotionStart.time}">
+                                                    Sắp giảm ${experience.promotionPercent}%
+                                                </c:when>
+                                                <c:when test="${now.time > experience.promotionEnd.time}">
+                                                    Đã hết khuyến mãi
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Khuyến mãi ${experience.promotionPercent}%
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </c:when>
                                     <c:otherwise>
@@ -1563,9 +1572,7 @@
                             <div class="price-display accommodation">
                                 <c:set var="isPromo" value="${accommodation.promotionPercent > 0 
                                     && accommodation.promotionStart != null 
-                                    && accommodation.promotionEnd != null 
-                                    && now.time >= accommodation.promotionStart.time 
-                                    && now.time <= accommodation.promotionEnd.time}" />
+                                    && accommodation.promotionEnd != null}" />
                                 <c:choose>
                                     <c:when test="${isPromo}">
                                         <div class="price-amount accommodation" style="text-decoration: line-through; color: #888; font-size: 0.9em;">
@@ -1575,7 +1582,17 @@
                                             <fmt:formatNumber value="${accommodation.pricePerNight * (1 - accommodation.promotionPercent / 100.0)}" type="currency" currencySymbol="" maxFractionDigits="0" /> VNĐ
                                         </div>
                                         <div class="promotion-badge" style="margin-top: 5px;">
-                                            Khuyến mãi ${accommodation.promotionPercent}%
+                                            <c:choose>
+                                                <c:when test="${now.time < accommodation.promotionStart.time}">
+                                                    Sắp giảm ${accommodation.promotionPercent}%
+                                                </c:when>
+                                                <c:when test="${now.time > accommodation.promotionEnd.time}">
+                                                    Đã hết khuyến mãi
+                                                </c:when>
+                                                <c:otherwise>
+                                                    Khuyến mãi ${accommodation.promotionPercent}%
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </c:when>
                                     <c:otherwise>
@@ -3194,16 +3211,20 @@
                                     if (!promotionPercent || promotionPercent <= 0) {
                                         return false;
                                     }
-                                    
                                     if (!promotionStart || !promotionEnd) {
                                         return false;
                                     }
-                                    
+                                    // Chuyển về 00:00:00 local time
+                                    function toLocalDateOnly(dateStr) {
+                                        const d = new Date(dateStr);
+                                        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                    }
                                     const now = new Date();
-                                    const startDate = new Date(promotionStart);
-                                    const endDate = new Date(promotionEnd);
-                                    
-                                    return now >= startDate && now <= endDate;
+                                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                                    const startDate = toLocalDateOnly(promotionStart);
+                                    const endDate = toLocalDateOnly(promotionEnd);
+                                    // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+                                    return today >= startDate && today <= endDate;
                                 }
 
                                 // Calculate promotion price
@@ -3226,7 +3247,26 @@
                                     
                                     // Calculate final unit price
                                     let finalUnitPrice = unitPrice;
-                                    if (isPromo) {
+                                    const now = new Date();
+                                    const startDate = promotionStart ? new Date(promotionStart) : null;
+                                    const endDate = promotionEnd ? new Date(promotionEnd) : null;
+                                    
+                                    // Xác định trạng thái khuyến mãi
+                                    let promoStatus = '';
+                                    let shouldApplyDiscount = false;
+                                    
+                                    if (promotionPercent > 0 && startDate && endDate) {
+                                        if (now < startDate) {
+                                            promoStatus = 'Sắp giảm giá';
+                                        } else if (now > endDate) {
+                                            promoStatus = 'Đã hết hạn';
+                                        } else {
+                                            promoStatus = 'Đang giảm giá';
+                                            shouldApplyDiscount = true;
+                                        }
+                                    }
+                                    
+                                    if (shouldApplyDiscount) {
                                         finalUnitPrice = calculatePromotionPrice(unitPrice, promotionPercent);
                                     }
                                     
@@ -3235,9 +3275,27 @@
                                     const totalPrice = basePrice + serviceFee;
 
                                     // Update display with promotion info if applicable
-                                    if (isPromo) {
+                                    if (promotionPercent > 0 && startDate && endDate) {
                                         const originalPrice = quantity * unitPrice;
-                                        updateElement('basePrice', formatCurrency(originalPrice) + ' → ' + formatCurrency(basePrice));
+                                        let promoText = `(Giảm ${promotionPercent}%)`;
+                                        
+                                        // Thêm thông tin trạng thái khuyến mãi
+                                        if (now < startDate) {
+                                            // Khuyến mãi sắp diễn ra
+                                            const daysToStart = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+                                            promoText = `<span class="badge bg-info">Sắp giảm ${promotionPercent}% (còn ${daysToStart} ngày)</span>`;
+                                            updateElement('basePrice', formatCurrency(basePrice));
+                                        } else if (now > endDate) {
+                                            // Khuyến mãi đã kết thúc
+                                            updateElement('basePrice', formatCurrency(basePrice));
+                                        } else {
+                                            // Khuyến mãi đang diễn ra
+                                            const daysToEnd = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                                            promoText = `<span class="badge bg-success">Đang giảm ${promotionPercent}% (còn ${daysToEnd} ngày)</span>`;
+                                            const formattedOriginalPrice = formatCurrency(originalPrice);
+                                            const formattedBasePrice = formatCurrency(basePrice);
+                                            updateElement('basePrice', '<span style="text-decoration: line-through; color: #888;">' + formattedOriginalPrice + '</span> → <span style="color: #ff385c; font-weight: bold;">' + formattedBasePrice + '</span> ' + promoText);
+                                        }
                                     } else {
                                         updateElement('basePrice', formatCurrency(basePrice));
                                     }
@@ -3249,7 +3307,8 @@
                                 function updateElement(id, value) {
                                     const element = document.getElementById(id);
                                     if (element) {
-                                        element.textContent = value;
+                                        // Cho phép HTML nếu cần
+                                        element.innerHTML = value;
                                     }
                                 }
 
@@ -3459,6 +3518,156 @@
                                         bookingDateInput.dispatchEvent(event);
                                     }
                                 });
+
+                                // Check if promotion is active for a specific date
+                                function isPromotionActive(promotionPercent, promotionStart, promotionEnd, checkDate = null) {
+                                    if (!promotionPercent || promotionPercent <= 0) {
+                                        return false;
+                                    }
+                                    if (!promotionStart || !promotionEnd) {
+                                        return false;
+                                    }
+                                    // Chuyển về 00:00:00 local time
+                                    function toLocalDateOnly(dateStr) {
+                                        const d = new Date(dateStr);
+                                        return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                                    }
+                                    
+                                    // Sử dụng ngày được truyền vào hoặc ngày hiện tại
+                                    const now = new Date();
+                                    const dateToCheck = checkDate ? new Date(checkDate) : now;
+                                    const today = new Date(dateToCheck.getFullYear(), dateToCheck.getMonth(), dateToCheck.getDate());
+                                    const startDate = toLocalDateOnly(promotionStart);
+                                    const endDate = toLocalDateOnly(promotionEnd);
+                                    
+                                    // So sánh ngày (bao gồm cả ngày bắt đầu và kết thúc)
+                                    return today >= startDate && today <= endDate;
+                                }
+
+                                // Calculate promotion price
+                                function calculatePromotionPrice(originalPrice, promotionPercent) {
+                                    if (!promotionPercent || promotionPercent <= 0 || promotionPercent > 100) {
+                                        return originalPrice;
+                                    }
+                                    
+                                    return originalPrice * (1 - promotionPercent / 100.0);
+                                }
+
+                                function updatePriceCalculation(quantity, unitPrice) {
+                                    // Get promotion data from current service
+                                    const promotionPercent = currentServiceData?.promotionPercent || 0;
+                                    const promotionStart = currentServiceData?.promotionStart;
+                                    const promotionEnd = currentServiceData?.promotionEnd;
+                                    
+                                    // Lấy ngày đặt chỗ để kiểm tra khuyến mãi
+                                    let bookingDate = null;
+                                    
+                                    // Xác định loại dịch vụ và lấy ngày tương ứng
+                                    const serviceType = window.serviceType || detectServiceType();
+                                    if (serviceType === 'experience') {
+                                        const dateInput = document.getElementById('bookingDate');
+                                        if (dateInput && dateInput.value) {
+                                            bookingDate = dateInput.value;
+                                        }
+                                    } else if (serviceType === 'accommodation') {
+                                        const checkInInput = document.getElementById('checkIn');
+                                        if (checkInInput && checkInInput.value) {
+                                            bookingDate = checkInInput.value;
+                                        }
+                                    }
+                                    
+                                    console.log("Ngày đặt chỗ:", bookingDate);
+                                    console.log("Ngày bắt đầu KM:", promotionStart);
+                                    console.log("Ngày kết thúc KM:", promotionEnd);
+                                    
+                                    // Check if promotion is active for the booking date
+                                    const isPromo = bookingDate ? 
+                                        isPromotionActive(promotionPercent, promotionStart, promotionEnd, bookingDate) : 
+                                        isPromotionActive(promotionPercent, promotionStart, promotionEnd);
+                                    
+                                    console.log("Có áp dụng khuyến mãi:", isPromo);
+                                    
+                                    // Calculate final unit price
+                                    let finalUnitPrice = unitPrice;
+                                    const now = new Date();
+                                    const startDate = promotionStart ? new Date(promotionStart) : null;
+                                    const endDate = promotionEnd ? new Date(promotionEnd) : null;
+                                    
+                                    // Xác định trạng thái khuyến mãi
+                                    let promoStatus = '';
+                                    let shouldApplyDiscount = false;
+                                    
+                                    // Nếu có ngày đặt chỗ, kiểm tra ngày đó có nằm trong khoảng khuyến mãi không
+                                    if (bookingDate && promotionPercent > 0 && startDate && endDate) {
+                                        const bookingDateObj = new Date(bookingDate);
+                                        if (bookingDateObj >= startDate && bookingDateObj <= endDate) {
+                                            promoStatus = 'Đang giảm giá';
+                                            shouldApplyDiscount = true;
+                                        }
+                                    } 
+                                    // Nếu không có ngày đặt chỗ, hiển thị trạng thái dựa trên ngày hiện tại
+                                    else if (promotionPercent > 0 && startDate && endDate) {
+                                        if (now < startDate) {
+                                            promoStatus = 'Sắp giảm giá';
+                                        } else if (now > endDate) {
+                                            promoStatus = 'Đã hết hạn';
+                                        } else {
+                                            promoStatus = 'Đang giảm giá';
+                                            shouldApplyDiscount = true;
+                                        }
+                                    }
+                                    
+                                    if (shouldApplyDiscount || isPromo) {
+                                        finalUnitPrice = calculatePromotionPrice(unitPrice, promotionPercent);
+                                    }
+                                    
+                                    const basePrice = quantity * finalUnitPrice;
+                                    const serviceFee = Math.round(basePrice * 0.05);
+                                    const totalPrice = basePrice + serviceFee;
+
+                                    // Update display with promotion info if applicable
+                                    if (promotionPercent > 0 && startDate && endDate) {
+                                        const originalPrice = quantity * unitPrice;
+                                        let promoText = `(Giảm ${promotionPercent}%)`;
+                                        
+                                        // Nếu có ngày đặt chỗ và ngày đó nằm trong khoảng khuyến mãi
+                                        if (bookingDate) {
+                                            const bookingDateObj = new Date(bookingDate);
+                                            if (bookingDateObj >= startDate && bookingDateObj <= endDate) {
+                                                promoText = `<span class="badge bg-success">Giảm ${promotionPercent}% cho ngày đặt chỗ</span>`;
+                                                const formattedOriginalPrice = formatCurrency(originalPrice);
+                                                const formattedBasePrice = formatCurrency(basePrice);
+                                                updateElement('basePrice', '<span style="text-decoration: line-through; color: #888;">' + formattedOriginalPrice + '</span> → <span style="color: #ff385c; font-weight: bold;">' + formattedBasePrice + '</span> ' + promoText);
+                                            } else {
+                                                updateElement('basePrice', formatCurrency(basePrice));
+                                            }
+                                        } 
+                                        // Nếu không có ngày đặt chỗ, hiển thị dựa trên ngày hiện tại
+                                        else {
+                                            if (now < startDate) {
+                                                // Khuyến mãi sắp diễn ra
+                                                const daysToStart = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+                                                promoText = `<span class="badge bg-info">Sắp giảm ${promotionPercent}% (còn ${daysToStart} ngày)</span>`;
+                                                updateElement('basePrice', formatCurrency(basePrice));
+                                            } else if (now > endDate) {
+                                                // Khuyến mãi đã kết thúc
+                                                updateElement('basePrice', formatCurrency(basePrice));
+                                            } else {
+                                                // Khuyến mãi đang diễn ra
+                                                const daysToEnd = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+                                                promoText = `<span class="badge bg-success">Đang giảm ${promotionPercent}% (còn ${daysToEnd} ngày)</span>`;
+                                                const formattedOriginalPrice = formatCurrency(originalPrice);
+                                                const formattedBasePrice = formatCurrency(basePrice);
+                                                updateElement('basePrice', '<span style="text-decoration: line-through; color: #888;">' + formattedOriginalPrice + '</span> → <span style="color: #ff385c; font-weight: bold;">' + formattedBasePrice + '</span> ' + promoText);
+                                            }
+                                        }
+                                    } else {
+                                        updateElement('basePrice', formatCurrency(basePrice));
+                                    }
+                                    
+                                    updateElement('serviceFee', formatCurrency(serviceFee));
+                                    updateElement('totalPrice', formatCurrency(totalPrice));
+                                }
         </script>
     </body>
 </html>
