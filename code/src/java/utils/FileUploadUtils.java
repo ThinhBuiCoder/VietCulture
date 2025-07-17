@@ -371,4 +371,35 @@ public class FileUploadUtils {
     public static boolean deleteAccommodationImage(HttpServletRequest request, String fileName) {
         return deleteFile(request, ACCOMMODATION_UPLOAD_DIR, fileName);
     }
+
+    // ==================== GETTER METHODS - THÊM MỚI ====================
+    
+    /**
+     * Get avatar upload directory constant
+     */
+    public static String getAvatarUploadDir() {
+        return AVATAR_UPLOAD_DIR;
+    }
+
+    /**
+     * Get experience upload directory constant
+     */
+    public static String getExperienceUploadDir() {
+        return EXPERIENCE_UPLOAD_DIR;
+    }
+
+    /**
+     * Get accommodation upload directory constant
+     */
+    public static String getAccommodationUploadDir() {
+        return ACCOMMODATION_UPLOAD_DIR;
+    }
+
+    /**
+     * Get full file path for ImageServlet - FOR COMPATIBILITY
+     */
+    public static String getFullFilePath(HttpServletRequest request, String uploadDir, String fileName) {
+        String uploadPath = getUploadPath(request, uploadDir);
+        return uploadPath + File.separator + fileName;
+    }
 }

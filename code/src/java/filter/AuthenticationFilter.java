@@ -26,7 +26,8 @@ public class AuthenticationFilter implements Filter {
         "/images/",
         "/assets/",
         "/static/",
-        "/home"
+        "/home",
+        "/view/assets/images/" // Thêm dòng này để loại trừ ảnh exp
     );
     
     @Override

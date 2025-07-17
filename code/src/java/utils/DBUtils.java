@@ -11,11 +11,7 @@ public class DBUtils {
     private static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
 
     // Cấu hình kết nối database
-<<<<<<< HEAD
-    private static final String DB_URL = "jdbc:sqlserver://LAPTOP-MBT88TH7\\SQLEXPRESS;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
-=======
     private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
->>>>>>> 90c26804cf4dba276314791caef05f96675805f4
     private static final String USERNAME = "sa";
     private static final String PASSWORD = "123";
 
@@ -46,11 +42,7 @@ public class DBUtils {
             LOGGER.info("Database connection established successfully");
             return connection;
         } catch (SQLException e) {
-<<<<<<< HEAD
-            LOGGER.log(Level.SEVERE, "Database connection error: " + e.getMessage(), e);
-=======
             LOGGER.log(Level.SEVERE, "Database connection error", e);
->>>>>>> 90c26804cf4dba276314791caef05f96675805f4
             throw e;
         }
     }
