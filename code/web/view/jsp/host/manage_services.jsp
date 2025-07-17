@@ -416,6 +416,29 @@
         </div>
     </nav>
 
+    <%-- Thêm biến unreadCount để hiển thị số thông báo chưa đọc --%>
+    <%
+        com.chatbot.service.NotificationService notificationService = new com.chatbot.service.NotificationService();
+        int unreadCount = 0;
+        model.User currentUser = (model.User) session.getAttribute("user");
+        if (currentUser != null && "HOST".equals(currentUser.getRole())) {
+            java.util.List<com.chatbot.model.Notification> notis = notificationService.getUserNotifications(currentUser.getUserId());
+            for (com.chatbot.model.Notification n : notis) {
+                if (!n.isRead()) unreadCount++;
+            }
+        }
+    %>
+    <div style="position: fixed; top: 20px; right: 40px; z-index: 1000;">
+        <a href="${pageContext.request.contextPath}/host/notifications" title="Thông báo" style="position:relative;display:inline-block;">
+            <span style="font-size: 28px; color: #1890ff;">
+                &#128276;
+            </span>
+            <% if (unreadCount > 0) { %>
+                <span style="position:absolute;top:-8px;right:-8px;background:#ff3b3b;color:#fff;font-size:13px;font-weight:bold;padding:2px 7px;border-radius:50%;box-shadow:0 2px 8px #ffb3b3;"> <%= unreadCount %> </span>
+            <% } %>
+        </a>
+    </div>
+
     <div class="container">
         <!-- Messages -->
         <c:if test="${not empty sessionScope.error}">

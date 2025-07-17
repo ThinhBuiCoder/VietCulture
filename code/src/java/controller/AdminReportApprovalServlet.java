@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.chatbot.service.NotificationService;
 
 @WebServlet(name = "AdminReportApprovalServlet", urlPatterns = {"/admin/reports", "/admin/reports/*"})
 public class AdminReportApprovalServlet extends HttpServlet {
@@ -23,6 +24,7 @@ public class AdminReportApprovalServlet extends HttpServlet {
     private ReportDAO reportDAO = new ReportDAO();
     private ExperienceDAO experienceDAO = new ExperienceDAO();
     private AccommodationDAO accommodationDAO = new AccommodationDAO();
+    private NotificationService notificationService = new NotificationService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -36,7 +38,18 @@ public class AdminReportApprovalServlet extends HttpServlet {
             if (pathInfo == null || pathInfo.equals("/")) {
                 // Danh sách report PENDING
                 List<Report> pendingReports = reportDAO.getReportsByStatus("PENDING");
-                request.setAttribute("reports", pendingReports);
+                // Chia thành 2 list: khiếu nại và kháng cáo
+                java.util.List<Report> complaints = new java.util.ArrayList<>();
+                java.util.List<Report> appeals = new java.util.ArrayList<>();
+                for (Report r : pendingReports) {
+                    if ("APPEAL".equalsIgnoreCase(r.getReason())) {
+                        appeals.add(r);
+                    } else {
+                        complaints.add(r);
+                    }
+                }
+                request.setAttribute("complaints", complaints);
+                request.setAttribute("appeals", appeals);
                 request.getRequestDispatcher("/view/jsp/admin/reports/report-list.jsp").forward(request, response);
             } else if (pathInfo.matches("/\\d+")) {
                 // Chi tiết report
@@ -46,7 +59,17 @@ public class AdminReportApprovalServlet extends HttpServlet {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy báo cáo");
                     return;
                 }
+                // Nếu report có contentType/contentId, lấy chi tiết bài đăng
+                Object postDetail = null;
+                if (report.getContentType() != null && report.getContentId() > 0) {
+                    if ("experience".equalsIgnoreCase(report.getContentType())) {
+                        postDetail = experienceDAO.getExperienceById(report.getContentId());
+                    } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+                        postDetail = accommodationDAO.getAccommodationById(report.getContentId());
+                    }
+                }
                 request.setAttribute("report", report);
+                request.setAttribute("postDetail", postDetail);
                 request.getRequestDispatcher("/view/jsp/admin/reports/report-detail.jsp").forward(request, response);
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -84,14 +107,42 @@ public class AdminReportApprovalServlet extends HttpServlet {
             if ("approve".equals(action)) {
                 String notes = request.getParameter("notes");
                 success = reportDAO.approveReport(reportId, admin.getUserId(), notes);
-                // XÓA VĨNH VIỄN accommodation khi báo cáo được duyệt
                 Report report = reportDAO.getReportById(reportId);
                 if (report != null) {
-                    if ("experience".equalsIgnoreCase(report.getContentType())) {
-                        experienceDAO.updateExperienceStatus(report.getContentId(), false); // ẩn trải nghiệm
-                    } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
-                        // accommodationDAO.deleteAccommodation(report.getContentId()); // XÓA VĨNH VIỄN
-                        accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẨN accommodation thay vì xóa cứng
+                    // Nếu là kháng cáo (APPEAL) và được duyệt, mở lại bài đăng
+                    if ("APPEAL".equalsIgnoreCase(report.getReason())) {
+                        if ("experience".equalsIgnoreCase(report.getContentType())) {
+                            experienceDAO.updateExperienceStatus(report.getContentId(), true); // Hiện lại trải nghiệm
+                        } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+                            accommodationDAO.updateAccommodationStatus(report.getContentId(), true); // Hiện lại chỗ ở
+                        }
+                    } else {
+                        // Xử lý ẩn bài khi duyệt report vi phạm như cũ
+                        if ("experience".equalsIgnoreCase(report.getContentType())) {
+                            experienceDAO.updateExperienceStatus(report.getContentId(), false); // ẩn trải nghiệm
+                            // Gửi thông báo cho host
+                            model.Experience exp = experienceDAO.getExperienceById(report.getContentId());
+                            if (exp != null) {
+                                int hostId = exp.getHostId();
+                                if (hostId > 0) {
+                                    String title = "Bài đăng bị ẩn do bị báo cáo";
+                                    String msg = "Trải nghiệm '" + exp.getTitle() + "' của bạn đã bị admin ẩn do có báo cáo vi phạm được duyệt.";
+                                    notificationService.notifyUser(hostId, title, msg, "report_approved", "experience", exp.getExperienceId());
+                                }
+                            }
+                        } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+                            accommodationDAO.updateAccommodationStatus(report.getContentId(), false); // ẨN accommodation thay vì xóa cứng
+                            // Gửi thông báo cho host
+                            model.Accommodation acc = accommodationDAO.getAccommodationById(report.getContentId());
+                            if (acc != null) {
+                                int hostId = acc.getHostId();
+                                if (hostId > 0) {
+                                    String title = "Bài đăng bị ẩn do bị báo cáo";
+                                    String msg = "Chỗ ở '" + acc.getName() + "' của bạn đã bị admin ẩn do có báo cáo vi phạm được duyệt.";
+                                    notificationService.notifyUser(hostId, title, msg, "report_approved", "accommodation", acc.getAccommodationId());
+                                }
+                            }
+                        }
                     }
                 }
             } else if ("reject".equals(action)) {

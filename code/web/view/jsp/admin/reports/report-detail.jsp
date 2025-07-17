@@ -146,6 +146,61 @@
         <span class="<%= badgeClass %>"><%= status %></span>
       </div>
     </div>
+    <%-- Hiển thị chi tiết bài post nếu có postDetail --%>
+    <% if (report != null && request.getAttribute("postDetail") != null) {
+        Object postDetail = request.getAttribute("postDetail");
+        if ("experience".equalsIgnoreCase(report.getContentType())) {
+            model.Experience exp = (model.Experience) postDetail;
+            String[] images = exp.getImages() != null ? exp.getImages().split(",") : new String[0];
+    %>
+    <div style="background:#f8fafd; border-radius:12px; padding:18px 20px; margin-bottom:18px; box-shadow:0 2px 8px #e3e8f0;">
+      <h3 style="color:#1976d2; margin-bottom:10px;"><i class="fa-solid fa-mountain-sun"></i> Chi tiết Trải nghiệm</h3>
+      <div><b>Tiêu đề:</b> <%= exp.getTitle() %></div>
+      <div><b>Địa điểm:</b> <%= exp.getLocation() %></div>
+      <div><b>Mô tả:</b> <%= exp.getDescription() %></div>
+      <div><b>Giá:</b> <%= exp.getPrice() %> VNĐ</div>
+      <div><b>Trạng thái:</b> <%= exp.isActive() ? "Đang hiển thị" : "Đã ẩn" %></div>
+      <div><b>Host:</b> <%= exp.getHostName() %></div>
+      <% if (images.length > 0 && !images[0].trim().isEmpty()) { %>
+      <div style="margin-top:14px;">
+        <b>Ảnh trải nghiệm:</b>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+          <% for (String img : images) { 
+               String fileName = img != null ? img.trim() : "";
+               if (!fileName.isEmpty()) { %>
+            <img src="<%=request.getContextPath()%>/<%= fileName %>" alt="Ảnh trải nghiệm" style="width:110px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e3e8f0;" onerror="this.onerror=null;this.src='<%=request.getContextPath()%>/view/assets/images/experiences/exp.png';" />
+          <%   } 
+             } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <%  } else if ("accommodation".equalsIgnoreCase(report.getContentType())) {
+            model.Accommodation acc = (model.Accommodation) postDetail;
+            String[] images = acc.getImages() != null ? acc.getImages().split(",") : new String[0];
+    %>
+    <div style="background:#f8fafd; border-radius:12px; padding:18px 20px; margin-bottom:18px; box-shadow:0 2px 8px #e3e8f0;">
+      <h3 style="color:#1976d2; margin-bottom:10px;"><i class="fa-solid fa-hotel"></i> Chi tiết Chỗ ở</h3>
+      <div><b>Tên chỗ ở:</b> <%= acc.getName() %></div>
+      <div><b>Địa chỉ:</b> <%= acc.getAddress() %></div>
+      <div><b>Mô tả:</b> <%= acc.getDescription() %></div>
+      <div><b>Giá/đêm:</b> <%= acc.getPricePerNight() %> VNĐ</div>
+      <div><b>Trạng thái:</b> <%= acc.isActive() ? "Đang hiển thị" : "Đã ẩn" %></div>
+      <div><b>Host:</b> <%= acc.getHostName() %></div>
+      <% if (images.length > 0 && !images[0].trim().isEmpty()) { %>
+      <div style="margin-top:14px;">
+        <b>Ảnh chỗ ở:</b>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+          <% for (String img : images) { %>
+            <img src="<%=request.getContextPath()%>/view/assets/images/accommodations/<%= img.trim() %>" alt="Ảnh chỗ ở" style="width:110px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #e3e8f0;" />
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+    <%  }
+      }
+    %>
     <% if (report != null && "PENDING".equals(status)) { %>
     <div class="report-actions">
       <form method="post" action="<%=request.getContextPath()%>/admin/reports/<%= report.getReportId() %>/approve">
