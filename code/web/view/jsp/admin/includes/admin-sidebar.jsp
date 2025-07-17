@@ -77,7 +77,7 @@
     <ul class="nav">
         <li class="nav-item">
             <a class="nav-link ${fn:contains(pageContext.request.requestURI, '/admin/dashboard') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/dashboard">
-                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                <i class="fas fa-chart-bar me-2"></i> Thống kê
             </a>
         </li>
         <li class="nav-item">

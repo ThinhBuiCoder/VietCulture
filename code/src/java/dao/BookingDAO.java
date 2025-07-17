@@ -1586,4 +1586,335 @@ public class BookingDAO {
 
         return stats;
     }
+
+    /**
+     * Lấy doanh thu theo tuần hiện tại
+     * @return Danh sách doanh thu theo từng ngày trong tuần
+     */
+    public List<Double> getWeeklyRevenue() throws SQLException {
+        List<Double> weeklyRevenue = new ArrayList<>();
+        
+        String sql = """
+            SELECT DATEPART(WEEKDAY, b.bookingDate) AS weekday, 
+                   SUM(b.totalPrice) AS dailyRevenue
+            FROM Bookings b
+            WHERE b.bookingDate >= DATEADD(DAY, -DATEPART(WEEKDAY, GETDATE()) + 1, CAST(GETDATE() AS DATE))
+            AND b.bookingDate < DATEADD(DAY, 8 - DATEPART(WEEKDAY, GETDATE()), CAST(GETDATE() AS DATE))
+            AND b.status IN ('COMPLETED', 'CONFIRMED')
+            GROUP BY DATEPART(WEEKDAY, b.bookingDate)
+            ORDER BY weekday
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // Khởi tạo mảng với 7 phần tử tương ứng 7 ngày trong tuần, giá trị mặc định là 0
+            for (int i = 0; i < 7; i++) {
+                weeklyRevenue.add(0.0);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int weekday = rs.getInt("weekday");
+                    double revenue = rs.getDouble("dailyRevenue");
+                    
+                    // Điều chỉnh index theo ngày trong tuần (MSSQL trả về 1-7 cho CN đến T7)
+                    weeklyRevenue.set(weekday - 1, revenue);
+                }
+            }
+        }
+        
+        return weeklyRevenue;
+    }
+    
+    /**
+     * Lấy doanh thu theo tháng trong năm hiện tại
+     * @return Danh sách doanh thu theo từng tháng
+     */
+    public List<Double> getMonthlyRevenue() throws SQLException {
+        List<Double> monthlyRevenue = new ArrayList<>();
+        
+        String sql = """
+            SELECT MONTH(b.bookingDate) AS month, 
+                   SUM(b.totalPrice) AS monthlyRevenue
+            FROM Bookings b
+            WHERE YEAR(b.bookingDate) = YEAR(GETDATE())
+            AND b.status IN ('COMPLETED', 'CONFIRMED')
+            GROUP BY MONTH(b.bookingDate)
+            ORDER BY month
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // Khởi tạo mảng với 12 phần tử tương ứng 12 tháng, giá trị mặc định là 0
+            for (int i = 0; i < 12; i++) {
+                monthlyRevenue.add(0.0);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int month = rs.getInt("month");
+                    double revenue = rs.getDouble("monthlyRevenue");
+                    
+                    // Điều chỉnh index vì tháng được đánh số từ 1-12
+                    monthlyRevenue.set(month - 1, revenue);
+                }
+            }
+        }
+        
+        return monthlyRevenue;
+    }
+    
+    /**
+     * Lấy doanh thu theo năm trong 5 năm gần đây
+     * @return Danh sách doanh thu theo năm
+     */
+    public List<Double> getYearlyRevenue() throws SQLException {
+        List<Double> yearlyRevenue = new ArrayList<>();
+        List<Integer> years = new ArrayList<>();
+        
+        // Lấy 5 năm gần đây
+        int currentYear = java.time.Year.now().getValue();
+        for (int i = 0; i < 5; i++) {
+            years.add(currentYear - 4 + i);
+        }
+        
+        String sql = """
+            SELECT YEAR(b.bookingDate) AS year, 
+                   SUM(b.totalPrice) AS yearlyRevenue
+            FROM Bookings b
+            WHERE YEAR(b.bookingDate) >= ? AND YEAR(b.bookingDate) <= ?
+            AND b.status IN ('COMPLETED', 'CONFIRMED')
+            GROUP BY YEAR(b.bookingDate)
+            ORDER BY year
+        """;
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setInt(1, years.get(0));
+            ps.setInt(2, years.get(years.size() - 1));
+            
+            // Khởi tạo mảng với số phần tử tương ứng số năm, giá trị mặc định là 0
+            for (int i = 0; i < years.size(); i++) {
+                yearlyRevenue.add(0.0);
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int year = rs.getInt("year");
+                    double revenue = rs.getDouble("yearlyRevenue");
+                    
+                    // Tìm index tương ứng với năm trong danh sách năm
+                    int index = years.indexOf(year);
+                    if (index >= 0) {
+                        yearlyRevenue.set(index, revenue);
+                    }
+                }
+            }
+        }
+        
+        return yearlyRevenue;
+    }
+    
+    /**
+     * Lấy danh sách các năm trong 5 năm gần đây để hiển thị trên trục x
+     * @return Danh sách các năm
+     */
+    public List<Integer> getYearLabels() {
+        List<Integer> years = new ArrayList<>();
+        int currentYear = java.time.Year.now().getValue();
+        
+        for (int i = 0; i < 5; i++) {
+            years.add(currentYear - 4 + i);
+        }
+        
+        return years;
+    }
+
+    /**
+     * Get count of bookings with specified status
+     */
+    public int getBookingCountByStatus(String status) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM Bookings WHERE status = ?";
+        
+        try (Connection conn = DBUtils.getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setString(1, status);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting bookings with status: " + status, e);
+            throw e;
+        }
+        return 0;
+    }
+    
+    /**
+     * Get bookings with filters
+     */
+    public List<Booking> getBookingsWithFilters(String status, String type, String search, 
+                                               String startDate, String endDate, int page, int pageSize) throws SQLException {
+        List<Booking> bookings = new ArrayList<>();
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT b.bookingId, b.experienceId, b.accommodationId, b.travelerId, ");
+        sqlBuilder.append("b.bookingDate, b.bookingTime, b.numberOfPeople, b.totalPrice, ");
+        sqlBuilder.append("b.status, b.specialRequests, b.contactInfo, b.createdAt, ");
+        sqlBuilder.append("e.title as experienceName, a.name as accommodationName, ");
+        sqlBuilder.append("u.fullName as travelerName, u.email as travelerEmail ");
+        sqlBuilder.append("FROM Bookings b ");
+        sqlBuilder.append("LEFT JOIN Experiences e ON b.experienceId = e.experienceId ");
+        sqlBuilder.append("LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId ");
+        sqlBuilder.append("LEFT JOIN Users u ON b.travelerId = u.userId ");
+        sqlBuilder.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        // Add filters to SQL
+        if (status != null && !status.isEmpty()) {
+            sqlBuilder.append("AND b.status = ? ");
+            params.add(status);
+        }
+        
+        if (type != null && !type.isEmpty()) {
+            if ("EXPERIENCE".equals(type)) {
+                sqlBuilder.append("AND b.experienceId IS NOT NULL ");
+            } else if ("ACCOMMODATION".equals(type)) {
+                sqlBuilder.append("AND b.accommodationId IS NOT NULL ");
+            }
+        }
+        
+        if (search != null && !search.isEmpty()) {
+            sqlBuilder.append("AND (u.fullName LIKE ? OR u.email LIKE ? OR CAST(b.bookingId AS VARCHAR) LIKE ? ");
+            sqlBuilder.append("OR e.title LIKE ? OR a.name LIKE ?) ");
+            String searchPattern = "%" + search + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        if (startDate != null && !startDate.isEmpty()) {
+            sqlBuilder.append("AND b.bookingDate >= ? ");
+            params.add(startDate);
+        }
+        
+        if (endDate != null && !endDate.isEmpty()) {
+            sqlBuilder.append("AND b.bookingDate <= ? ");
+            params.add(endDate);
+        }
+        
+        sqlBuilder.append("ORDER BY b.createdAt DESC ");
+        
+        // Add pagination
+        int offset = (page - 1) * pageSize;
+        sqlBuilder.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+            
+            // Set parameters
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Booking booking = mapBookingFromResultSet(rs);
+                    
+                    // Additional fields for display
+                    booking.setTravelerName(rs.getString("travelerName"));
+                    booking.setTravelerEmail(rs.getString("travelerEmail"));
+                    
+                    bookings.add(booking);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error getting bookings with filters", e);
+            throw e;
+        }
+        
+        return bookings;
+    }
+    
+    /**
+     * Get total count of bookings with filters
+     */
+    public int getTotalBookingsWithFilters(String status, String type, String search, 
+                                          String startDate, String endDate) throws SQLException {
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT COUNT(*) FROM Bookings b ");
+        sqlBuilder.append("LEFT JOIN Users u ON b.travelerId = u.userId ");
+        sqlBuilder.append("LEFT JOIN Experiences e ON b.experienceId = e.experienceId ");
+        sqlBuilder.append("LEFT JOIN Accommodations a ON b.accommodationId = a.accommodationId ");
+        sqlBuilder.append("WHERE 1=1 ");
+        
+        List<Object> params = new ArrayList<>();
+        
+        // Add filters to SQL
+        if (status != null && !status.isEmpty()) {
+            sqlBuilder.append("AND b.status = ? ");
+            params.add(status);
+        }
+        
+        if (type != null && !type.isEmpty()) {
+            if ("EXPERIENCE".equals(type)) {
+                sqlBuilder.append("AND b.experienceId IS NOT NULL ");
+            } else if ("ACCOMMODATION".equals(type)) {
+                sqlBuilder.append("AND b.accommodationId IS NOT NULL ");
+            }
+        }
+        
+        if (search != null && !search.isEmpty()) {
+            sqlBuilder.append("AND (u.fullName LIKE ? OR u.email LIKE ? OR CAST(b.bookingId AS VARCHAR) LIKE ? ");
+            sqlBuilder.append("OR e.title LIKE ? OR a.name LIKE ?) ");
+            String searchPattern = "%" + search + "%";
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+            params.add(searchPattern);
+        }
+        
+        if (startDate != null && !startDate.isEmpty()) {
+            sqlBuilder.append("AND b.bookingDate >= ? ");
+            params.add(startDate);
+        }
+        
+        if (endDate != null && !endDate.isEmpty()) {
+            sqlBuilder.append("AND b.bookingDate <= ? ");
+            params.add(endDate);
+        }
+        
+        try (Connection conn = DBUtils.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+            
+            // Set parameters
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting bookings with filters", e);
+            throw e;
+        }
+        
+        return 0;
+    }
 }
