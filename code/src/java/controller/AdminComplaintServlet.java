@@ -1,8 +1,14 @@
 package controller;
 
 import dao.ComplaintDAO;
+import dao.BookingDAO;
+import dao.ExperienceDAO;
+import dao.AccommodationDAO;
 import model.Complaint;
 import model.User;
+import model.Booking;
+import model.Experience;
+import model.Accommodation;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,16 +21,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.chatbot.service.NotificationService;
 
 @WebServlet(name = "AdminComplaintServlet", urlPatterns = {"/admin/complaints", "/admin/complaints/*"})
 public class AdminComplaintServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(AdminComplaintServlet.class.getName());
     
     private ComplaintDAO complaintDAO;
+    private NotificationService notificationService;
+    private BookingDAO bookingDAO;
+    private ExperienceDAO experienceDAO;
+    private AccommodationDAO accommodationDAO;
     
     @Override
     public void init() throws ServletException {
         complaintDAO = new ComplaintDAO();
+        notificationService = new NotificationService();
+        bookingDAO = new BookingDAO();
+        experienceDAO = new ExperienceDAO();
+        accommodationDAO = new AccommodationDAO();
     }
     
     @Override
@@ -178,6 +193,60 @@ public class AdminComplaintServlet extends HttpServlet {
         String resolution = request.getParameter("resolution");
         
         boolean success = complaintDAO.updateComplaintResolution(complaintId, newStatus, resolution, currentUser.getUserId());
+
+        // Gửi thông báo cho host nếu khiếu nại được giải quyết
+        if (success && "RESOLVED".equalsIgnoreCase(newStatus)) {
+            Complaint complaint = complaintDAO.getComplaintById(complaintId);
+            int hostId = -1;
+            String relatedTitle = "";
+            if (complaint != null) {
+                if (complaint.getRelatedBookingId() != null) {
+                    Booking booking = bookingDAO.getBookingById(complaint.getRelatedBookingId());
+                    if (booking != null) {
+                        if (booking.getExperienceId() != null) {
+                            Experience exp = experienceDAO.getExperienceById(booking.getExperienceId());
+                            if (exp != null) {
+                                hostId = exp.getHostId();
+                                relatedTitle = exp.getTitle();
+                            }
+                        } else if (booking.getAccommodationId() != null) {
+                            Accommodation acc = accommodationDAO.getAccommodationById(booking.getAccommodationId());
+                            if (acc != null) {
+                                hostId = acc.getHostId();
+                                relatedTitle = acc.getName();
+                            }
+                        }
+                    }
+                }
+                // Nếu có trường hostId trực tiếp trong complaint (mở rộng tương lai)
+                // else if (complaint.getHostId() != null) { hostId = complaint.getHostId(); }
+                if (relatedTitle.isEmpty() && complaint.getRelatedContentTitle() != null) {
+                    relatedTitle = complaint.getRelatedContentTitle();
+                }
+                if (relatedTitle.isEmpty()) {
+                    relatedTitle = "Bài đăng của bạn";
+                }
+            }
+            if (hostId > 0) {
+                String title = "Khiếu nại đã được giải quyết";
+                String message = "Khiếu nại liên quan đến '" + relatedTitle + "' đã được admin xử lý. Vui lòng kiểm tra chi tiết.";
+                String contentType = null;
+                int contentId = 0;
+                if (complaint != null && complaint.getRelatedBookingId() != null) {
+                    Booking booking = bookingDAO.getBookingById(complaint.getRelatedBookingId());
+                    if (booking != null) {
+                        if (booking.getExperienceId() != null) {
+                            contentType = "experience";
+                            contentId = booking.getExperienceId();
+                        } else if (booking.getAccommodationId() != null) {
+                            contentType = "accommodation";
+                            contentId = booking.getAccommodationId();
+                        }
+                    }
+                }
+                notificationService.notifyUser(hostId, title, message, "complaint", contentType, contentId);
+            }
+        }
         
         String result = "{\"success\":" + success + ",\"message\":\"" + 
                        (success ? "Cập nhật trạng thái thành công" : "Cập nhật trạng thái thất bại") + "\"}";

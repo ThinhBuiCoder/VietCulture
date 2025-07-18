@@ -121,6 +121,13 @@
                 <library dirs="200">
                     <file>${file.reference.slf4j-simple-2.0.9.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
+<<<<<<< HEAD
+=======
+                </library>
+                <library dirs="200">
+                    <file>${file.reference.jakarta.activation-2.0.1.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+>>>>>>> 67b1721a9db9109964dfb57f77a1db3498ffb132
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>

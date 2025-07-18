@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.chatbot.service.NotificationService;
 
 /**
  * Complete Servlet quản lý duyệt nội dung với logic adminApprovalStatus
@@ -44,6 +45,7 @@ public class AdminContentApprovalServlet extends HttpServlet {
     private UserDAO userDAO;
     private CityDAO cityDAO;
     private Gson gson;
+    private NotificationService notificationService;
 
     @Override
     public void init() throws ServletException {
@@ -53,6 +55,7 @@ public class AdminContentApprovalServlet extends HttpServlet {
             userDAO = new UserDAO();
             cityDAO = new CityDAO();
             gson = new Gson();
+            notificationService = new NotificationService();
             LOGGER.info("AdminContentApprovalServlet initialized successfully");
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to initialize AdminContentApprovalServlet", e);
@@ -297,6 +300,29 @@ public class AdminContentApprovalServlet extends HttpServlet {
             if (success) {
                 String adminEmail = admin.getEmail();
                 LOGGER.info("Admin " + adminEmail + " approved " + contentType + " ID: " + contentId);
+                // Gửi notification cho host
+                int hostId = -1;
+                String title = "Bài đăng đã được duyệt";
+                String notifyMsg = "";
+                if ("experience".equals(contentType)) {
+                    Experience experience = experienceDAO.getExperienceById(contentId);
+                    if (experience != null) {
+                        hostId = experience.getHostId();
+                        notifyMsg = "Trải nghiệm '" + experience.getTitle() + "' của bạn đã được admin duyệt và hiển thị công khai.";
+                        if (hostId > 0) {
+                            notificationService.notifyUser(hostId, title, notifyMsg, "content_approval", "experience", experience.getExperienceId());
+                        }
+                    }
+                } else if ("accommodation".equals(contentType)) {
+                    Accommodation accommodation = accommodationDAO.getAccommodationById(contentId);
+                    if (accommodation != null) {
+                        hostId = accommodation.getHostId();
+                        notifyMsg = "Chỗ ở '" + accommodation.getName() + "' của bạn đã được admin duyệt và hiển thị công khai.";
+                        if (hostId > 0) {
+                            notificationService.notifyUser(hostId, title, notifyMsg, "content_approval", "accommodation", accommodation.getAccommodationId());
+                        }
+                    }
+                }
             }
 
             sendJsonResponse(response, success, message, null);
