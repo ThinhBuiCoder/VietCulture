@@ -3621,7 +3621,7 @@
                                             if (!currentUserId) {
                                                 // Redirect to login with current page as return URL
                                                 const currentPath = window.location.pathname + window.location.search;
-                                                window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+                                                window.location.href = '${pageContext.request.contextPath}/login?redirect=' + encodeURIComponent(currentPath);
                                                 return;
                                             }
 
@@ -3641,14 +3641,14 @@
                                             }
 
                                             // Try multiple methods to ensure compatibility
-                                            fetch('/chat/api/create-room', {
+                                            fetch('${pageContext.request.contextPath}/chat/api/create-room', {
                                                 method: 'POST',
                                                 body: formData
                                             })
                                                     .then(response => response.json())
                                                     .then(data => {
                                                         if (data.success) {
-                                                            window.location.href = '/chat/room/' + data.chatRoomId;
+                                                            window.location.href = '${pageContext.request.contextPath}/chat/room/' + data.chatRoomId;
                                                         } else {
                                                             showToast('Lỗi: ' + (data.message || 'Không thể tạo chat'), 'error');
                                                         }
@@ -3739,11 +3739,11 @@
                                                     'Đăng nhập để có thể xem thông tin liên hệ của host và bắt đầu trò chuyện để được tư vấn chi tiết.' +
                                                     '</p>' +
                                                     '<div class="d-grid gap-2">' +
-                                                    '<a href="/login?redirect=chat&experienceId=' + experienceId + '" ' +
+                                                    '<a href="${pageContext.request.contextPath}/login?redirect=chat&experienceId=' + experienceId + '" ' +
                                                     'class="btn btn-primary">' +
                                                     '<i class="ri-login-circle-line me-2"></i>Đăng Nhập' +
                                                     '</a>' +
-                                                    '<a href="/register" class="btn btn-outline-primary">' +
+                                                    '<a href="${pageContext.request.contextPath}/register" class="btn btn-outline-primary">' +
                                                     '<i class="ri-user-add-line me-2"></i>Tạo Tài Khoản Mới' +
                                                     '</a>' +
                                                     '</div>' +

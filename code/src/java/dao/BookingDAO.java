@@ -1,4 +1,4 @@
-package dao;
+    package dao;
 
 import model.Accommodation;
 import model.Booking;

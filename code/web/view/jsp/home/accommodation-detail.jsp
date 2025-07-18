@@ -2026,7 +2026,11 @@
                     <div class="contact-host-section">
                         <h6 class="mb-3">Liên hệ chủ nhà</h6>
                         <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary btn-sm">
+                            <button class="btn btn-outline-primary btn-sm btn-chat chat-pulse" 
+                                   onclick="chatWithHost()"
+                                   data-host-id="${accommodation.hostId}"
+                                   data-accommodation-id="${accommodation.accommodationId}"
+                                   data-current-user-id="${sessionScope.user.userId}">
                                 <i class="ri-message-3-line me-2"></i>Gửi tin nhắn
                             </button>
                             <button class="btn btn-outline-primary btn-sm">
@@ -2614,18 +2618,83 @@
                                     // This would typically save to user's favorites
                                     // For now, just show a toast
                                     const heartIcon = event.target.closest('.action-btn').querySelector('i');
-
+                                    
+                                    // Toggle heart icon
                                     if (heartIcon.classList.contains('ri-heart-line')) {
                                         heartIcon.classList.remove('ri-heart-line');
                                         heartIcon.classList.add('ri-heart-fill');
-                                        heartIcon.style.color = 'var(--primary-color)';
+                                        heartIcon.style.color = '#FF385C';
                                         showToast('Đã lưu vào danh sách yêu thích', 'success');
                                     } else {
                                         heartIcon.classList.remove('ri-heart-fill');
                                         heartIcon.classList.add('ri-heart-line');
                                         heartIcon.style.color = '';
-                                        showToast('Đã bỏ khỏi danh sách yêu thích', 'info');
+                                        showToast('Đã xóa khỏi danh sách yêu thích', 'info');
                                     }
+                                }
+                                
+// Chat functionality
+                                function chatWithHost() {
+                                    const chatBtn = document.querySelector('.btn-chat');
+                                    if (!chatBtn) {
+                                        console.error('Chat button not found');
+                                        return;
+                                    }
+
+                                    const hostId = chatBtn.getAttribute('data-host-id');
+                                    const accommodationId = chatBtn.getAttribute('data-accommodation-id');
+                                    const currentUserId = chatBtn.getAttribute('data-current-user-id');
+
+                                    console.log('Chat data:', {hostId, accommodationId, currentUserId});
+
+                                    if (!hostId) {
+                                        showToast('Không tìm thấy thông tin host', 'error');
+                                        return;
+                                    }
+
+                                    if (!currentUserId) {
+                                        // Redirect to login with current page as return URL
+                                        const currentPath = window.location.pathname + window.location.search;
+                                        window.location.href = '${pageContext.request.contextPath}/login?redirect=' + encodeURIComponent(currentPath);
+                                        return;
+                                    }
+
+                                    if (hostId === currentUserId) {
+                                        showToast('Bạn không thể chat với chính mình', 'info');
+                                        return;
+                                    }
+
+                                    const originalText = chatBtn.innerHTML;
+                                    chatBtn.innerHTML = '<i class="ri-loader-2-line"></i> Đang tạo chat...';
+                                    chatBtn.disabled = true;
+
+                                    const formData = new FormData();
+                                    formData.append('hostId', hostId);
+                                    if (accommodationId) {
+                                        formData.append('accommodationId', accommodationId);
+                                    }
+
+                                    // Try multiple methods to ensure compatibility
+                                    fetch('${pageContext.request.contextPath}/chat/api/create-room', {
+                                        method: 'POST',
+                                        body: formData
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            window.location.href = '${pageContext.request.contextPath}/chat/room/' + data.chatRoomId;
+                                        } else {
+                                            showToast('Lỗi: ' + (data.message || 'Không thể tạo chat'), 'error');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Chat error:', error);
+                                        showToast('Có lỗi xảy ra: ' + error.message, 'error');
+                                    })
+                                    .finally(() => {
+                                        chatBtn.innerHTML = originalText;
+                                        chatBtn.disabled = false;
+                                    });
                                 }
 
 // Show toast notification

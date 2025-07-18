@@ -7,13 +7,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBUtils {
+
     // Sử dụng Logger thay cho System.out
     private static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
 
-    // Cấu hình kết nối database
-    private static final String DB_URL = "jdbc:sqlserver://localhost:1433;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
-    private static final String USERNAME = "sa";
-    private static final String PASSWORD = "123";
+// Cấu hình kết nối database
+private static final String DB_URL = "jdbc:sqlserver://ADMIN-PC\\MSSQLSERVER01;databaseName=TravelerDB;encrypt=true;trustServerCertificate=true";
+private static final String USERNAME = "sa";
+private static final String PASSWORD = "123";
 
     // Prevent instantiation
     private DBUtils() {
@@ -33,6 +34,7 @@ public class DBUtils {
 
     /**
      * Lấy kết nối đến database
+     *
      * @return Connection tới database
      * @throws SQLException nếu không thể kết nối
      */
@@ -49,6 +51,7 @@ public class DBUtils {
 
     /**
      * Đóng kết nối an toàn
+     *
      * @param conn Connection cần đóng
      */
     public static void closeConnection(Connection conn) {
@@ -64,6 +67,7 @@ public class DBUtils {
 
     /**
      * Kiểm tra kết nối database
+     *
      * @return true nếu kết nối thành công, false nếu không
      */
     public static boolean testConnection() {
@@ -78,6 +82,7 @@ public class DBUtils {
 
     /**
      * Kiểm tra thông tin kết nối
+     *
      * @return Thông tin chi tiết về kết nối
      */
     public static String getConnectionInfo() {
@@ -86,11 +91,12 @@ public class DBUtils {
 
     /**
      * Main method để kiểm tra kết nối trực tiếp
+     *
      * @param args Tham số dòng lệnh
      */
     public static void main(String[] args) {
         LOGGER.info("Testing database connection...");
-        
+
         if (testConnection()) {
             LOGGER.info("Connection successful!");
             LOGGER.info("Connection Details: " + getConnectionInfo());
